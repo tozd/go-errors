@@ -83,6 +83,7 @@ func (f *fundamental) Format(s fmt.State, verb rune) {
 					io.WriteString(s, "\n")
 				}
 			}
+			fmt.Fprintf(s, "Stack trace (most recent call first):\n")
 			f.stack.Format(s, verb)
 			return
 		}
@@ -117,6 +118,7 @@ func (w *errorf) Format(s fmt.State, verb rune) {
 					io.WriteString(s, "\n")
 				}
 			}
+			fmt.Fprintf(s, "Stack trace (most recent call first):\n")
 			stack(w.StackTrace()).Format(s, verb)
 			return
 		}
@@ -157,6 +159,7 @@ func (w *errorfWithStack) Format(s fmt.State, verb rune) {
 					io.WriteString(s, "\n")
 				}
 			}
+			fmt.Fprintf(s, "Stack trace (most recent call first):\n")
 			w.stack.Format(s, verb)
 			return
 		}
@@ -208,6 +211,7 @@ func (w *withStack) Format(s fmt.State, verb rune) {
 					io.WriteString(s, "\n")
 				}
 			}
+			fmt.Fprintf(s, "Stack trace (most recent call first):\n")
 			w.stack.Format(s, verb)
 			return
 		}
@@ -280,6 +284,7 @@ func (w *wrapped) Format(s fmt.State, verb rune) {
 					io.WriteString(s, "\n")
 				}
 			}
+			fmt.Fprintf(s, "Stack trace (most recent call first):\n")
 			w.stack.Format(s, verb)
 			unwrap := fmt.Sprintf("%+v", w.error)
 			if len(unwrap) > 0 {
@@ -454,6 +459,7 @@ func (w *withMessageAndStack) Format(s fmt.State, verb rune) {
 			if needsNewline {
 				io.WriteString(s, "\n")
 			}
+			fmt.Fprintf(s, "Stack trace (most recent call first):\n")
 			w.stack.Format(s, verb)
 			return
 		}

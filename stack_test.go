@@ -3,11 +3,9 @@ package errors
 import (
 	"fmt"
 	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var initpc = caller()
@@ -56,7 +54,7 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%d",
-		"^13$",
+		"^11$",
 	}, {
 		zeropc,
 		"%d",
@@ -86,12 +84,12 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%v",
-		"^stack_test.go:13$",
+		"^stack_test.go:11$",
 	}, {
 		initpc,
 		"%+v",
 		"^gitlab.com/tozd/go/errors.init\n" +
-			"\t.+/stack_test.go:13$",
+			"\t.+/stack_test.go:11$",
 	}, {
 		zeropc,
 		"%v",
@@ -123,51 +121,53 @@ func TestFuncname(t *testing.T) {
 	}
 }
 
-func TestStackTrace(t *testing.T) {
+func TestStackFormat(t *testing.T) {
 	tests := []struct {
-		err  error
-		want []string
+		err    error
+		format string
+		want   string
 	}{{
-		New("ooh"), []string{
-			"^gitlab.com/tozd/go/errors.TestStackTrace\n" +
-				"\t.+/stack_test.go:131$",
-		},
+		New("ooh"),
+		"%+v",
+		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
+			"\t.+/stack_test.go:130\n",
 	}, {
-		Wrap(New("ooh"), "ahh"), []string{
-			"^gitlab.com/tozd/go/errors.TestStackTrace\n" +
-				"\t.+/stack_test.go:136$", // this is the stack of Wrap, not New
-		},
+		Wrap(
+			New("ooh"),
+			"ahh",
+		),
+		"%+v",
+		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
+			"\t.+/stack_test.go:135\n",
 	}, {
-		func() error { noinline(); return New("ooh") }(), []string{
-			`^gitlab.com/tozd/go/errors.TestStackTrace.func1` +
-				"\n\t.+/stack_test.go:141$", // this is the stack of New
-			"^gitlab.com/tozd/go/errors.TestStackTrace\n" +
-				"\t.+/stack_test.go:141$", // this is the stack of New's caller
-		},
+		func() error {
+			noinline()
+			return New("ooh")
+		}(),
+		"%+v",
+		"^gitlab.com/tozd/go/errors.TestStackFormat.func1\n" +
+			"\t.+/stack_test.go:145\n" +
+			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
+			"\t.+/stack_test.go:146\n",
 	}, {
 		func() error {
 			return func() error {
 				noinline()
 				return Errorf("hello %s", fmt.Sprintf("world: %s", "ooh"))
 			}()
-		}(), []string{
-			`^gitlab.com/tozd/go/errors.TestStackTrace.func2.1` +
-				"\n\t.+/stack_test.go:151$", // this is the stack of Errorf
-			`^gitlab.com/tozd/go/errors.TestStackTrace.func2` +
-				"\n\t.+/stack_test.go:152$", // this is the stack of Errorf's caller
-			"^gitlab.com/tozd/go/errors.TestStackTrace\n" +
-				"\t.+/stack_test.go:153$", // this is the stack of Errorf's caller's caller
-		},
+		}(),
+		"%+v",
+		"^gitlab.com/tozd/go/errors.TestStackFormat.func2.1\n" +
+			"\t.+/stack_test.go:156\n" +
+			"gitlab.com/tozd/go/errors.TestStackFormat.func2\n" +
+			"\t.+/stack_test.go:157\n" +
+			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
+			"\t.+/stack_test.go:158\n",
 	}}
 
 	for k, tt := range tests {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
-			require.Implements(t, (*stackTracer)(nil), tt.err)
-			st := fmt.Sprintf("%+v", stack(tt.err.(stackTracer).StackTrace()))
-			stackLines := strings.Split(st, "\n")[1:]
-			for i := 0; i < len(tt.want); i++ {
-				assert.Regexp(t, tt.want[i], stackLines[2*i]+"\n"+stackLines[2*i+1])
-			}
+			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, stack(tt.err.(stackTracer).StackTrace())))
 		})
 	}
 }

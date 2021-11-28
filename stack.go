@@ -37,15 +37,15 @@ func (f frame) name() string {
 
 // Format formats the frame according to the fmt.Formatter interface.
 //
-//    %s    source file
-//    %d    source line
-//    %n    function name
+//    %s    the source file
+//    %d    the source line
+//    %n    the function name
 //    %v    equivalent to %s:%d
 //
-// Format accepts flags that alter the printing of some verbs, as follows:
+// Format accepts flags that alter the formatting of some verbs, as follows:
 //
-//    %+s   function name and path of source file relative to the compile time
-//          GOPATH separated by \n\t (<funcname>\n\t<path>)
+//    %+s   the full function name and full compile-time path of the source file,
+//          separated by \n\t (<funcname>\n\t<path>)
 //    %+v   equivalent to %+s:%d
 func (f frame) Format(s fmt.State, verb rune) {
 	switch verb {
@@ -81,27 +81,32 @@ func (f frame) MarshalText() ([]byte, error) {
 // stack represents a stack of program counters.
 type stack []uintptr
 
+// Format formats the stack of frames according to the fmt.Formatter interface.
+// For each frame in the stack, separated by \n:
+//
+//    %s	  lists the source file
+//    %d    lists the source line
+//    %n    lists the function name
+//    %v	  lists the source file and source line
+//
+// Format accepts flags that alter the formatting of some verbs, as follows:
+//
+//    %+s   lists the full function name and full compile-time path of the source file,
+//          separated by \n\t (<funcname>\n\t<path>)
+//    %+v   lists the full function name and full compile-time path of the source file
+//          with the source line, separated by \n\t
+//          (<funcname>\n\t<path>:<line>)
 func (s stack) Format(st fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		switch {
-		case st.Flag('+'):
-			if len(s) == 0 {
-				return
-			}
-			frames := runtime.CallersFrames(s)
-			first := true
-			for {
-				f, more := frames.Next()
-				if first {
-					first = false
-					fmt.Fprintf(st, "Stack trace (most recent call first):\n")
-				}
-				fmt.Fprintf(st, "%+v\n", frame(f))
-				if !more {
-					break
-				}
-			}
+	if len(s) == 0 {
+		return
+	}
+	frames := runtime.CallersFrames(s)
+	for {
+		f, more := frames.Next()
+		frame(f).Format(st, verb)
+		io.WriteString(st, "\n")
+		if !more {
+			break
 		}
 	}
 }
