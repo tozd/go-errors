@@ -8,12 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var initpc = caller()
-var zeropc = func() frame {
-	frames := runtime.CallersFrames([]uintptr{0})
-	f, _ := frames.Next()
-	return frame(f)
-}()
+var (
+	initpc = caller()
+	zeropc = func() frame {
+		frames := runtime.CallersFrames([]uintptr{0})
+		f, _ := frames.Next()
+		return frame(f)
+	}()
+)
 
 type X struct{}
 
@@ -54,7 +56,7 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%d",
-		"^11$",
+		"^12$",
 	}, {
 		zeropc,
 		"%d",
@@ -84,12 +86,12 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%v",
-		"^stack_test.go:11$",
+		"^stack_test.go:12$",
 	}, {
 		initpc,
 		"%+v",
 		"^gitlab.com/tozd/go/errors.init\n" +
-			"\t.+/stack_test.go:11$",
+			"\t.+/stack_test.go:12$",
 	}, {
 		zeropc,
 		"%v",
@@ -130,7 +132,7 @@ func TestStackFormat(t *testing.T) {
 		New("ooh"),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:130\n",
+			"\t.+/stack_test.go:132\n",
 	}, {
 		Wrap(
 			New("ooh"),
@@ -138,7 +140,7 @@ func TestStackFormat(t *testing.T) {
 		),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:135\n",
+			"\t.+/stack_test.go:137\n",
 	}, {
 		func() error {
 			noinline()
@@ -146,9 +148,9 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func1\n" +
-			"\t.+/stack_test.go:145\n" +
+			"\t.+/stack_test.go:147\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:146\n",
+			"\t.+/stack_test.go:148\n",
 	}, {
 		func() error {
 			return func() error {
@@ -158,11 +160,11 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func2.1\n" +
-			"\t.+/stack_test.go:156\n" +
+			"\t.+/stack_test.go:158\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat.func2\n" +
-			"\t.+/stack_test.go:157\n" +
+			"\t.+/stack_test.go:159\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:158\n",
+			"\t.+/stack_test.go:160\n",
 	}}
 
 	for k, tt := range tests {
