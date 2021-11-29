@@ -6,6 +6,7 @@ import (
 	"io"
 	"testing"
 
+	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/tozd/go/errors"
@@ -30,7 +31,7 @@ func TestFormatNew(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatNew\n" +
-			"\t.+/format_test.go:28\n" +
+			"\t.+/format_test.go:29\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.New("error"),
@@ -48,6 +49,7 @@ func TestFormatNew(t *testing.T) {
 func TestFormatErrorf(t *testing.T) {
 	parentErr := errors.New("error")
 	parentNoStackErr := stderrors.New("error")
+	parentPkgErr := pkgerrors.New("error")
 
 	tests := []struct {
 		error
@@ -67,7 +69,7 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:65\n",
+			"\t.+/format_test.go:67\n",
 	}, {
 		errors.Errorf("%w", parentErr),
 		"%s",
@@ -82,7 +84,7 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:49\n" +
+			"\t.+/format_test.go:50\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Errorf("%w", parentNoStackErr),
@@ -98,7 +100,23 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:96\n" +
+			"\t.+/format_test.go:98\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.Errorf("%w", parentPkgErr),
+		"%s",
+		"^error$",
+	}, {
+		errors.Errorf("%w", parentPkgErr),
+		"%v",
+		"^error$",
+	}, {
+		errors.Errorf("%w", parentPkgErr),
+		"%+v",
+		"^error\n" +
+			"Stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
+			"\t.+/format_test.go:52\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
@@ -128,7 +146,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^EOF\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:126\n" +
+			"\t.+/format_test.go:144\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -150,7 +168,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:147\n" +
+			"\t.+/format_test.go:165\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -172,7 +190,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:168\n" +
+			"\t.+/format_test.go:186\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -182,7 +200,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^EOF\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:179\n" +
+			"\t.+/format_test.go:197\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -192,8 +210,29 @@ func TestFormatWithStack(t *testing.T) {
 		"error1\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:189\n" +
+			"\t.+/format_test.go:207\n" +
 			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WithStack(
+			pkgerrors.New("error"),
+		),
+		"%s",
+		"^error$",
+	}, {
+		errors.WithStack(
+			pkgerrors.New("error"),
+		),
+		"%v",
+		"^error$",
+	}, {
+		errors.WithStack(
+			pkgerrors.New("error"),
+		),
+		"%+v",
+		"^error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
+			"\t.+/format_test.go:229" +
+			"(\n.+\n\t.+:\\d+)+$",
 	}}
 
 	for k, tt := range tests {
@@ -231,13 +270,13 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:226\n" +
+			"\t.+/format_test.go:265\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:227\n" +
+			"\t.+/format_test.go:266\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(io.EOF, "error"),
@@ -253,7 +292,7 @@ func TestFormatWrap(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:251\n" +
+			"\t.+/format_test.go:290\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"EOF\n$",
@@ -266,13 +305,13 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:261\n" +
+			"\t.+/format_test.go:300\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"error1\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:262\n" +
+			"\t.+/format_test.go:301\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"EOF\n$",
@@ -283,6 +322,36 @@ func TestFormatWrap(t *testing.T) {
 		),
 		"%q",
 		`"context"`,
+	}, {
+		errors.Wrap(
+			pkgerrors.New("error"),
+			"error2",
+		),
+		"%s",
+		"^error2$",
+	}, {
+		errors.Wrap(
+			pkgerrors.New("error"),
+			"error2",
+		),
+		"%v",
+		"^error2$",
+	}, {
+		errors.Wrap(
+			pkgerrors.New("error"),
+			"error2",
+		),
+		"%+v",
+		"^error2\n" +
+			"Stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
+			"\t.+/format_test.go:340\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nThe above error was caused by the following error:\n\n" +
+			"error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
+			"\t.+/format_test.go:341\n" +
+			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
 	for k, tt := range tests {
@@ -311,7 +380,7 @@ func TestFormatWrapf(t *testing.T) {
 		"^error2\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:309\n" +
+			"\t.+/format_test.go:378\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"EOF\n$",
@@ -338,13 +407,13 @@ func TestFormatWrapf(t *testing.T) {
 		"^error2\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:333\n" +
+			"\t.+/format_test.go:402\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:334\n" +
+			"\t.+/format_test.go:403\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
@@ -380,7 +449,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:377\n" +
+			"\t.+/format_test.go:446\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(io.EOF, "addition1"),
@@ -396,7 +465,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^addition1: EOF\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:394\n" +
+			"\t.+/format_test.go:463\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -414,7 +483,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^addition2: addition1: EOF\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:410\n" +
+			"\t.+/format_test.go:479\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -425,13 +494,13 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:420\n" +
+			"\t.+/format_test.go:489\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"error1: EOF\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:421\n" +
+			"\t.+/format_test.go:490\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -442,7 +511,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error1\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:438\n" +
+			"\t.+/format_test.go:507\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -453,7 +522,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error: EOF\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:449\n" +
+			"\t.+/format_test.go:518\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -467,14 +536,35 @@ func TestFormatWithMessage(t *testing.T) {
 		"^outside-error: inside-error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:460\n" +
+			"\t.+/format_test.go:529\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nThe above error was caused by the following error:\n\n" +
 			"EOF\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:461\n" +
+			"\t.+/format_test.go:530\n" +
 			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WithMessage(
+			pkgerrors.New("error"), "error2",
+		),
+		"%s",
+		"^error2: error$",
+	}, {
+		errors.WithMessage(
+			pkgerrors.New("error"), "error2",
+		),
+		"%v",
+		"^error2: error$",
+	}, {
+		errors.WithMessage(
+			pkgerrors.New("error"), "error2",
+		),
+		"%+v",
+		"^error2: error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
+			"\t.+/format_test.go:561" +
+			"(\n.+\n\t.+:\\d+)+$",
 	}}
 
 	for k, tt := range tests {
@@ -500,9 +590,9 @@ func TestFormatWrappedNew(t *testing.T) {
 		"^error\n" +
 			"Stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.wrappedNew\n" +
-			"\t.+/format_test.go:489\n" +
+			"\t.+/format_test.go:579\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrappedNew\n" +
-			"\t.+/format_test.go:498\n",
+			"\t.+/format_test.go:588\n",
 	}}
 
 	for k, tt := range tests {

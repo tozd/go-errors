@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -60,13 +61,22 @@ func TestJSON(t *testing.T) {
 		errors.Errorf("error: %w", errors.New("foobar")),
 		`{"error":"error: foobar","stack":[]}`,
 	}, {
+		errors.Errorf("error: %w", pkgerrors.New("foobar")),
+		`{"error":"error: foobar","stack":[]}`,
+	}, {
 		errors.WithStack(errors.Base("error")),
+		`{"error":"error","stack":[]}`,
+	}, {
+		errors.WithStack(pkgerrors.New("error")),
 		`{"error":"error","stack":[]}`,
 	}, {
 		errors.WithMessage(errors.Base("foobar"), "error"),
 		`{"error":"error: foobar","stack":[]}`,
 	}, {
 		errors.WithMessage(errors.New("foobar"), "error"),
+		`{"error":"error: foobar","stack":[]}`,
+	}, {
+		errors.WithMessage(pkgerrors.New("foobar"), "error"),
 		`{"error":"error: foobar","stack":[]}`,
 	}, {
 		errors.Wrap(errors.Base("foobar"), "error"),
@@ -80,6 +90,15 @@ func TestJSON(t *testing.T) {
 	}, {
 		errors.Wrap(errors.BaseWrap(errors.New("foo"), "bar"), "error"),
 		`{"error":"error","stack":[],"wrap":{"error":"bar","wrap":{"error":"foo","stack":[]}}}`,
+	}, {
+		errors.Wrap(pkgerrors.New("foobar"), "error"),
+		`{"error":"error","stack":[],"wrap":{"error":"foobar","stack":[]}}`,
+	}, {
+		errors.Wrap(pkgerrors.Wrap(pkgerrors.New("foo"), "bar"), "error"),
+		`{"error":"error","stack":[],"wrap":{"error":"bar: foo","stack":[],"wrap":{"error":"bar: foo","wrap":{"error":"foo","stack":[]}}}}`,
+	}, {
+		errors.Wrap(pkgerrors.WithMessage(errors.Base("foo"), "bar"), "error"),
+		`{"error":"error","stack":[],"wrap":{"error":"bar: foo","wrap":{"error":"foo"}}}`,
 	}}
 
 	for k, tt := range tests {

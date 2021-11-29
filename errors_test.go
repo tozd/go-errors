@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/tozd/go/errors"
@@ -59,6 +60,9 @@ func TestErrors(t *testing.T) {
 	}()
 	parentWithFormat1Err, parentWithFormat2Err := func() (errors.E, errors.E) {
 		return errors.WithStack(&errorWithFormat{"foobar\nmore data"}), errors.WithStack(&errorWithFormat{"foobar\nmore data\n"})
+	}()
+	parentPkgError := func() error {
+		return pkgerrors.New("parent")
 	}()
 
 	parentNoStackErr := stderrors.New("parent")
@@ -131,11 +135,11 @@ func TestErrors(t *testing.T) {
 		// "read error" is prefixed to the parent's stack trace output, so there is no extra line for the error message
 		{errors.WithMessage(noMsgErr, "read error"), "read error", parentErrStackSize, 0},
 
-		// errors.WithStack and parent with custom %+v and no stack
+		// errors.WithMessage and parent with custom %+v and no stack
 		{errors.WithMessage(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error: foobar", currentStackSize, 2},
 		{errors.WithMessage(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error: foobar", currentStackSize, 2},
 
-		// errors.WithStack and parent with custom %+v and stack
+		// errors.WithMessage and parent with custom %+v and stack
 		{errors.WithMessage(parentWithFormat1Err, "read error"), "read error: foobar", parentErrStackSize, 2},
 		{errors.WithMessage(parentWithFormat2Err, "read error"), "read error: foobar", parentErrStackSize, 2},
 
@@ -178,6 +182,32 @@ func TestErrors(t *testing.T) {
 		{errors.Wrapf(parentNoStackErr, "read error %d", 1), "read error 1", currentStackSize, 3 + 2},
 		// We use w() to prevent static analysis.
 		{errors.Wrapf(parentNoStackErr, "read error ("+w()+")", noMsgNoStackErr), "read error (%!w(*errors.errorString=&{}))", currentStackSize, 3 + 2},
+
+		// errors.Errorf with %w and github.com/pkg/errors parent,
+		// we format the stack trace in this case
+		{errors.Errorf("read error with parent: %w", parentPkgError), "read error with parent: parent", parentErrStackSize, 1},
+
+		// errors.WithStack and github.com/pkg/errors parent,
+		// formatting is fully done by parentPkgError in this case,
+		// there is still one line for the error message, but
+		// there is no "Stack trace (most recent call first)" line,
+		// and no final newline
+		{errors.WithStack(parentPkgError), "parent", parentErrStackSize, 1 - 1 - 1},
+
+		// errors.Wrap and github.com/pkg/errors parent,
+		// formatting of the cause is fully done by parentPkgError in this case,
+		// there are still three lines extra for "The above error was caused by the
+		// following error" + lines for error messages, but
+		// there is no second "Stack trace (most recent call first)" line,
+		// a final newline is still added
+		{errors.Wrap(parentPkgError, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2},
+
+		// errors.WithMessage and github.com/pkg/errors parent,
+		// formatting of the cause is fully done by parentPkgError in this case,
+		// additional message is just prefixed, there is still one line for the
+		// error message, but there is no "Stack trace (most recent call first)" line,
+		// and no final newline
+		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", parentErrStackSize, 1 - 1 - 1},
 	}
 
 	for k, tt := range tests {

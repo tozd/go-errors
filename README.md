@@ -7,6 +7,7 @@ Features:
 
 * Based of [`github.com/pkg/errors`](https://github.com/pkg/errors) with similar API, addressing many its [open issues](https://github.com/pkg/errors/issues).
   In many cases it can be used as a drop-in replacement.
+  At the same time compatible with [`github.com/pkg/errors`](https://github.com/pkg/errors) errors.
 * Uses standard error wrapping (available since Go 1.13).
 * Provides [`errors.Errorf`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Errorf) which supports `%w` format verb to both wrap
   and record a stack trace at the same time (if not already recorded).

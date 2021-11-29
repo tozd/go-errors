@@ -3,10 +3,17 @@ package errors
 import (
 	"fmt"
 	"io"
+	"unsafe"
+
+	pkgerrors "github.com/pkg/errors"
 )
 
 type stackTracer interface {
 	StackTrace() []uintptr
+}
+
+type pkgStackTracer interface {
+	StackTrace() pkgerrors.StackTrace
 }
 
 // E interface can be used in as a return type instead of the standard error
@@ -35,6 +42,10 @@ func New(message string) E {
 // It supports %w format verb to wrap an existing error.
 // Errorf also records the stack trace at the point it was called,
 // unless wrapped error already have a stack trace.
+//
+// When formatting the returned error using %+v, formatting
+// is not delegated to the wrapped error (when there is one),
+// giving you full control of the message and formatted error.
 func Errorf(format string, args ...interface{}) E {
 	err := fmt.Errorf(format, args...)
 	u, ok := err.(interface {
@@ -43,6 +54,11 @@ func Errorf(format string, args ...interface{}) E {
 	if ok {
 		unwrap := u.Unwrap()
 		if _, ok := unwrap.(stackTracer); ok {
+			return &errorf{
+				unwrap,
+				err.Error(),
+			}
+		} else if _, ok := unwrap.(pkgStackTracer); ok {
 			return &errorf{
 				unwrap,
 				err.Error(),
@@ -131,8 +147,15 @@ func (w *errorf) Format(s fmt.State, verb rune) {
 }
 
 func (w *errorf) StackTrace() []uintptr {
-	// We know error has stackTracer interface because we construct it only then.
-	return w.error.(stackTracer).StackTrace()
+	switch e := w.error.(type) {
+	case stackTracer:
+		return e.StackTrace()
+	case pkgStackTracer:
+		st := e.StackTrace()
+		return *(*[]uintptr)(unsafe.Pointer(&st))
+	default:
+		panic(New("not possible"))
+	}
 }
 
 type errorfWithStack struct {
@@ -175,6 +198,10 @@ func (w *errorfWithStack) Format(s fmt.State, verb rune) {
 // if err does not already have a stack trace.
 // If err is nil, WithStack returns nil.
 //
+// When formatting the returned error using %+v, formatting
+// is delegated to the wrapped error. The stack trace is added only
+// if the wrapped error does not already have it.
+//
 // Use this instead of Wrap when you just want to convert an existing error
 // into one with a stack trace. Use it as close to where the error originated
 // as you can get.
@@ -184,7 +211,12 @@ func WithStack(err error) E {
 	}
 	if e, ok := err.(E); ok {
 		return e
+	} else if _, ok := err.(pkgStackTracer); ok {
+		return &withPkgStack{
+			err,
+		}
 	}
+
 	return &withStack{
 		err,
 		callers(),
@@ -223,10 +255,43 @@ func (w *withStack) Format(s fmt.State, verb rune) {
 	}
 }
 
+type withPkgStack struct {
+	error
+}
+
+func (w *withPkgStack) Unwrap() error {
+	return w.error
+}
+
+func (w *withPkgStack) StackTrace() []uintptr {
+	// We know error has pkgStackTracer interface because we construct it only then.
+	st := w.error.(pkgStackTracer).StackTrace()
+	return *(*[]uintptr)(unsafe.Pointer(&st))
+}
+
+func (w *withPkgStack) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			fmt.Fprintf(s, "%+v", w.error)
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(s, w.Error())
+	case 'q':
+		fmt.Fprintf(s, "%q", w.Error())
+	}
+}
+
 // Wrap returns an error annotating err with a stack trace
 // at the point Wrap is called, and the supplied message.
 // Wrapping is done even if err already has a stack trace.
+// It records the original error as a cause.
 // If err is nil, Wrap returns nil.
+//
+// When formatting the returned error using %+v, formatting
+// of the cause is delegated to the wrapped error.
 //
 // Use this when you want to make a new error,
 // preserving the cause of the new error.
@@ -244,8 +309,13 @@ func Wrap(err error, message string) E {
 // Wrapf returns an error annotating err with a stack trace
 // at the point Wrapf is called, and the supplied message
 // formatted according to a format specifier.
+// Wrapping is done even if err already has a stack trace.
+// It records the original error as a cause.
 // It does not support %w format verb.
 // If err is nil, Wrapf returns nil.
+//
+// When formatting the returned error using %+v, formatting
+// of the cause is delegated to the wrapped error.
 //
 // Use this when you want to make a new error,
 // preserving the cause of the new error.
@@ -306,10 +376,14 @@ func (w *wrapped) Format(s fmt.State, verb rune) {
 
 // WithMessage annotates err with a prefix message.
 // If err does not have a stack trace, stack strace is recorded as well.
-// It does not support controlling the delimiter. Use Errorf if you need that,
-// but there is a difference: when using %+v to format the error created
-// using WithMessage, the formatting recurses into the wrapped error, prefixing
-// with the message. With Errorf this is not possible.
+//
+// It does not support controlling the delimiter. Use Errorf if you need that.
+//
+// When formatting the returned error using %+v, formatting
+// is delegated to the wrapped error, prefixing it
+// with the message. The stack trace is added only
+// if the wrapped error does not already have it.
+//
 // If err is nil, WithMessage returns nil.
 func WithMessage(err error, message string) E {
 	if err == nil {
@@ -318,6 +392,11 @@ func WithMessage(err error, message string) E {
 	if e, ok := err.(E); ok {
 		return &withMessage{
 			e,
+			message,
+		}
+	} else if _, ok := err.(pkgStackTracer); ok {
+		return &withMessage{
+			err,
 			message,
 		}
 	}
@@ -332,17 +411,26 @@ func WithMessage(err error, message string) E {
 // WithMessagef annotates err with a prefix message
 // formatted according to a format specifier.
 // If err does not have a stack trace, stack strace is recorded as well.
+//
 // It does not support %w format verb or controlling the delimiter.
-// Use Errorf if you need that,
-// but there is a difference: when using %+v to format the error created
-// using WithMessagef, the formatting recurses into the wrapped error, prefixing
-// with the message. With Errorf this is not possible.
+// Use Errorf if you need that.
+//
+// When formatting the returned error using %+v, formatting
+// is delegated to the wrapped error, prefixing it
+// with the message. The stack trace is added only
+// if the wrapped error does not already have it.
+//
 // If err is nil, WithMessagef returns nil.
 func WithMessagef(err error, format string, args ...interface{}) E {
 	if err == nil {
 		return nil
 	}
 	if _, ok := err.(stackTracer); ok {
+		return &withMessage{
+			err,
+			fmt.Sprintf(format, args...),
+		}
+	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withMessage{
 			err,
 			fmt.Sprintf(format, args...),
@@ -405,8 +493,15 @@ func (w *withMessage) Format(s fmt.State, verb rune) {
 }
 
 func (w *withMessage) StackTrace() []uintptr {
-	// We know error has stackTracer interface because we construct it only then.
-	return w.error.(stackTracer).StackTrace()
+	switch e := w.error.(type) {
+	case stackTracer:
+		return e.StackTrace()
+	case pkgStackTracer:
+		st := e.StackTrace()
+		return *(*[]uintptr)(unsafe.Pointer(&st))
+	default:
+		panic(New("not possible"))
+	}
 }
 
 type withMessageAndStack struct {

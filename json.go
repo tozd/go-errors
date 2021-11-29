@@ -3,6 +3,7 @@ package errors
 import (
 	"bytes"
 	"encoding/json"
+	"unsafe"
 )
 
 // marshalJSONError marshals foreign errors.
@@ -11,6 +12,9 @@ func marshalJSONError(err error) ([]byte, E) {
 	var s stack
 	if stackErr, ok := err.(stackTracer); ok {
 		s = stack(stackErr.StackTrace())
+	} else if stackErr, ok := err.(pkgStackTracer); ok {
+		st := stackErr.StackTrace()
+		s = stack(*(*[]uintptr)(unsafe.Pointer(&st)))
 	}
 	var jsonWrap []byte
 	u, ok := err.(interface {
@@ -85,6 +89,16 @@ func (w withStack) MarshalJSON() ([]byte, error) {
 	}{
 		Error: w.Error(),
 		Stack: w.stack,
+	})
+}
+
+func (w withPkgStack) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Error string `json:"error,omitempty"`
+		Stack stack  `json:"stack,omitempty"`
+	}{
+		Error: w.Error(),
+		Stack: w.StackTrace(),
 	})
 }
 
