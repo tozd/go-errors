@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"path"
@@ -69,13 +70,20 @@ func (f frame) Format(s fmt.State, verb rune) {
 	}
 }
 
-// MarshalText formats a stack trace frame as a text string. The output is the
-// same as that of fmt.Sprintf("%+v", f), but without newlines or tabs.
-func (f frame) MarshalText() ([]byte, error) {
+func (f frame) MarshalJSON() ([]byte, error) {
 	if f.Function == "" {
-		return []byte("unknown"), nil
+		return []byte("{}"), nil
 	}
-	return []byte(fmt.Sprintf("%s %s:%d", f.name(), f.file(), f.line())), nil
+
+	return json.Marshal(&struct {
+		Name string `json:"name,omitempty"`
+		File string `json:"file,omitempty"`
+		Line int    `json:"line,omitempty"`
+	}{
+		Name: f.name(),
+		File: f.file(),
+		Line: f.line(),
+	})
 }
 
 // stack represents a stack of program counters.
@@ -109,6 +117,29 @@ func (s stack) Format(st fmt.State, verb rune) {
 			break
 		}
 	}
+}
+
+func (s stack) MarshalJSON() ([]byte, error) {
+	output := []byte{'['}
+	frames := runtime.CallersFrames(s)
+	first := true
+	for {
+		f, more := frames.Next()
+		b, err := frame(f).MarshalJSON()
+		if err != nil {
+			return nil, WithStack(err)
+		}
+		if !first {
+			output = append(output, ',')
+		}
+		first = false
+		output = append(output, b...)
+		if !more {
+			break
+		}
+	}
+	output = append(output, ']')
+	return output, nil
 }
 
 func (s stack) StackTrace() []uintptr {
