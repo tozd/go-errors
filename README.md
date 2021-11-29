@@ -21,6 +21,8 @@ Features:
   * [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap): creating a new error but recording its cause
 * Provides [`errors.Base`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Base) function to create errors without a stack trace to be used as
   base errors for [`errors.Is`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Is) and [`errors.As`](https://pkg.go.dev/gitlab.com/tozd/go/errors#As).
+* Differentiates between wrapping and recording a cause: only [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap) records a cause,
+  while other functions are error transformers, wrapping the original.
 * Novice friendly formatting of a stack trace when error is formatted using `%+v`:
   tells what is the order of the stack trace and what is the relation between
   wrapped errors.

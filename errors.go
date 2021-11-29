@@ -16,6 +16,10 @@ type pkgStackTracer interface {
 	StackTrace() pkgerrors.StackTrace
 }
 
+type causer interface {
+	Cause() error
+}
+
 // E interface can be used in as a return type instead of the standard error
 // interface to annotate which functions return an error with a stack trace.
 // This is useful so that you know when you should use WithStack (for functions
@@ -341,6 +345,10 @@ func (w *wrapped) Error() string {
 }
 
 func (w *wrapped) Unwrap() error {
+	return w.error
+}
+
+func (w *wrapped) Cause() error {
 	return w.error
 }
 

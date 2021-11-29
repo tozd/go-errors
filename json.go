@@ -16,35 +16,35 @@ func marshalJSONError(err error) ([]byte, E) {
 		st := stackErr.StackTrace()
 		s = stack(*(*[]uintptr)(unsafe.Pointer(&st)))
 	}
-	var jsonWrap []byte
+	var jsonCause []byte
 	u, ok := err.(interface {
-		Unwrap() error
+		Cause() error
 	})
 	if ok {
-		unwrap := u.Unwrap()
-		jsonWrap, e = json.Marshal(unwrap)
+		cause := u.Cause()
+		jsonCause, e = json.Marshal(cause)
 		if e != nil {
 			return nil, WithStack(e)
 		}
-		if len(jsonWrap) == 0 || bytes.Equal(jsonWrap, []byte("{}")) {
+		if len(jsonCause) == 0 || bytes.Equal(jsonCause, []byte("{}")) {
 			var eStack E
-			jsonWrap, eStack = marshalJSONError(unwrap)
+			jsonCause, eStack = marshalJSONError(cause)
 			if eStack != nil {
 				return nil, eStack
 			}
 		}
-		if bytes.Equal(jsonWrap, []byte("{}")) {
-			jsonWrap = []byte{}
+		if bytes.Equal(jsonCause, []byte("{}")) {
+			jsonCause = []byte{}
 		}
 	}
 	jsonErr, e := json.Marshal(&struct {
 		Error string          `json:"error,omitempty"`
 		Stack stack           `json:"stack,omitempty"`
-		Wrap  json.RawMessage `json:"wrap,omitempty"`
+		Cause json.RawMessage `json:"cause,omitempty"`
 	}{
 		Error: err.Error(),
 		Stack: s,
-		Wrap:  jsonWrap,
+		Cause: jsonCause,
 	})
 	if e != nil {
 		return nil, WithStack(e)
@@ -119,11 +119,11 @@ func (w wrapped) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
 		Error string          `json:"error,omitempty"`
 		Stack stack           `json:"stack,omitempty"`
-		Wrap  json.RawMessage `json:"wrap,omitempty"`
+		Cause json.RawMessage `json:"cause,omitempty"`
 	}{
 		Error: w.msg,
 		Stack: w.stack,
-		Wrap:  jsonWrap,
+		Cause: jsonWrap,
 	})
 }
 

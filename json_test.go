@@ -80,25 +80,25 @@ func TestJSON(t *testing.T) {
 		`{"error":"error: foobar","stack":[]}`,
 	}, {
 		errors.Wrap(errors.Base("foobar"), "error"),
-		`{"error":"error","stack":[],"wrap":{"error":"foobar"}}`,
+		`{"error":"error","stack":[],"cause":{"error":"foobar"}}`,
 	}, {
 		errors.Wrap(errors.New("foobar"), "error"),
-		`{"error":"error","stack":[],"wrap":{"error":"foobar","stack":[]}}`,
+		`{"error":"error","stack":[],"cause":{"error":"foobar","stack":[]}}`,
 	}, {
 		errors.Wrap(errors.BaseWrap(errors.Base("foo"), "bar"), "error"),
-		`{"error":"error","stack":[],"wrap":{"error":"bar","wrap":{"error":"foo"}}}`,
+		`{"error":"error","stack":[],"cause":{"error":"bar"}}`,
 	}, {
 		errors.Wrap(errors.BaseWrap(errors.New("foo"), "bar"), "error"),
-		`{"error":"error","stack":[],"wrap":{"error":"bar","wrap":{"error":"foo","stack":[]}}}`,
+		`{"error":"error","stack":[],"cause":{"error":"bar"}}`,
 	}, {
 		errors.Wrap(pkgerrors.New("foobar"), "error"),
-		`{"error":"error","stack":[],"wrap":{"error":"foobar","stack":[]}}`,
+		`{"error":"error","stack":[],"cause":{"error":"foobar","stack":[]}}`,
 	}, {
 		errors.Wrap(pkgerrors.Wrap(pkgerrors.New("foo"), "bar"), "error"),
-		`{"error":"error","stack":[],"wrap":{"error":"bar: foo","stack":[],"wrap":{"error":"bar: foo","wrap":{"error":"foo","stack":[]}}}}`,
+		`{"error":"error","stack":[],"cause":{"error":"bar: foo","stack":[],"cause":{"error":"bar: foo","cause":{"error":"foo","stack":[]}}}}`,
 	}, {
 		errors.Wrap(pkgerrors.WithMessage(errors.Base("foo"), "bar"), "error"),
-		`{"error":"error","stack":[],"wrap":{"error":"bar: foo","wrap":{"error":"foo"}}}`,
+		`{"error":"error","stack":[],"cause":{"error":"bar: foo","cause":{"error":"foo"}}}`,
 	}}
 
 	for k, tt := range tests {
