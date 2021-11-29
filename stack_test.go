@@ -184,5 +184,5 @@ func caller() frame {
 }
 
 //go:noinline
-// noinline prevents the caller being inlined
+// noinline prevents the caller being inlined.
 func noinline() {}

@@ -92,8 +92,8 @@ func Basef(format string, args ...interface{}) error {
 // control the error message.
 func BaseWrap(err error, message string) error {
 	return &base{
-		message,
 		err,
+		message,
 	}
 }
 
@@ -106,14 +106,14 @@ func BaseWrap(err error, message string) error {
 // control the error message.
 func BaseWrapf(err error, format string, args ...interface{}) error {
 	return &base{
-		fmt.Sprintf(format, args...),
 		err,
+		fmt.Sprintf(format, args...),
 	}
 }
 
 type base struct {
-	msg string
 	err error
+	msg string
 }
 
 func (b *base) Unwrap() error {

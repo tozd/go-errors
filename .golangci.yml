@@ -1,0 +1,101 @@
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    exclude-functions:
+      - io.WriteString
+    enable-all: true
+  godot:
+    scope: all
+  gofumpt:
+    go: "1.16"
+  goimports:
+    local-prefixes: gitlab.com/tozd/go/errors
+  gosimple:
+    go: "1.16"
+    checks:
+      - all
+  govet:
+    check-shadowing: true
+  nolintlint:
+    allow-unused: false
+    allow-leading-space: false
+    require-specific: true
+  stylecheck:
+    go: "1.16"
+    checks:
+      - all
+  staticcheck:
+    go: "1.16"
+    checks:
+      - all
+  unused:
+    go: "1.16"
+
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - bidichk
+    - deadcode
+    - dupl
+    - errcheck
+    - exhaustive
+    - exhaustivestruct
+    - exportloopref
+    - goconst
+    - gocritic
+    - godot
+    - gofmt
+    - gofumpt
+    - goimports
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - ireturn
+    - lll
+    - misspell
+    - nakedret
+    - nilerr
+    - nilnil
+    - nolintlint
+    - predeclared
+    - revive
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - tenv
+    - testpackage
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - wastedassign
+    - whitespace
+    # - bodyclose
+    # - durationcheck
+    # - errname
+    # - errorlint
+    # - importas
+    # - noctx
+    # - wrapcheck
+
+issues:
+  exclude-rules:
+    - path: stack_test\.go
+      linters:
+        - testpackage
+    - path: json_test\.go
+      linters:
+        - lll
+    - path: errors_test\.go
+      linters:
+        - revive
+        - staticcheck
+        - gocritic
+        - lll
+        - godot

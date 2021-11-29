@@ -1,0 +1,59 @@
+test:
+  stage: test
+
+  image: golang:$IMAGE_TAG
+
+  variables:
+    GO111MODULE: 'on'
+
+  before_script:
+    - apk add make gcc musl-dev
+    - (cd /go; go get gotest.tools/gotestsum@v1.7.0)
+    - (cd /go; go get github.com/boumenot/gocover-cobertura@v1.2.0)
+
+  script:
+    - make test-ci
+
+  artifacts:
+    when: always
+    reports:
+      junit: tests.xml
+      cobertura: coverage.xml
+    paths:
+      - coverage.html
+    expire_in: never
+
+  parallel:
+    matrix:
+      - IMAGE_TAG: ['1.14-alpine3.13', '1.15-alpine3.14', '1.16-alpine3.14', '1.17-alpine3.14']
+
+lint:
+  stage: test
+
+  image: golang:1.17-alpine3.14
+
+  before_script:
+    - apk add make gcc musl-dev
+    - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.43.0
+
+  script:
+    - make lint-ci
+
+  artifacts:
+    when: always
+    reports:
+      codequality: codeclimate.json
+    expire_in: never
+
+fmt:
+  stage: test
+
+  image: golang:1.17-alpine3.14
+
+  before_script:
+    - apk add make git gcc musl-dev
+    - go install mvdan.cc/gofumpt@v0.2.0
+    - go install golang.org/x/tools/cmd/goimports@v0.1.7
+
+  script:
+    - make fmt-ci

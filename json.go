@@ -17,9 +17,7 @@ func marshalJSONError(err error) ([]byte, E) {
 		s = stack(*(*[]uintptr)(unsafe.Pointer(&st)))
 	}
 	var jsonCause []byte
-	u, ok := err.(interface {
-		Cause() error
-	})
+	u, ok := err.(causer)
 	if ok {
 		cause := u.Cause()
 		jsonCause, e = json.Marshal(cause)
