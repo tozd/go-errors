@@ -207,3 +207,53 @@ func ExampleErrorf_wrap() {
 	// runtime.goexit
 	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
 }
+
+func ExampleBase() {
+	err := errors.Base("whoops")
+	fmt.Println(err)
+	// Output: whoops
+}
+
+func ExampleBasef() {
+	err := errors.Basef("whoops #%d", 2)
+	fmt.Println(err)
+	// Output: whoops #2
+}
+
+func ExampleBaseWrap() {
+	base := errors.Base("error")
+	valueError := errors.BaseWrap(base, "value")
+	fmt.Println(valueError)
+	// Output: value
+}
+
+func ExampleBaseWrapf() {
+	base := errors.Base("error")
+	valueError := errors.BaseWrapf(base, "value %d", 2)
+	fmt.Println(valueError)
+	// Output: value 2
+}
+
+func ExampleCause() {
+	base := errors.Base("error")
+	wrapped := errors.Wrap(base, "wrapped")
+	fmt.Println(errors.Cause(wrapped))
+	// Output: error
+}
+
+func ExampleUnwrap() {
+	base := errors.Base("error")
+	withPrefix := errors.WithMessage(base, "prefix")
+	fmt.Println(withPrefix)
+	fmt.Println(errors.Unwrap(withPrefix))
+	// Output:
+	// prefix: error
+	// error
+}
+
+func ExampleIs() {
+	base := errors.Base("error")
+	valueError := errors.BaseWrap(base, "value")
+	fmt.Println(errors.Is(valueError, base))
+	// Output: true
+}
