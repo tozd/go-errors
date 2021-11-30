@@ -50,3 +50,16 @@ addressed (primarily because many require some backward incompatible change). At
 Go 1.13 added official support for wrapping errors and it does not (and cannot, in backwards compatible way) fully embrace it.
 This package takes what is best from `github.com/pkg/errors`, but breaks things a bit to address many of the open issues
 community has identified since then and to modernize it to today's Go.
+
+## What are main differences from `github.com/pkg/errors`?
+
+* The `stackTracer` interface's `StackTrace()` method returns `[]uintptr` and not custom type `StackTrace`.
+* All error-wrapping functions return errors which implement the standard `unwrapper` interface,
+  but only `errors.Wrap` records a cause error and returns an error which implements the `causer` interface.
+* All error-wrapping functions wrap the error into only one new error.
+* `Errorf` supports `%w`.
+* Errors formatted using `%+v` include lines `Stack trace (most recent call first):` and
+  `The above error was caused by the following error:` to make it clearer how is the stack
+  trace formatted and how are multiple errors related to each other.
+* Only `errors.Wrap` always records the stack trace while other functions do
+  not record if it is already present.
