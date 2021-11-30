@@ -128,7 +128,7 @@
 //             fmt.Println("Failed to unlock the doors.")
 //     }
 //
-// Formatted printing of errors
+// Formatting errors
 //
 // All errors with a stack trace returned from this package implement fmt.Formatter
 // interface and can be formatted by the fmt package. The following verbs are supported:
