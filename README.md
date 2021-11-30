@@ -63,3 +63,5 @@ community has identified since then and to modernize it to today's Go.
   trace formatted and how are multiple errors related to each other.
 * Only `errors.Wrap` always records the stack trace while other functions do
   not record if it is already present.
+* `errors.Cause` repeatedly unwraps the error until it finds one which implements the `causer` interface,
+  and then return its cause.

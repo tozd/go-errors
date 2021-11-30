@@ -287,3 +287,13 @@ func TestBases(t *testing.T) {
 	assert.ErrorIs(t, err, parent)
 	assert.ErrorIs(t, err, grandparent)
 }
+
+func TestCause(t *testing.T) {
+	assert.Nil(t, errors.Cause(errors.Base("foo")))
+	assert.Nil(t, errors.Cause(errors.New("foo")))
+	assert.Nil(t, errors.Cause(errors.WithMessage(errors.Base("foo"), "bar")))
+
+	err := errors.Base("foo")
+	assert.Equal(t, err, errors.Cause(errors.Wrap(err, "bar")))
+	assert.Equal(t, err, errors.Cause(errors.WithMessage(errors.Wrap(err, "bar"), "zar")))
+}

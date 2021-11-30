@@ -72,7 +72,8 @@
 //             Cause() error
 //     }
 //
-// which enables access to the underlying low-level error.
+// which enables access to the underlying low-level error. You can also
+// use errors.Cause to obtain the cause.
 //
 // Although the causer interface is not exported by this package, it is
 // considered a part of its stable public interface.
@@ -713,4 +714,19 @@ func (w *withMessageAndStack) Format(s fmt.State, verb rune) {
 	case 'q':
 		fmt.Fprintf(s, "%q", w.Error())
 	}
+}
+
+// Cause returns the result of calling the Cause method on err, if err's
+// type contains an Cause method returning error.
+// Otherwise, the err is unwrapped and the process is repeated.
+// If unwrapping is not possible, Cause returns nil.
+func Cause(err error) error {
+	for err != nil {
+		c, ok := err.(causer)
+		if ok {
+			return c.Cause()
+		}
+		err = Unwrap(err)
+	}
+	return err
 }
