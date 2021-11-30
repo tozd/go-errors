@@ -99,3 +99,6 @@ issues:
         - gocritic
         - lll
         - godot
+    - path: example_test\.go
+      linters:
+        - godot
