@@ -20,6 +20,10 @@ type causer interface {
 	Cause() error
 }
 
+type unwrapper interface {
+	Unwrap() error
+}
+
 // E interface can be used in as a return type instead of the standard error
 // interface to annotate which functions return an error with a stack trace.
 // This is useful so that you know when you should use WithStack (for functions
@@ -52,9 +56,7 @@ func New(message string) E {
 // giving you full control of the message and formatted error.
 func Errorf(format string, args ...interface{}) E {
 	err := fmt.Errorf(format, args...)
-	u, ok := err.(interface {
-		Unwrap() error
-	})
+	u, ok := err.(unwrapper)
 	if ok {
 		unwrap := u.Unwrap()
 		if _, ok := unwrap.(stackTracer); ok {
