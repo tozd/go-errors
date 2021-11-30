@@ -23,6 +23,8 @@ test:
       - coverage.html
     expire_in: never
 
+  coverage: '/coverage: \d+\.\d+% of statements/'
+
   parallel:
     matrix:
       - IMAGE_TAG: ['1.14-alpine3.13', '1.15-alpine3.14', '1.16-alpine3.14', '1.17-alpine3.14']

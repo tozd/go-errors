@@ -16,10 +16,10 @@ fmt-ci: fmt
 	git diff --exit-code --color=always
 
 test:
-	gotestsum --format dots --packages ./... -- -race -timeout 10m
+	gotestsum --format pkgname --packages ./... -- -race -timeout 10m -cover -covermode atomic
 
 test-ci:
-	gotestsum --format dots --packages ./... --junitfile tests.xml -- -race -timeout 10m -coverprofile=coverage.txt -covermode atomic
+	gotestsum --format pkgname --packages ./... --junitfile tests.xml -- -race -timeout 10m -coverprofile=coverage.txt -covermode atomic
 	gocover-cobertura < coverage.txt > coverage.xml
 	go tool cover -html=coverage.txt -o coverage.html
 
