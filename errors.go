@@ -724,7 +724,10 @@ func Cause(err error) error {
 	for err != nil {
 		c, ok := err.(causer)
 		if ok {
-			return c.Cause()
+			cause := c.Cause()
+			if cause != nil {
+				return cause
+			}
 		}
 		err = Unwrap(err)
 	}

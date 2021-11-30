@@ -52,6 +52,24 @@ func (e *errorWithFormat) Format(s fmt.State, verb rune) {
 	}
 }
 
+type errorWithCauseAndWrap struct {
+	msg   string
+	cause error
+	wrap  error
+}
+
+func (e *errorWithCauseAndWrap) Error() string {
+	return e.msg
+}
+
+func (e *errorWithCauseAndWrap) Cause() error {
+	return e.cause
+}
+
+func (e *errorWithCauseAndWrap) Unwrap() error {
+	return e.wrap
+}
+
 func TestErrors(t *testing.T) {
 	// We make errors inside a function so that the stack trace is
 	// different from errors made through errors.* call.
@@ -296,4 +314,13 @@ func TestCause(t *testing.T) {
 	err := errors.Base("foo")
 	assert.Equal(t, err, errors.Cause(errors.Wrap(err, "bar")))
 	assert.Equal(t, err, errors.Cause(errors.WithMessage(errors.Wrap(err, "bar"), "zar")))
+
+	wrap := &errorWithCauseAndWrap{"test", nil, nil}
+	assert.Nil(t, errors.Cause(wrap))
+
+	wrap.wrap = err
+	assert.Nil(t, errors.Cause(wrap))
+
+	wrap.wrap = errors.Wrap(err, "bar")
+	assert.Equal(t, err, errors.Cause(wrap))
 }
