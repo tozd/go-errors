@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `errors.Cause` now supports `Cause` which returns `nil`.
-- Use `errors.Cause` when JSON marshaling foreign errors.
+- `errors.Cause` handles better `Cause` which returns `nil`.
+- JSON marshaling of foreign errors uses `errors.Cause`.
 
 ## [0.1.0] - 2021-11-30
 
