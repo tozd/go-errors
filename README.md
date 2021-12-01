@@ -45,7 +45,7 @@ See full package documentation with examples on [pkg.go.dev](https://pkg.go.dev/
 ## Why a new Go errors package?
 
 I find [`github.com/pkg/errors`](https://github.com/pkg/errors) package amazing.
-But it is in the [maintenance mode](https://github.com/pkg/errors#roadmap) and not developed anymore, with [many issues](https://github.com/pkg/errors/issues) not
+But the repository is archived and not developed anymore, with [many issues](https://github.com/pkg/errors/issues) not
 addressed (primarily because many require some backward incompatible change). At the same time it has been made before
 Go 1.13 added official support for wrapping errors and it does not (and cannot, in backwards compatible way) fully embrace it.
 This package takes what is best from `github.com/pkg/errors`, but breaks things a bit to address many of the open issues
