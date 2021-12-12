@@ -1,5 +1,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  # We want full history so that "git describe" always works correctly.
+  GIT_DEPTH: 0
 
 test:
   stage: test
