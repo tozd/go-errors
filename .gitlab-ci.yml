@@ -88,3 +88,17 @@ publish:
   rules:
     # Only on protected tags on main repository. Protected tags start with "v".
     - if: '$CI_COMMIT_TAG && $CI_COMMIT_REF_NAME =~ /^v/ && $CI_PROJECT_PATH == "tozd/go/errors"'
+
+sync_releases:
+  stage: deploy
+
+  image:
+    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-2-0:latest-debug
+    entrypoint: [""]
+
+  script:
+    - /gitlab-release
+
+  rules:
+    # Protected tags start with "v".
+    - if: '$GITLAB_API_TOKEN && ($CI_COMMIT_BRANCH == "main" || ($CI_COMMIT_TAG && $CI_COMMIT_REF_NAME =~ /^v/))'
