@@ -95,7 +95,7 @@ sync_releases:
   stage: deploy
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/release/branch/main:3859cf4a434c5c4e37f951e9e94466e2dc03c93a-debug
+    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-2-1:latest-debug
     entrypoint: [""]
 
   script:
