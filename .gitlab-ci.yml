@@ -1,13 +1,18 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 test:
   stage: test
 
   image: golang:$IMAGE_TAG
 
   variables:
+    # We set GO111MODULE so that we can use "go get" instead of "go install"
+    # for all Go versions in the parallel matrix.
     GO111MODULE: 'on'
 
   before_script:
-    - apk add make gcc musl-dev
+    - apk --update add make gcc musl-dev
     - (cd /go; go get gotest.tools/gotestsum@v1.7.0)
     - (cd /go; go get github.com/boumenot/gocover-cobertura@v1.2.0)
 
@@ -23,6 +28,7 @@ test:
       - coverage.html
     expire_in: never
 
+  # This has to be set in project's settings (CI/CD -> General pipelines section) as well.
   coverage: '/coverage: \d+\.\d+% of statements/'
 
   parallel:
@@ -35,7 +41,7 @@ lint:
   image: golang:1.17-alpine3.14
 
   before_script:
-    - apk add make gcc musl-dev
+    - apk --update add make gcc musl-dev
     - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.43.0
 
   script:
@@ -53,7 +59,7 @@ fmt:
   image: golang:1.17-alpine3.14
 
   before_script:
-    - apk add make git gcc musl-dev
+    - apk --update add make git gcc musl-dev
     - go install mvdan.cc/gofumpt@v0.2.0
     - go install golang.org/x/tools/cmd/goimports@v0.1.7
 
