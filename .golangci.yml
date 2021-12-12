@@ -4,6 +4,9 @@ linters-settings:
     exclude-functions:
       - io.WriteString
     enable-all: true
+  gocritic:
+    disabled-checks:
+      - ifElseChain
   godot:
     scope: all
   gofumpt:
