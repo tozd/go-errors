@@ -118,7 +118,7 @@ sync_releases:
     - if: '$GITLAB_API_TOKEN && ($CI_COMMIT_BRANCH == "main" || ($CI_COMMIT_TAG && $CI_COMMIT_REF_NAME =~ /^v/))'
 
 sync_config:
-  stage: sync
+  stage: deploy
 
   image:
     name: registry.gitlab.com/tozd/gitlab/config/tag/v0-2-0:latest-debug
