@@ -68,16 +68,28 @@ fmt:
   script:
     - make fmt-ci
 
-docs:
+lint_docs:
   stage: test
 
   image: node:17-alpine3.14
 
   before_script:
-    - npm install -g 'markdownlint-cli@~0.30.0'
+    - apk --update add make
 
   script:
-    - "npx --no markdownlint -- --ignore-path .gitignore '**/*.md'"
+    - make lint-docs
+
+audit:
+  stage: test
+
+  image: golang:1.17-alpine3.14
+
+  before_script:
+    - apk --update add make git gcc musl-dev
+    - go install github.com/sonatype-nexus-community/nancy@v1.0.29
+
+  script:
+    - make audit
 
 publish:
   stage: deploy
@@ -104,3 +116,19 @@ sync_releases:
   rules:
     # Protected tags start with "v".
     - if: '$GITLAB_API_TOKEN && ($CI_COMMIT_BRANCH == "main" || ($CI_COMMIT_TAG && $CI_COMMIT_REF_NAME =~ /^v/))'
+
+sync_config:
+  stage: sync
+
+  image:
+    name: registry.gitlab.com/tozd/gitlab/config/tag/v0-2-0:latest-debug
+    entrypoint: [""]
+
+  script:
+    - /gitlab-config set
+
+  rules:
+    - if: '$GITLAB_API_TOKEN && $SOPS_AGE_KEY_FILE && $CI_COMMIT_BRANCH == "main"'
+      changes:
+        - .gitlab-conf.yml
+        - .gitlab-avatar.png
