@@ -73,7 +73,6 @@ many of the open issues community has identified since then and to modernize it 
 * Support for `Errorf` wrapping an error: [#244](https://github.com/pkg/errors/issues/244)
 * Having each function wrap only once: [#223](https://github.com/pkg/errors/issues/223)
 
-
 ## What are main differences from `github.com/pkg/errors`?
 
 * The `stackTracer` interface's `StackTrace()` method returns `[]uintptr` and not custom type `StackTrace`.
@@ -88,3 +87,9 @@ many of the open issues community has identified since then and to modernize it 
   not record if it is already present.
 * `errors.Cause` repeatedly unwraps the error until it finds one which implements the `causer` interface,
   and then return its cause.
+
+## It looks like `Wrap` should be named `Cause`. Why it is not?
+
+For legacy reasons because this package builds on shoulders of `github.com/pkg/errors`.
+Every modification to errors made through this package is done through wrapping
+so that original error is always available. `Wrap` wraps the error to records the cause.
