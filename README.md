@@ -58,7 +58,21 @@ with [many issues](https://github.com/pkg/errors/issues) not addressed (primaril
 backward incompatible change). At the same time it has been made before
 Go 1.13 added official support for wrapping errors and it does not (and cannot, in backwards compatible way)
 fully embrace it. This package takes what is best from `github.com/pkg/errors`, but breaks things a bit to address
-many of the open issues community has identified since then and to modernize it to today's Go.
+many of the open issues community has identified since then and to modernize it to today's Go:
+
+* Message formatting `WithMessage` vs. `Wrap`: [#114](https://github.com/pkg/errors/pull/114)
+* Do not re-add stack trace if one is already there: [#122](https://github.com/pkg/errors/pull/122)
+* Be explicit when you want to record a stack trace again vs. do not if it already exists: [#75](https://github.com/pkg/errors/issues/75) [#158](https://github.com/pkg/errors/issues/158) [#242](https://github.com/pkg/errors/issues/242)
+* `StackTrace()` should return `[]uintptr`: [#79](https://github.com/pkg/errors/issues/79)
+* Do not assume `Cause` cannot return `nil`: [#89](https://github.com/pkg/errors/issues/89)
+* Obtaining only message from `Wrap`: [#93](https://github.com/pkg/errors/issues/93)
+* `WithMessage` always prefixes the message: [#102](https://github.com/pkg/errors/issues/102)
+* Differentiate between "wrapping" and "causing": [#112](https://github.com/pkg/errors/issues/112)
+* Support for base errors: [#130](https://github.com/pkg/errors/issues/130) [#160](https://github.com/pkg/errors/issues/160)
+* Support for a different delimiter by supporting `Errorf`: [#207](https://github.com/pkg/errors/issues/207) [#226](https://github.com/pkg/errors/issues/226)
+* Support for `Errorf` wrapping an error: [#244](https://github.com/pkg/errors/issues/244)
+* Having each function wrap only once: [#223](https://github.com/pkg/errors/issues/223)
+
 
 ## What are main differences from `github.com/pkg/errors`?
 
