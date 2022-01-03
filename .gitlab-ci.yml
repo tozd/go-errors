@@ -103,6 +103,9 @@ publish:
     # Only on protected tags on main repository. Protected tags start with "v".
     - if: '$CI_COMMIT_TAG && $CI_COMMIT_REF_NAME =~ /^v/ && $CI_PROJECT_PATH == "tozd/go/errors"'
 
+  # We do not need build artifacts in this job.
+  dependencies: []
+
 sync_releases:
   stage: deploy
 
@@ -117,11 +120,14 @@ sync_releases:
     # Protected tags start with "v".
     - if: '$GITLAB_API_TOKEN && ($CI_COMMIT_BRANCH == "main" || ($CI_COMMIT_TAG && $CI_COMMIT_REF_NAME =~ /^v/))'
 
+  # We do not need build artifacts in this job.
+  dependencies: []
+
 sync_config:
   stage: deploy
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/config/tag/v0-2-0:latest-debug
+    name: registry.gitlab.com/tozd/gitlab/config/tag/v0-3-0:latest-debug
     entrypoint: [""]
 
   script:
@@ -132,3 +138,6 @@ sync_config:
       changes:
         - .gitlab-conf.yml
         - .gitlab-avatar.png
+
+  # We do not need build artifacts in this job.
+  dependencies: []
