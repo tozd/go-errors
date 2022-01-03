@@ -62,7 +62,9 @@ many of the open issues community has identified since then and to modernize it 
 
 * Message formatting `WithMessage` vs. `Wrap`: [#114](https://github.com/pkg/errors/pull/114)
 * Do not re-add stack trace if one is already there: [#122](https://github.com/pkg/errors/pull/122)
-* Be explicit when you want to record a stack trace again vs. do not if it already exists: [#75](https://github.com/pkg/errors/issues/75) [#158](https://github.com/pkg/errors/issues/158) [#242](https://github.com/pkg/errors/issues/242)
+* Be explicit when you want to record a stack trace again vs. do not if it already exists:
+  [#75](https://github.com/pkg/errors/issues/75) [#158](https://github.com/pkg/errors/issues/158)
+  [#242](https://github.com/pkg/errors/issues/242)
 * `StackTrace()` should return `[]uintptr`: [#79](https://github.com/pkg/errors/issues/79)
 * Do not assume `Cause` cannot return `nil`: [#89](https://github.com/pkg/errors/issues/89)
 * Obtaining only message from `Wrap`: [#93](https://github.com/pkg/errors/issues/93)
