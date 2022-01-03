@@ -95,3 +95,11 @@ many of the open issues community has identified since then and to modernize it 
 For legacy reasons because this package builds on shoulders of `github.com/pkg/errors`.
 Every modification to errors made through this package is done through wrapping
 so that original error is always available. `Wrap` wraps the error to records the cause.
+
+## Related projects
+
+* [cockroachdb/errors](https://github.com/cockroachdb/errors) – Go errors
+  with every possible feature you might ever need in your large project.
+  This package aims to stay lean and be more or less just a drop-in replacement
+  for core Go errors, but with stack traces (and few utility functions for common
+  cases).
