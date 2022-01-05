@@ -44,7 +44,7 @@ project:
   # The default branch name. Type: string
   default_branch: main
   # Short project description. Type: string
-  description: A Go package providing errors with a stack trace https://pkg.go.dev/gitlab.com/tozd/go/errors
+  description: A Go package providing errors with a stack trace. https://pkg.go.dev/gitlab.com/tozd/go/errors
   # Disable email notifications. Type: boolean
   emails_disabled: false
   # The classification label for the project. Type: string
