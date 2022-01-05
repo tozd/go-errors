@@ -138,7 +138,6 @@ sync_config:
     - if: '$GITLAB_API_TOKEN && $SOPS_AGE_KEY_FILE && $CI_COMMIT_BRANCH == "main"'
       changes:
         - .gitlab-conf.yml
-        - .gitlab-avatar.png
 
   # We do not need build artifacts in this job.
   dependencies: []
