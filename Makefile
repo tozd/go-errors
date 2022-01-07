@@ -19,8 +19,8 @@ lint-ci:
 
 fmt:
 	go mod tidy
-	gofumpt -w *.go
-	goimports -w -local gitlab.com/tozd/go/errors *.go
+	git ls-files --cached --modified --other --exclude-standard -z | grep -z -Z '.go$$' | xargs -0 gofumpt -w
+	git ls-files --cached --modified --other --exclude-standard -z | grep -z -Z '.go$$' | xargs -0 goimports -w -local gitlab.com/tozd/go/errors
 
 fmt-ci: fmt
 	git diff --exit-code --color=always
