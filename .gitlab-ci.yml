@@ -62,7 +62,7 @@ fmt:
   image: golang:1.17-alpine3.14
 
   before_script:
-    - apk --update add make git gcc musl-dev
+    - apk --update add make git gcc musl-dev grep
     - go install mvdan.cc/gofumpt@v0.2.0
     - go install golang.org/x/tools/cmd/goimports@v0.1.7
 
