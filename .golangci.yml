@@ -19,6 +19,8 @@ linters-settings:
       - all
   govet:
     check-shadowing: true
+  lll:
+    line-length: 170
   nolintlint:
     allow-unused: false
     allow-leading-space: false
@@ -43,7 +45,6 @@ linters:
     - dupl
     - errcheck
     - exhaustive
-    - exhaustivestruct
     - exportloopref
     - goconst
     - gocritic
