@@ -92,6 +92,20 @@ audit:
   script:
     - make audit
 
+commits:
+  stage: test
+
+  image: golang:1.17-alpine3.14
+
+  variables:
+    GIT_DEPTH: "0"
+
+  before_script:
+    - apk --update add git
+
+  script:
+    - '! git log --oneline "-G^(<<<<<<<|=======|>>>>>>>)" | grep "^"'
+
 publish:
   stage: deploy
 
