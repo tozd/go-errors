@@ -6,6 +6,21 @@ import (
 	"unsafe"
 )
 
+func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	b := buf.Bytes()
+	if len(b) > 0 {
+		return b[:len(b)-1], nil
+	}
+	return b, nil
+}
+
 // marshalJSONError marshals foreign errors.
 func marshalJSONError(err error) ([]byte, E) {
 	var e error
@@ -19,7 +34,7 @@ func marshalJSONError(err error) ([]byte, E) {
 	var jsonCause []byte
 	cause := Cause(err)
 	if cause != nil {
-		jsonCause, e = json.Marshal(cause)
+		jsonCause, e = marshalWithoutEscapeHTML(cause)
 		if e != nil {
 			return nil, WithStack(e)
 		}
@@ -34,7 +49,7 @@ func marshalJSONError(err error) ([]byte, E) {
 			jsonCause = []byte{}
 		}
 	}
-	jsonErr, e := json.Marshal(&struct {
+	jsonErr, e := marshalWithoutEscapeHTML(&struct {
 		Error string          `json:"error,omitempty"`
 		Stack stack           `json:"stack,omitempty"`
 		Cause json.RawMessage `json:"cause,omitempty"`
@@ -50,7 +65,7 @@ func marshalJSONError(err error) ([]byte, E) {
 }
 
 func (f fundamental) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
 	}{
@@ -60,7 +75,7 @@ func (f fundamental) MarshalJSON() ([]byte, error) {
 }
 
 func (w errorf) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
 	}{
@@ -70,7 +85,7 @@ func (w errorf) MarshalJSON() ([]byte, error) {
 }
 
 func (w errorfWithStack) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
 	}{
@@ -80,7 +95,7 @@ func (w errorfWithStack) MarshalJSON() ([]byte, error) {
 }
 
 func (w withStack) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
 	}{
@@ -90,7 +105,7 @@ func (w withStack) MarshalJSON() ([]byte, error) {
 }
 
 func (w withPkgStack) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
 	}{
@@ -100,7 +115,7 @@ func (w withPkgStack) MarshalJSON() ([]byte, error) {
 }
 
 func (w wrapped) MarshalJSON() ([]byte, error) {
-	jsonWrap, err := json.Marshal(w.error)
+	jsonWrap, err := marshalWithoutEscapeHTML(w.error)
 	if err != nil {
 		return nil, WithStack(err)
 	}
@@ -113,7 +128,7 @@ func (w wrapped) MarshalJSON() ([]byte, error) {
 	if bytes.Equal(jsonWrap, []byte("{}")) {
 		jsonWrap = []byte{}
 	}
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string          `json:"error,omitempty"`
 		Stack stack           `json:"stack,omitempty"`
 		Cause json.RawMessage `json:"cause,omitempty"`
@@ -125,7 +140,7 @@ func (w wrapped) MarshalJSON() ([]byte, error) {
 }
 
 func (w withMessage) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
 	}{
@@ -135,7 +150,7 @@ func (w withMessage) MarshalJSON() ([]byte, error) {
 }
 
 func (w withMessageAndStack) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
 	}{

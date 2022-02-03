@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"path"
@@ -75,7 +74,7 @@ func (f frame) MarshalJSON() ([]byte, error) {
 		return []byte("{}"), nil
 	}
 
-	return json.Marshal(&struct {
+	return marshalWithoutEscapeHTML(&struct {
 		Name string `json:"name,omitempty"`
 		File string `json:"file,omitempty"`
 		Line int    `json:"line,omitempty"`
