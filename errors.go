@@ -411,12 +411,14 @@ func WithStack(err error) E {
 	return &withStack{
 		err,
 		callers(),
+		nil,
 	}
 }
 
 type withStack struct {
 	error
 	stack
+	details map[string]interface{}
 }
 
 func (w *withStack) Unwrap() error {
@@ -444,6 +446,13 @@ func (w *withStack) Format(s fmt.State, verb rune) {
 	case 'q':
 		fmt.Fprintf(s, "%q", w.Error())
 	}
+}
+
+func (w *withStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
 }
 
 type withPkgStack struct {
