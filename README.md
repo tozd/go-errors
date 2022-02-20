@@ -34,6 +34,7 @@ Features:
   tells what is the order of the stack trace and what is the relation between
   wrapped errors.
 * Makes sure a stack trace is not recorded multiple times unnecessarily.
+* Provide optional details map on all errors returned by this package.
 * Errors implement `MarshalJSON` and can be marshaled into JSON.
 
 ## Installation

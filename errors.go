@@ -90,6 +90,19 @@
 //     "reading image failed: connection error"
 //     "reading image failed (connection error)"
 //
+// Adding details to an error
+//
+// Errors returned by this package implement the detailer interface
+//
+//     type detailer interface {
+//             Details() map[string]interface{}
+//     }
+//
+// which enables access to a map with optional additional information about
+// the error. Returned map can be modified in-place to store additional
+// information. You can also use errors.Details and errors.AllDetails to
+// access details.
+//
 // Working with the hierarchy of errors
 //
 // Errors which implement the following standard unwrapper interface
@@ -164,6 +177,10 @@ type unwrapper interface {
 	Unwrap() error
 }
 
+type detailer interface {
+	Details() map[string]interface{}
+}
+
 // E interface can be used in as a return type instead of the standard error
 // interface to annotate which functions return an error with a stack trace.
 // This is useful so that you know when you should use WithStack (for functions
@@ -203,11 +220,13 @@ func Errorf(format string, args ...interface{}) E {
 			return &errorf{
 				unwrap,
 				err.Error(),
+				nil,
 			}
 		} else if _, ok := unwrap.(pkgStackTracer); ok {
 			return &errorf{
 				unwrap,
 				err.Error(),
+				nil,
 			}
 		}
 
@@ -215,6 +234,7 @@ func Errorf(format string, args ...interface{}) E {
 			unwrap,
 			err.Error(),
 			callers(),
+			nil,
 		}
 	}
 
@@ -229,6 +249,7 @@ func Errorf(format string, args ...interface{}) E {
 type fundamental struct {
 	msg string
 	stack
+	details map[string]interface{}
 }
 
 func (f *fundamental) Error() string {
@@ -257,9 +278,17 @@ func (f *fundamental) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (f *fundamental) Details() map[string]interface{} {
+	if f.details == nil {
+		f.details = make(map[string]interface{})
+	}
+	return f.details
+}
+
 type errorf struct {
 	error
-	msg string
+	msg     string
+	details map[string]interface{}
 }
 
 func (w *errorf) Error() string {
@@ -304,10 +333,18 @@ func (w *errorf) StackTrace() []uintptr {
 	}
 }
 
+func (w *errorf) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
 type errorfWithStack struct {
 	error
 	msg string
 	stack
+	details map[string]interface{}
 }
 
 func (w *errorfWithStack) Error() string {
@@ -340,6 +377,13 @@ func (w *errorfWithStack) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (w *errorfWithStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
 // WithStack annotates err with a stack trace at the point WithStack was called,
 // if err does not already have a stack trace.
 // If err is nil, WithStack returns nil.
@@ -360,6 +404,7 @@ func WithStack(err error) E {
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withPkgStack{
 			err,
+			nil,
 		}
 	}
 
@@ -403,6 +448,7 @@ func (w *withStack) Format(s fmt.State, verb rune) {
 
 type withPkgStack struct {
 	error
+	details map[string]interface{}
 }
 
 func (w *withPkgStack) Unwrap() error {
@@ -430,6 +476,13 @@ func (w *withPkgStack) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (w *withPkgStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
 // Wrap returns an error annotating err with a stack trace
 // at the point Wrap is called, and the supplied message.
 // Wrapping is done even if err already has a stack trace.
@@ -449,6 +502,7 @@ func Wrap(err error, message string) E {
 		err,
 		message,
 		callers(),
+		nil,
 	}
 }
 
@@ -473,6 +527,7 @@ func Wrapf(err error, format string, args ...interface{}) E {
 		err,
 		fmt.Sprintf(format, args...),
 		callers(),
+		nil,
 	}
 }
 
@@ -480,6 +535,7 @@ type wrapped struct {
 	error
 	msg string
 	stack
+	details map[string]interface{}
 }
 
 func (w *wrapped) Error() string {
@@ -524,6 +580,13 @@ func (w *wrapped) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (w *wrapped) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
 // WithMessage annotates err with a prefix message.
 // If err does not have a stack trace, stack strace is recorded as well.
 //
@@ -543,11 +606,13 @@ func WithMessage(err error, message string) E {
 		return &withMessage{
 			e,
 			message,
+			nil,
 		}
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withMessage{
 			err,
 			message,
+			nil,
 		}
 	}
 
@@ -555,6 +620,7 @@ func WithMessage(err error, message string) E {
 		err,
 		message,
 		callers(),
+		nil,
 	}
 }
 
@@ -579,11 +645,13 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		return &withMessage{
 			err,
 			fmt.Sprintf(format, args...),
+			nil,
 		}
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withMessage{
 			err,
 			fmt.Sprintf(format, args...),
+			nil,
 		}
 	}
 
@@ -591,12 +659,14 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		err,
 		fmt.Sprintf(format, args...),
 		callers(),
+		nil,
 	}
 }
 
 type withMessage struct {
 	error
-	msg string
+	msg     string
+	details map[string]interface{}
 }
 
 func (w *withMessage) Error() string {
@@ -654,10 +724,18 @@ func (w *withMessage) StackTrace() []uintptr {
 	}
 }
 
+func (w *withMessage) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
 type withMessageAndStack struct {
 	error
 	msg string
 	stack
+	details map[string]interface{}
 }
 
 func (w *withMessageAndStack) Error() string {
@@ -716,6 +794,13 @@ func (w *withMessageAndStack) Format(s fmt.State, verb rune) {
 	}
 }
 
+func (w *withMessageAndStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
 // Cause returns the result of calling the Cause method on err, if err's
 // type contains an Cause method returning error.
 // Otherwise, the err is unwrapped and the process is repeated.
@@ -732,4 +817,33 @@ func Cause(err error) error {
 		err = Unwrap(err)
 	}
 	return err
+}
+
+// Details returns the result of calling the Details method on err,
+// or nil if it is not available.
+func Details(err error) map[string]interface{} {
+	if err == nil {
+		return nil
+	}
+	d, ok := err.(detailer)
+	if ok {
+		return d.Details()
+	}
+	return nil
+}
+
+// AllDetails returns a map build from calling The Details method on err
+// and populating the map with key/value pairs which are not yet
+// present. Afterwards, the err is unwrapped and the process is repeated.
+func AllDetails(err error) map[string]interface{} {
+	res := make(map[string]interface{})
+	for err != nil {
+		for key, value := range Details(err) {
+			if _, ok := res[key]; !ok {
+				res[key] = value
+			}
+		}
+		err = Unwrap(err)
+	}
+	return res
 }
