@@ -127,7 +127,7 @@ func TestFormatErrorf(t *testing.T) {
 	}
 }
 
-func TestFormatWithStack(t *testing.T) {
+func TestFormatWithStack(t *testing.T) { //nolint: dupl
 	tests := []struct {
 		error
 		format string
@@ -593,6 +593,121 @@ func TestFormatWrappedNew(t *testing.T) {
 			"\t.+/format_test.go:579\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrappedNew\n" +
 			"\t.+/format_test.go:588\n",
+	}}
+
+	for k, tt := range tests {
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+		})
+	}
+}
+
+func TestFormatWithDetails(t *testing.T) { //nolint: dupl
+	tests := []struct {
+		error
+		format string
+		want   string
+	}{{
+		errors.WithDetails(io.EOF),
+		"%s",
+		"^EOF$",
+	}, {
+		errors.WithDetails(io.EOF),
+		"%v",
+		"^EOF$",
+	}, {
+		errors.WithDetails(io.EOF),
+		"%+v",
+		"^EOF\n" +
+			"Stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
+			"\t.+/format_test.go:619\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WithDetails(
+			errors.New("error"),
+		),
+		"%s",
+		"^error$",
+	}, {
+		errors.WithDetails(
+			errors.New("error"),
+		),
+		"%v",
+		"^error$",
+	}, {
+		errors.WithDetails(
+			errors.New("error"),
+		),
+		"%+v",
+		"^error\n" +
+			"Stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
+			"\t.+/format_test.go:640\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WithDetails(
+			errors.Base("error"),
+		),
+		"%s",
+		"^error$",
+	}, {
+		errors.WithDetails(
+			errors.Base("error"),
+		),
+		"%v",
+		"^error$",
+	}, {
+		errors.WithDetails(
+			errors.Base("error"),
+		),
+		"%+v",
+		"^error\n" +
+			"Stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
+			"\t.+/format_test.go:661\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WithDetails(
+			errors.WithDetails(io.EOF),
+		),
+		"%+v",
+		"^EOF\n" +
+			"Stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
+			"\t.+/format_test.go:672\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WithDetails(
+			errors.Errorf("error%d", 1),
+		),
+		"%+v",
+		"error1\n" +
+			"Stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
+			"\t.+/format_test.go:682\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WithDetails(
+			pkgerrors.New("error"),
+		),
+		"%s",
+		"^error$",
+	}, {
+		errors.WithDetails(
+			pkgerrors.New("error"),
+		),
+		"%v",
+		"^error$",
+	}, {
+		errors.WithDetails(
+			pkgerrors.New("error"),
+		),
+		"%+v",
+		"^error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
+			"\t.+/format_test.go:704" +
+			"(\n.+\n\t.+:\\d+)+$",
 	}}
 
 	for k, tt := range tests {

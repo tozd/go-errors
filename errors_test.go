@@ -134,6 +134,20 @@ func TestErrors(t *testing.T) {
 		{errors.WithStack(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 2},
 		{errors.WithStack(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 2},
 
+		// errors.WithDetails and parent without stack
+		{errors.WithDetails(io.EOF), "EOF", currentStackSize, 1},
+		{errors.WithDetails(errors.Base("EOF")), "EOF", currentStackSize, 1},
+		{errors.WithDetails(errors.Base("")), "", currentStackSize, 0},
+		{errors.WithDetails(errors.Base("foobar\n")), "foobar\n", currentStackSize, 1},
+
+		// errors.WithDetails and parent with stack
+		{errors.WithDetails(parentErr), "parent", parentErrStackSize, 1},
+		{errors.WithDetails(noMsgErr), "", parentErrStackSize, 0},
+
+		// errors.WithDetails and parent with custom %+v
+		{errors.WithDetails(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 2},
+		{errors.WithDetails(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 2},
+
 		// errors.WithMessage and parent without stack
 		{errors.WithMessage(parentNoStackErr, "read error"), "read error: parent", currentStackSize, 1},
 		{errors.WithMessage(parentNoStackErr, ""), "parent", currentStackSize, 1},
@@ -212,6 +226,13 @@ func TestErrors(t *testing.T) {
 		// and no final newline
 		{errors.WithStack(parentPkgError), "parent", parentErrStackSize, 1 - 1 - 1},
 
+		// errors.WithDetails and github.com/pkg/errors parent,
+		// formatting is fully done by parentPkgError in this case,
+		// there is still one line for the error message, but
+		// there is no "Stack trace (most recent call first)" line,
+		// and no final newline
+		{errors.WithDetails(parentPkgError), "parent", parentErrStackSize, 1 - 1 - 1},
+
 		// errors.Wrap and github.com/pkg/errors parent,
 		// formatting of the cause is fully done by parentPkgError in this case,
 		// there are still three lines extra for "The above error was caused by the
@@ -245,6 +266,10 @@ func TestErrors(t *testing.T) {
 
 func TestWithStackNil(t *testing.T) {
 	assert.Nil(t, errors.WithStack(nil), nil)
+}
+
+func TestWithDetailsNil(t *testing.T) {
+	assert.Nil(t, errors.WithDetails(nil), nil)
 }
 
 func TestWrapNil(t *testing.T) {
@@ -323,4 +348,19 @@ func TestCause(t *testing.T) {
 
 	wrap.wrap = errors.Wrap(err, "bar")
 	assert.Equal(t, err, errors.Cause(wrap))
+}
+
+func TestDetails(t *testing.T) {
+	err := errors.New("test")
+	errors.Details(err)["zoo"] = "base"
+	errors.Details(err)["foo"] = "bar"
+	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.Details(err))
+	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(err))
+	err2 := errors.WithDetails(err)
+	errors.Details(err2)["foo"] = "baz"
+	errors.Details(err2)["foo2"] = "bar2"
+	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.Details(err))
+	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(err))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.Details(err2))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(err2))
 }

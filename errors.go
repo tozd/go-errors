@@ -856,3 +856,84 @@ func AllDetails(err error) map[string]interface{} {
 	}
 	return res
 }
+
+type withDetails struct {
+	error
+	details map[string]interface{}
+}
+
+func (w *withDetails) Unwrap() error {
+	return w.error
+}
+
+func (w *withDetails) Format(s fmt.State, verb rune) {
+	if f, ok := w.error.(interface {
+		Format(s fmt.State, verb rune)
+	}); ok {
+		f.Format(s, verb)
+		return
+	}
+
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			fmt.Fprintf(s, "%+v", w.error)
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(s, w.Error())
+	case 'q':
+		fmt.Fprintf(s, "%q", w.Error())
+	}
+}
+
+func (w *withDetails) StackTrace() []uintptr {
+	// We know error has stackTracer interface because we construct it only then.
+	return w.error.(stackTracer).StackTrace()
+}
+
+func (w *withDetails) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
+// WithDetails wraps err implementing the detailer interface to access
+// a map with optional additional information about the error.
+//
+// If err does not have a stack trace, then this call is equivalent
+// to calling WithStack, annotating err with a stack trace as well.
+//
+// Use this when you have an err which implements stackTracer interface
+// but does not implement detailer interface as well.
+//
+// It is useful when err does implement detailer interface, but you want
+// to reuse same err multiple times (e.g., pass same err to multiple
+// goroutines), adding different details each time. Calling WithDetails
+// wraps err and adds an additional and independent layer of details on
+// top of any existing details.
+func WithDetails(err error) E {
+	if err == nil {
+		return nil
+	}
+	if _, ok := err.(E); ok {
+		// This is where it is different from WithStack.
+		return &withDetails{
+			err,
+			nil,
+		}
+	} else if _, ok := err.(pkgStackTracer); ok {
+		return &withPkgStack{
+			err,
+			nil,
+		}
+	}
+
+	return &withStack{
+		err,
+		callers(),
+		nil,
+	}
+}
