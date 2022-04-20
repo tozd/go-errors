@@ -17,6 +17,10 @@ plugins:
     addUnreleased: true
     addVersionUrl: true
     head: main
+    versionUrlFormats:
+      unreleasedUrl: "{repositoryUrl}/-/compare/{tagName}...{head}"
+      versionUrl: "{repositoryUrl}/-/compare/{previousTag}...{tagName}"
+      firstVersionUrl: "{repositoryUrl}/-/tags/{tagName}"
 npm:
   publish: true
 github:

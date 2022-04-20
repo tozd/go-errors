@@ -16,7 +16,7 @@ test:
 
   before_script:
     - apk --update add make gcc musl-dev
-    - (cd /go; go get gotest.tools/gotestsum@v1.7.0)
+    - (cd /go; go get gotest.tools/gotestsum@v1.8.0)
     - (cd /go; go get github.com/boumenot/gocover-cobertura@v1.2.0)
 
   script:
@@ -45,7 +45,7 @@ lint:
 
   before_script:
     - apk --update add make gcc musl-dev
-    - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.43.0
+    - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.45.2
 
   script:
     - make lint-ci
@@ -63,8 +63,8 @@ fmt:
 
   before_script:
     - apk --update add make git gcc musl-dev grep
-    - go install mvdan.cc/gofumpt@v0.2.0
-    - go install golang.org/x/tools/cmd/goimports@v0.1.7
+    - go install mvdan.cc/gofumpt@v0.3.1
+    - go install golang.org/x/tools/cmd/goimports@v0.1.10
 
   script:
     - make fmt-ci
@@ -87,7 +87,7 @@ audit:
 
   before_script:
     - apk --update add make git gcc musl-dev
-    - go install github.com/sonatype-nexus-community/nancy@v1.0.29
+    - go install github.com/sonatype-nexus-community/nancy@v1.0.33
 
   script:
     - make audit
@@ -125,7 +125,7 @@ sync_releases:
   stage: deploy
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-2-1:latest-debug
+    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-3-0:latest-debug
     entrypoint: [""]
 
   script:
@@ -142,7 +142,7 @@ sync_config:
   stage: deploy
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/config/tag/v0-3-0:latest-debug
+    name: registry.gitlab.com/tozd/gitlab/config/tag/v0-3-3:latest-debug
     entrypoint: [""]
 
   script:
