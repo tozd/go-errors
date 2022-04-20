@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2022-04-20
+
 ### Added
 
 - Errors returned by this package provide also optional details map accessible
@@ -33,7 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First public release.
 
-[unreleased]: https://gitlab.com/tozd/go/errors/-/compare/v0.3.0...main
+[unreleased]: https://gitlab.com/tozd/go/errors/-/compare/v0.4.0...main
+[0.4.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.2.0...v0.3.0
 [0.2.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.1.0...v0.2.0
 [0.1.0]: https://gitlab.com/tozd/go/errors/-/tags/v0.1.0
