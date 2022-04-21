@@ -64,7 +64,7 @@ func marshalJSONError(err error) ([]byte, E) {
 	return jsonErr, nil
 }
 
-func (f fundamental) MarshalJSON() ([]byte, error) {
+func (f *fundamental) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
@@ -74,7 +74,7 @@ func (f fundamental) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (w errorf) MarshalJSON() ([]byte, error) {
+func (w *errorf) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
@@ -84,7 +84,7 @@ func (w errorf) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (w errorfWithStack) MarshalJSON() ([]byte, error) {
+func (w *errorfWithStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
@@ -94,7 +94,7 @@ func (w errorfWithStack) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (w withStack) MarshalJSON() ([]byte, error) {
+func (w *withStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
@@ -104,7 +104,7 @@ func (w withStack) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (w withPkgStack) MarshalJSON() ([]byte, error) {
+func (w *withPkgStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
@@ -114,7 +114,7 @@ func (w withPkgStack) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (w wrapped) MarshalJSON() ([]byte, error) {
+func (w *wrapped) MarshalJSON() ([]byte, error) {
 	jsonWrap, err := marshalWithoutEscapeHTML(w.error)
 	if err != nil {
 		return nil, WithStack(err)
@@ -139,7 +139,7 @@ func (w wrapped) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (w withMessage) MarshalJSON() ([]byte, error) {
+func (w *withMessage) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
@@ -149,7 +149,7 @@ func (w withMessage) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (w withMessageAndStack) MarshalJSON() ([]byte, error) {
+func (w *withMessageAndStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
 		Stack stack  `json:"stack,omitempty"`
