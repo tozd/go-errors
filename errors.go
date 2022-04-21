@@ -857,6 +857,13 @@ func AllDetails(err error) map[string]interface{} {
 	return res
 }
 
+func initializeDetails(err error) {
+	for err != nil {
+		Details(err)
+		err = Unwrap(err)
+	}
+}
+
 type withDetails struct {
 	error
 	details map[string]interface{}
@@ -894,9 +901,7 @@ func (w *withDetails) StackTrace() []uintptr {
 }
 
 func (w *withDetails) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
+	// Map is always initialized when constructing withDetails.
 	return w.details
 }
 
@@ -918,22 +923,33 @@ func WithDetails(err error) E {
 	if err == nil {
 		return nil
 	}
+
+	// Details were explicitly asked for, so we initialize them across
+	// the whole stack of errors. It is useful to do this here so that
+	// there are no race conditions if AllDetails on the same error is
+	// called from multiple goroutines, racing which call will initialize
+	// nil maps first.
+	initializeDetails(err)
+
 	if _, ok := err.(E); ok {
 		// This is where it is different from WithStack.
 		return &withDetails{
 			err,
-			nil,
+			// We always initialize map.
+			make(map[string]interface{}),
 		}
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withPkgStack{
 			err,
-			nil,
+			// We always initialize map.
+			make(map[string]interface{}),
 		}
 	}
 
 	return &withStack{
 		err,
 		callers(),
-		nil,
+		// We always initialize map.
+		make(map[string]interface{}),
 	}
 }
