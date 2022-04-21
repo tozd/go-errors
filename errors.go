@@ -156,6 +156,7 @@ package errors
 import (
 	"fmt"
 	"io"
+	"sync"
 	"unsafe"
 
 	pkgerrors "github.com/pkg/errors"
@@ -197,9 +198,8 @@ type E interface {
 // New also records the stack trace at the point it was called.
 func New(message string) E {
 	return &fundamental{
-		msg:     message,
-		stack:   callers(),
-		details: make(map[string]interface{}, 0),
+		msg:   message,
+		stack: callers(),
 	}
 }
 
@@ -221,13 +221,15 @@ func Errorf(format string, args ...interface{}) E {
 			return &errorf{
 				unwrap,
 				err.Error(),
-				make(map[string]interface{}, 0),
+				nil,
+				sync.Mutex{},
 			}
 		} else if _, ok := unwrap.(pkgStackTracer); ok {
 			return &errorf{
 				unwrap,
 				err.Error(),
-				make(map[string]interface{}, 0),
+				nil,
+				sync.Mutex{},
 			}
 		}
 
@@ -235,7 +237,8 @@ func Errorf(format string, args ...interface{}) E {
 			unwrap,
 			err.Error(),
 			callers(),
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	}
 
@@ -251,6 +254,7 @@ type fundamental struct {
 	msg string
 	stack
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (f *fundamental) Error() string {
@@ -280,6 +284,13 @@ func (f *fundamental) Format(s fmt.State, verb rune) {
 }
 
 func (f *fundamental) Details() map[string]interface{} {
+	if f.details == nil {
+		f.lock.Lock()
+		if f.details == nil {
+			f.details = make(map[string]interface{})
+		}
+		f.lock.Unlock()
+	}
 	return f.details
 }
 
@@ -287,6 +298,7 @@ type errorf struct {
 	error
 	msg     string
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *errorf) Error() string {
@@ -332,6 +344,13 @@ func (w *errorf) StackTrace() []uintptr {
 }
 
 func (w *errorf) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
@@ -340,6 +359,7 @@ type errorfWithStack struct {
 	msg string
 	stack
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *errorfWithStack) Error() string {
@@ -373,6 +393,13 @@ func (w *errorfWithStack) Format(s fmt.State, verb rune) {
 }
 
 func (w *errorfWithStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
@@ -396,14 +423,16 @@ func WithStack(err error) E {
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withPkgStack{
 			err,
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	}
 
 	return &withStack{
 		err,
 		callers(),
-		make(map[string]interface{}, 0),
+		nil,
+		sync.Mutex{},
 	}
 }
 
@@ -411,6 +440,7 @@ type withStack struct {
 	error
 	stack
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *withStack) Unwrap() error {
@@ -441,12 +471,20 @@ func (w *withStack) Format(s fmt.State, verb rune) {
 }
 
 func (w *withStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
 type withPkgStack struct {
 	error
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *withPkgStack) Unwrap() error {
@@ -475,6 +513,13 @@ func (w *withPkgStack) Format(s fmt.State, verb rune) {
 }
 
 func (w *withPkgStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
@@ -497,7 +542,8 @@ func Wrap(err error, message string) E {
 		err,
 		message,
 		callers(),
-		make(map[string]interface{}, 0),
+		nil,
+		sync.Mutex{},
 	}
 }
 
@@ -522,7 +568,8 @@ func Wrapf(err error, format string, args ...interface{}) E {
 		err,
 		fmt.Sprintf(format, args...),
 		callers(),
-		make(map[string]interface{}, 0),
+		nil,
+		sync.Mutex{},
 	}
 }
 
@@ -531,6 +578,7 @@ type wrapped struct {
 	msg string
 	stack
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *wrapped) Error() string {
@@ -576,6 +624,13 @@ func (w *wrapped) Format(s fmt.State, verb rune) {
 }
 
 func (w *wrapped) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
@@ -598,13 +653,15 @@ func WithMessage(err error, message string) E {
 		return &withMessage{
 			e,
 			message,
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withMessage{
 			err,
 			message,
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	}
 
@@ -612,7 +669,8 @@ func WithMessage(err error, message string) E {
 		err,
 		message,
 		callers(),
-		make(map[string]interface{}, 0),
+		nil,
+		sync.Mutex{},
 	}
 }
 
@@ -637,13 +695,15 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		return &withMessage{
 			err,
 			fmt.Sprintf(format, args...),
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withMessage{
 			err,
 			fmt.Sprintf(format, args...),
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	}
 
@@ -651,7 +711,8 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		err,
 		fmt.Sprintf(format, args...),
 		callers(),
-		make(map[string]interface{}, 0),
+		nil,
+		sync.Mutex{},
 	}
 }
 
@@ -659,6 +720,7 @@ type withMessage struct {
 	error
 	msg     string
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *withMessage) Error() string {
@@ -717,6 +779,13 @@ func (w *withMessage) StackTrace() []uintptr {
 }
 
 func (w *withMessage) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
@@ -725,6 +794,7 @@ type withMessageAndStack struct {
 	msg string
 	stack
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *withMessageAndStack) Error() string {
@@ -784,6 +854,13 @@ func (w *withMessageAndStack) Format(s fmt.State, verb rune) {
 }
 
 func (w *withMessageAndStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
@@ -837,6 +914,7 @@ func AllDetails(err error) map[string]interface{} {
 type withDetails struct {
 	error
 	details map[string]interface{}
+	lock    sync.Mutex
 }
 
 func (w *withDetails) Unwrap() error {
@@ -871,6 +949,13 @@ func (w *withDetails) StackTrace() []uintptr {
 }
 
 func (w *withDetails) Details() map[string]interface{} {
+	if w.details == nil {
+		w.lock.Lock()
+		if w.details == nil {
+			w.details = make(map[string]interface{})
+		}
+		w.lock.Unlock()
+	}
 	return w.details
 }
 
@@ -896,18 +981,21 @@ func WithDetails(err error) E {
 		// This is where it is different from WithStack.
 		return &withDetails{
 			err,
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withPkgStack{
 			err,
-			make(map[string]interface{}, 0),
+			nil,
+			sync.Mutex{},
 		}
 	}
 
 	return &withStack{
 		err,
 		callers(),
-		make(map[string]interface{}, 0),
+		nil,
+		sync.Mutex{},
 	}
 }
