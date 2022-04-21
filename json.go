@@ -26,7 +26,7 @@ func marshalJSONError(err error) ([]byte, E) {
 	var e error
 	var s stack
 	if stackErr, ok := err.(stackTracer); ok {
-		s = stack(stackErr.StackTrace())
+		s = stackErr.StackTrace()
 	} else if stackErr, ok := err.(pkgStackTracer); ok {
 		st := stackErr.StackTrace()
 		s = stack(*(*[]uintptr)(unsafe.Pointer(&st)))
@@ -80,7 +80,7 @@ func (w errorf) MarshalJSON() ([]byte, error) {
 		Stack stack  `json:"stack,omitempty"`
 	}{
 		Error: w.msg,
-		Stack: stack(w.StackTrace()),
+		Stack: w.StackTrace(),
 	})
 }
 
@@ -145,7 +145,7 @@ func (w withMessage) MarshalJSON() ([]byte, error) {
 		Stack stack  `json:"stack,omitempty"`
 	}{
 		Error: w.Error(),
-		Stack: stack(w.StackTrace()),
+		Stack: w.StackTrace(),
 	})
 }
 
@@ -157,4 +157,8 @@ func (w withMessageAndStack) MarshalJSON() ([]byte, error) {
 		Error: w.Error(),
 		Stack: w.stack,
 	})
+}
+
+func (w withDetails) MarshalJSON() ([]byte, error) {
+	return marshalWithoutEscapeHTML(w.error)
 }
