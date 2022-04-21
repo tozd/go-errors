@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2022-04-21
+
 ### Fixed
 
 - Initialize details when calling `WithDetails` to prevent race conditions.
@@ -39,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First public release.
 
-[unreleased]: https://gitlab.com/tozd/go/errors/-/compare/v0.4.0...main
+[unreleased]: https://gitlab.com/tozd/go/errors/-/compare/v0.4.1...main
+[0.4.1]: https://gitlab.com/tozd/go/errors/-/compare/v0.4.0...v0.4.1
 [0.4.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.3.0...v0.4.0
 [0.3.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.2.0...v0.3.0
 [0.2.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.1.0...v0.2.0
