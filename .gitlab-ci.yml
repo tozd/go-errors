@@ -33,7 +33,6 @@ test:
       - coverage.html
     expire_in: never
 
-  # This has to be set in project's settings (CI/CD -> General pipelines section) as well.
   coverage: '/coverage: \d+\.\d+% of statements/'
 
   parallel:
