@@ -134,7 +134,7 @@ func ExampleWrap_printf() {
 	// runtime.goexit
 	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
 	//
-	// The above error was caused by the following error:
+	// the above error was caused by the following error:
 	//
 	// whoops
 	// stack trace (most recent call first):

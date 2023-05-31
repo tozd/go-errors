@@ -573,7 +573,7 @@ func (w *wrapped) Format(s fmt.State, verb rune) {
 			w.stack.Format(s, verb)
 			unwrap := fmt.Sprintf("%+v", w.error)
 			if len(unwrap) > 0 {
-				io.WriteString(s, "\nThe above error was caused by the following error:\n\n")
+				io.WriteString(s, "\nthe above error was caused by the following error:\n\n")
 				io.WriteString(s, unwrap)
 				if unwrap[len(unwrap)-1] != '\n' {
 					io.WriteString(s, "\n")

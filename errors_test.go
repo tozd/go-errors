@@ -181,17 +181,17 @@ func TestErrors(t *testing.T) {
 		{errors.WithMessagef(parentNoStackErr, "read error ("+w()+")", noMsgNoStackErr), "read error (%!w(*errors.errorString=&{})): parent", currentStackSize, 1},
 
 		// errors.Wrap and parent without stack, there are three lines extra for
-		// "The above error was caused by the following error" + lines for error messages
+		// "the above error was caused by the following error" + lines for error messages
 		{errors.Wrap(parentNoStackErr, "read error"), "read error", currentStackSize, 3 + 2},
 		{errors.Wrap(parentNoStackErr, ""), "", currentStackSize, 3 + 1},
 		{errors.Wrap(parentNoStackErr, "read error\n"), "read error\n", currentStackSize, 3 + 2},
 		{errors.Wrap(io.EOF, "read error"), "read error", currentStackSize, 3 + 2},
-		// There is no "The above error was caused by the following error" message.
+		// There is no "the above error was caused by the following error" message.
 		{errors.Wrap(noMsgNoStackErr, "read error"), "read error", currentStackSize, 1},
 		{errors.Wrap(noMsgNoStackErr, ""), "", currentStackSize, 0},
 
 		// errors.Wrap and parent with stack, there are three lines extra for
-		// "The above error was caused by the following error" + lines for error messages
+		// "the above error was caused by the following error" + lines for error messages
 		// + 1 for additional stack trace (most recent call first)" line
 		{errors.Wrap(parentErr, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2 + 1},
 		{errors.Wrap(parentErr, ""), "", currentStackSize + parentErrStackSize, 3 + 1 + 1},
@@ -200,12 +200,12 @@ func TestErrors(t *testing.T) {
 		{errors.Wrap(noMsgErr, ""), "", currentStackSize + parentErrStackSize, 3 + 0 + 1},
 
 		// errors.Wrap and parent with custom %+v and no stack, there are three lines extra for
-		// "The above error was caused by the following error" + lines for error messages
+		// "the above error was caused by the following error" + lines for error messages
 		{errors.Wrap(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error", currentStackSize, 3 + 3},
 		{errors.Wrap(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error", currentStackSize, 3 + 3},
 
 		// errors.Wrap and parent with custom %+v and stack there are three lines extra for
-		// "The above error was caused by the following error" + lines for error messages
+		// "the above error was caused by the following error" + lines for error messages
 		// + 1 for additional stack trace (most recent call first)" line
 		{errors.Wrap(parentWithFormat1Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3 + 1},
 		{errors.Wrap(parentWithFormat2Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3 + 1},
