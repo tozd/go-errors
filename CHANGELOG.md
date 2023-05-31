@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- Lines `stack trace (most recent call first):` and
+  `the above error was caused by the following error:` changed to lower case.
+
 ## [0.4.1] - 2022-04-21
 
 ### Fixed

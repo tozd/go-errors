@@ -18,7 +18,7 @@ func ExampleNew_printf() {
 
 	// Example output:
 	// whoops
-	// Stack trace (most recent call first):
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleNew_printf
 	// 	/home/user/errors/example_test.go:16
 	// testing.runExample
@@ -49,7 +49,7 @@ func ExampleWithMessage_printf() {
 
 	// Example output:
 	// oh noes: whoops
-	// Stack trace (most recent call first):
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWithMessage_printf
 	// 	/home/user/errors/example_test.go:46
 	// testing.runExample
@@ -87,7 +87,7 @@ func ExampleWithStack_printf() {
 
 	// Example output:
 	// whoops
-	// Stack trace (most recent call first):
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWithStack_printf
 	// 	/home/user/errors/example_test.go:54
 	// testing.runExample
@@ -118,7 +118,7 @@ func ExampleWrap_printf() {
 
 	// Example output:
 	// oh noes
-	// Stack trace (most recent call first):
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWrap_printf
 	// 	/home/user/errors/example_test.go:86
 	// testing.runExample
@@ -137,7 +137,7 @@ func ExampleWrap_printf() {
 	// The above error was caused by the following error:
 	//
 	// whoops
-	// Stack trace (most recent call first):
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWrap_printf
 	// 	/home/user/errors/example_test.go:85
 	// testing.runExample
@@ -167,7 +167,7 @@ func ExampleErrorf() {
 
 	// Example output:
 	// whoops: foo
-	// Stack trace (most recent call first):
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleErrorf
 	// 	/home/user/errors/example_test.go:134
 	// testing.runExample
@@ -191,7 +191,7 @@ func ExampleErrorf_wrap() {
 
 	// Example output:
 	// oh noes (whoops)
-	// Stack trace (most recent call first):
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleErrorf_wrap
 	// 	/home/user/errors/example_test.go:189
 	// testing.runExample

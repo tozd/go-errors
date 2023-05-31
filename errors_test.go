@@ -192,7 +192,7 @@ func TestErrors(t *testing.T) {
 
 		// errors.Wrap and parent with stack, there are three lines extra for
 		// "The above error was caused by the following error" + lines for error messages
-		// + 1 for additional Stack trace (most recent call first)" line
+		// + 1 for additional stack trace (most recent call first)" line
 		{errors.Wrap(parentErr, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2 + 1},
 		{errors.Wrap(parentErr, ""), "", currentStackSize + parentErrStackSize, 3 + 1 + 1},
 		{errors.Wrap(parentErr, "read error\n"), "read error\n", currentStackSize + parentErrStackSize, 3 + 2 + 1},
@@ -206,7 +206,7 @@ func TestErrors(t *testing.T) {
 
 		// errors.Wrap and parent with custom %+v and stack there are three lines extra for
 		// "The above error was caused by the following error" + lines for error messages
-		// + 1 for additional Stack trace (most recent call first)" line
+		// + 1 for additional stack trace (most recent call first)" line
 		{errors.Wrap(parentWithFormat1Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3 + 1},
 		{errors.Wrap(parentWithFormat2Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3 + 1},
 
@@ -222,14 +222,14 @@ func TestErrors(t *testing.T) {
 		// errors.WithStack and github.com/pkg/errors parent,
 		// formatting is fully done by parentPkgError in this case,
 		// there is still one line for the error message, but
-		// there is no "Stack trace (most recent call first)" line,
+		// there is no "stack trace (most recent call first)" line,
 		// and no final newline
 		{errors.WithStack(parentPkgError), "parent", parentErrStackSize, 1 - 1 - 1},
 
 		// errors.WithDetails and github.com/pkg/errors parent,
 		// formatting is fully done by parentPkgError in this case,
 		// there is still one line for the error message, but
-		// there is no "Stack trace (most recent call first)" line,
+		// there is no "stack trace (most recent call first)" line,
 		// and no final newline
 		{errors.WithDetails(parentPkgError), "parent", parentErrStackSize, 1 - 1 - 1},
 
@@ -237,14 +237,14 @@ func TestErrors(t *testing.T) {
 		// formatting of the cause is fully done by parentPkgError in this case,
 		// there are still three lines extra for "The above error was caused by the
 		// following error" + lines for error messages, but
-		// there is no second "Stack trace (most recent call first)" line,
+		// there is no second "stack trace (most recent call first)" line,
 		// a final newline is still added
 		{errors.Wrap(parentPkgError, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2},
 
 		// errors.WithMessage and github.com/pkg/errors parent,
 		// formatting of the cause is fully done by parentPkgError in this case,
 		// additional message is just prefixed, there is still one line for the
-		// error message, but there is no "Stack trace (most recent call first)" line,
+		// error message, but there is no "stack trace (most recent call first)" line,
 		// and no final newline
 		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", parentErrStackSize, 1 - 1 - 1},
 	}

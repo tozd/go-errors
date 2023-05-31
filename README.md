@@ -83,8 +83,8 @@ many of the open issues community has identified since then and to modernize it 
   but only `errors.Wrap` records a cause error and returns an error which implements the `causer` interface.
 * All error-wrapping functions wrap the error into only one new error.
 * `Errorf` supports `%w`.
-* Errors formatted using `%+v` include lines `Stack trace (most recent call first):` and
-  `The above error was caused by the following error:` to make it clearer how is the stack
+* Errors formatted using `%+v` include lines `stack trace (most recent call first):` and
+  `the above error was caused by the following error:` to make it clearer how is the stack
   trace formatted and how are multiple errors related to each other.
 * Only `errors.Wrap` always records the stack trace while other functions do
   not record if it is already present.
