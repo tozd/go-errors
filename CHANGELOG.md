@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 
+- Package is tested only on Go 1.16 and newer.
 - Lines `stack trace (most recent call first):` and
   `the above error was caused by the following error:` changed to lower case.
 

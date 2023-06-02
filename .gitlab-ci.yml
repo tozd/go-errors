@@ -9,15 +9,10 @@ test:
 
   image: golang:$IMAGE_TAG
 
-  variables:
-    # We set GO111MODULE so that we can use "go get" instead of "go install"
-    # for all Go versions in the parallel matrix.
-    GO111MODULE: 'on'
-
   before_script:
     - apk --update add make gcc musl-dev
-    - (cd /go; go get gotest.tools/gotestsum@v1.10.0)
-    - (cd /go; go get github.com/boumenot/gocover-cobertura@v1.2.0)
+    - (cd /go; go install gotest.tools/gotestsum@v1.10.0)
+    - (cd /go; go install github.com/boumenot/gocover-cobertura@v1.2.0)
 
   script:
     - make test-ci
@@ -37,7 +32,7 @@ test:
 
   parallel:
     matrix:
-      - IMAGE_TAG: ['1.14-alpine3.13', '1.15-alpine3.14', '1.16-alpine3.15', '1.17-alpine3.16', '1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18']
+      - IMAGE_TAG: ['1.16-alpine3.15', '1.17-alpine3.16', '1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18']
 
 lint:
   stage: test
