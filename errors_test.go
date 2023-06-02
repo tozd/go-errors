@@ -247,6 +247,10 @@ func TestErrors(t *testing.T) {
 		// error message, but there is no "stack trace (most recent call first)" line,
 		// and no final newline
 		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", parentErrStackSize, 1 - 1 - 1},
+
+		// Wrap behaves like New and Errorf if provided error is nil.
+		{errors.Wrap(nil, "foo"), "foo", currentStackSize, 1},
+		{errors.Wrap(nil, "read error without format specifiers"), "read error without format specifiers", currentStackSize, 1},
 	}
 
 	for k, tt := range tests {
@@ -270,14 +274,6 @@ func TestWithStackNil(t *testing.T) {
 
 func TestWithDetailsNil(t *testing.T) {
 	assert.Nil(t, errors.WithDetails(nil), nil)
-}
-
-func TestWrapNil(t *testing.T) {
-	assert.Nil(t, errors.Wrap(nil, "no error"), nil)
-}
-
-func TestWrapfNil(t *testing.T) {
-	assert.Nil(t, errors.Wrapf(nil, "no error"), nil)
 }
 
 func TestWithMessageNil(t *testing.T) {

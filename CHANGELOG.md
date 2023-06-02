@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 
+- `Wrap` behaves like `New` and `Wrapf` like `Errorf` if provided error is nil
+  instead of returning `nil`.
+  [#2](https://gitlab.com/tozd/go/errors/-/issues/2)
 - Package is tested only on Go 1.16 and newer.
 - Lines `stack trace (most recent call first):` and
   `the above error was caused by the following error:` changed to lower case.

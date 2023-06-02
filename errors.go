@@ -496,7 +496,7 @@ func (w *withPkgStack) Details() map[string]interface{} {
 // at the point Wrap is called, and the supplied message.
 // Wrapping is done even if err already has a stack trace.
 // It records the original error as a cause.
-// If err is nil, Wrap returns nil.
+// If err is nil, Wrap behaves like New.
 //
 // When formatting the returned error using %+v, formatting
 // of the cause is delegated to the wrapped error.
@@ -505,7 +505,10 @@ func (w *withPkgStack) Details() map[string]interface{} {
 // preserving the cause of the new error.
 func Wrap(err error, message string) E {
 	if err == nil {
-		return nil
+		return &fundamental{
+			msg:   message,
+			stack: callers(),
+		}
 	}
 	return &wrapped{
 		err,
@@ -521,7 +524,8 @@ func Wrap(err error, message string) E {
 // Wrapping is done even if err already has a stack trace.
 // It records the original error as a cause.
 // It does not support %w format verb.
-// If err is nil, Wrapf returns nil.
+// If err is nil, Wrapf behaves like Errorf, but without
+// support for %w format verb.
 //
 // When formatting the returned error using %+v, formatting
 // of the cause is delegated to the wrapped error.
@@ -530,7 +534,10 @@ func Wrap(err error, message string) E {
 // preserving the cause of the new error.
 func Wrapf(err error, format string, args ...interface{}) E {
 	if err == nil {
-		return nil
+		return &fundamental{
+			msg:   fmt.Sprintf(format, args...),
+			stack: callers(),
+		}
 	}
 	return &wrapped{
 		err,
