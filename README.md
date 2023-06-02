@@ -104,3 +104,8 @@ so that original error is always available. `Wrap` wraps the error to records th
   This package aims to stay lean and be more or less just a drop-in replacement
   for core Go errors, but with stack traces (and few utility functions for common
   cases).
+
+## GitHub mirror
+
+There is also a [read-only GitHub mirror available](https://github.com/tozd/go-errors),
+if you need to fork the project there.
