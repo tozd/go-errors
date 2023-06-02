@@ -20,12 +20,14 @@ var (
 type X struct{}
 
 // val returns a frame pointing to itself.
+//
 //go:noinline
 func (x X) val() frame {
 	return caller()
 }
 
 // ptr returns a frame pointing to itself.
+//
 //go:noinline
 func (x *X) ptr() frame {
 	return caller()
@@ -183,6 +185,7 @@ func caller() frame {
 	return frame(f)
 }
 
-//go:noinline
 // noinline prevents the caller being inlined.
+//
+//go:noinline
 func noinline() {}

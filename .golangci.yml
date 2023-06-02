@@ -10,11 +10,11 @@ linters-settings:
   godot:
     scope: all
   gofumpt:
-    go: "1.17"
+    go: "1.20"
   goimports:
     local-prefixes: gitlab.com/tozd/go/errors
   gosimple:
-    go: "1.17"
+    go: "1.20"
     checks:
       - all
   govet:
@@ -26,24 +26,28 @@ linters-settings:
     allow-leading-space: false
     require-specific: true
   stylecheck:
-    go: "1.17"
+    go: "1.20"
     checks:
       - all
   staticcheck:
-    go: "1.17"
+    go: "1.20"
     checks:
       - all
   unused:
-    go: "1.17"
+    go: "1.20"
 
 linters:
   disable-all: true
   enable:
+    - asasalint
     - asciicheck
     - bidichk
-    - deadcode
+    - decorder
+    - dogsled
     - dupl
+    - dupword
     - errcheck
+    - errchkjson
     - exhaustive
     - exportloopref
     - goconst
@@ -60,16 +64,21 @@ linters:
     - ineffassign
     - ireturn
     - lll
+    - makezero
+    - mirror
     - misspell
+    - musttag
     - nakedret
     - nilerr
     - nilnil
     - nolintlint
+    - prealloc
     - predeclared
+    - reassign
     - revive
     - staticcheck
-    - structcheck
     - stylecheck
+    - tagalign
     - tenv
     - testpackage
     - thelper
@@ -77,16 +86,23 @@ linters:
     - typecheck
     - unconvert
     - unused
-    - varcheck
+    - usestdlibvars
     - wastedassign
     - whitespace
     # - bodyclose
+    # - containedctx
+    # - contextcheck
     # - durationcheck
+    # - err113
     # - errname
     # - errorlint
+    # - gocheckcompilerdirectives
     # - importas
     # - noctx
+    # - nosprintfhostport
+    # - tagliatelle
     # - wrapcheck
+    # - zerologlint
 
 issues:
   exclude-rules:

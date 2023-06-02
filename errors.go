@@ -2,9 +2,9 @@
 //
 // The traditional error handling idiom in Go is roughly akin to
 //
-//     if err != nil {
-//             return err
-//     }
+//	if err != nil {
+//	        return err
+//	}
 //
 // which when applied recursively up the call stack results in error reports
 // without a stack trace or context.
@@ -12,19 +12,19 @@
 // errors along the failure path in a way that does not destroy the
 // original error.
 //
-// Adding a stack trace to an error
+// # Adding a stack trace to an error
 //
 // When interacting with code which returns errors without a stack trace,
 // you can upgrade that error to one with a stack trace using errors.WithStack.
 // For example:
 //
-//     func readAll(r io.Reader) ([]byte, errors.E) {
-//             data, err := ioutil.ReadAll(r)
-//             if err != nil {
-//                     return nil, errors.WithStack(err)
-//             }
-//             return data, nil
-//     }
+//	func readAll(r io.Reader) ([]byte, errors.E) {
+//	        data, err := ioutil.ReadAll(r)
+//	        if err != nil {
+//	                return nil, errors.WithStack(err)
+//	        }
+//	        return data, nil
+//	}
 //
 // errors.WithStack records the stack trace at the point where it was called, so
 // use it as close to where the error originated as you can get so that the
@@ -42,9 +42,9 @@
 // Errors with a stack trace implement the following interface, returning program
 // counters of function invocations:
 //
-//     type stackTracer interface {
-//             StackTrace() []uintptr
-//     }
+//	type stackTracer interface {
+//	        StackTrace() []uintptr
+//	}
 //
 // You can use standard runtime.CallersFrames to obtain stack trace frame
 // information (e.g., function name, source code file and line).
@@ -52,25 +52,25 @@
 // Although the stackTracer interface is not exported by this package, it is
 // considered a part of its stable public interface.
 //
-// Adding context to an error
+// # Adding context to an error
 //
 // Sometimes an error occurs in a low-level function and the error messages
 // returned from it are too low-level, too.
 // You can use errors.Wrap to construct a new higher-level error while
 // recording the original error as a cause.
 //
-//     image, err := readAll(imageFile)
-//     if err != nil {
-//             return nil, errors.Wrap(err, "reading image failed")
-//     }
+//	image, err := readAll(imageFile)
+//	if err != nil {
+//	        return nil, errors.Wrap(err, "reading image failed")
+//	}
 //
 // In the example above we returned a new error with a new message,
 // hidding the low-level details. The returned error implements the
 // following interface
 //
-//     type causer interface {
-//             Cause() error
-//     }
+//	type causer interface {
+//	        Cause() error
+//	}
 //
 // which enables access to the underlying low-level error. You can also
 // use errors.Cause to obtain the cause.
@@ -82,34 +82,34 @@
 // You can use errors.WithMessage, which adds a prefix to the existing message,
 // or errors.Errorf, which gives you more control over the new message.
 //
-//    errors.WithMessage(err, "reading image failed")
-//    errors.Errorf("reading image failed (%w)", err)
+//	errors.WithMessage(err, "reading image failed")
+//	errors.Errorf("reading image failed (%w)", err)
 //
 // Example new messages could then be, respectively:
 //
-//     "reading image failed: connection error"
-//     "reading image failed (connection error)"
+//	"reading image failed: connection error"
+//	"reading image failed (connection error)"
 //
-// Adding details to an error
+// # Adding details to an error
 //
 // Errors returned by this package implement the detailer interface
 //
-//     type detailer interface {
-//             Details() map[string]interface{}
-//     }
+//	type detailer interface {
+//	        Details() map[string]interface{}
+//	}
 //
 // which enables access to a map with optional additional information about
 // the error. Returned map can be modified in-place to store additional
 // information. You can also use errors.Details and errors.AllDetails to
 // access details.
 //
-// Working with the hierarchy of errors
+// # Working with the hierarchy of errors
 //
 // Errors which implement the following standard unwrapper interface
 //
-//     type unwrapper interface {
-//             Unwrap() error
-//     }
+//	type unwrapper interface {
+//	        Unwrap() error
+//	}
 //
 // form a hierarchy of errors where a wrapping error points its parent,
 // wrapped, error. Errors returned from this package implement this
@@ -117,40 +117,40 @@
 // This enables us to have constant base errors which we annotate
 // with a stack trace before we return them:
 //
-//     var AuthenticationError = errors.Base("authentication error")
-//     var MissingPassphraseError = errors.BaseWrap(AuthenticationError, "missing passphrase")
-//     var InvalidPassphraseError = errors.BaseWrap(AuthenticationError, "invalid passphrase")
+//	var AuthenticationError = errors.Base("authentication error")
+//	var MissingPassphraseError = errors.BaseWrap(AuthenticationError, "missing passphrase")
+//	var InvalidPassphraseError = errors.BaseWrap(AuthenticationError, "invalid passphrase")
 //
-//     func authenticate(passphrase string) errors.E {
-//             if passphrase == "" {
-//                     return errors.WithStack(MissingPassphraseError)
-//             } else if passphrase != "open sesame" {
-//                     return errors.WithStack(InvalidPassphraseError)
-//             }
-//             return nil
-//     }
+//	func authenticate(passphrase string) errors.E {
+//	        if passphrase == "" {
+//	                return errors.WithStack(MissingPassphraseError)
+//	        } else if passphrase != "open sesame" {
+//	                return errors.WithStack(InvalidPassphraseError)
+//	        }
+//	        return nil
+//	}
 //
 // We can use errors.Is to determine which error has been returned:
 //
-//     if errors.Is(err, MissingPassphraseError) {
-//             fmt.Println("Please provide a passphrase to unlock the doors.")
-//     }
+//	if errors.Is(err, MissingPassphraseError) {
+//	        fmt.Println("Please provide a passphrase to unlock the doors.")
+//	}
 //
 // Works across the hierarchy, too:
 //
-//     if errors.Is(err, AuthenticationError) {
-//             fmt.Println("Failed to unlock the doors.")
-//     }
+//	if errors.Is(err, AuthenticationError) {
+//	        fmt.Println("Failed to unlock the doors.")
+//	}
 //
-// Formatting errors
+// # Formatting errors
 //
 // All errors with a stack trace returned from this package implement fmt.Formatter
 // interface and can be formatted by the fmt package. The following verbs are supported:
 //
-//     %s    the error message
-//     %v    same as %s
-//     %+v   together with the error message include also the stack trace,
-//           ends with a newline
+//	%s    the error message
+//	%v    same as %s
+//	%+v   together with the error message include also the stack trace,
+//	      ends with a newline
 package errors
 
 import (

@@ -241,6 +241,7 @@ func ExampleCause() {
 	// Output: error
 }
 
+//nolint:dupword
 func ExampleUnwrap() {
 	base := errors.Base("error")
 	withPrefix := errors.WithMessage(base, "prefix")

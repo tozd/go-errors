@@ -37,16 +37,16 @@ func (f frame) name() string {
 
 // Format formats the frame according to the fmt.Formatter interface.
 //
-//    %s    the source file
-//    %d    the source line
-//    %n    the function name
-//    %v    equivalent to %s:%d
+//	%s    the source file
+//	%d    the source line
+//	%n    the function name
+//	%v    equivalent to %s:%d
 //
 // Format accepts flags that alter the formatting of some verbs, as follows:
 //
-//    %+s   the full function name and full compile-time path of the source file,
-//          separated by \n\t (<funcname>\n\t<path>)
-//    %+v   equivalent to %+s:%d
+//	%+s   the full function name and full compile-time path of the source file,
+//	      separated by \n\t (<funcname>\n\t<path>)
+//	%+v   equivalent to %+s:%d
 func (f frame) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
@@ -91,18 +91,18 @@ type stack []uintptr
 // Format formats the stack of frames according to the fmt.Formatter interface.
 // For each frame in the stack, separated by \n:
 //
-//    %s	  lists the source file
-//    %d    lists the source line
-//    %n    lists the function name
-//    %v	  lists the source file and source line
+//	%s	  lists the source file
+//	%d    lists the source line
+//	%n    lists the function name
+//	%v	  lists the source file and source line
 //
 // Format accepts flags that alter the formatting of some verbs, as follows:
 //
-//    %+s   lists the full function name and full compile-time path of the source file,
-//          separated by \n\t (<funcname>\n\t<path>)
-//    %+v   lists the full function name and full compile-time path of the source file
-//          with the source line, separated by \n\t
-//          (<funcname>\n\t<path>:<line>)
+//	%+s   lists the full function name and full compile-time path of the source file,
+//	      separated by \n\t (<funcname>\n\t<path>)
+//	%+v   lists the full function name and full compile-time path of the source file
+//	      with the source line, separated by \n\t
+//	      (<funcname>\n\t<path>:<line>)
 func (s stack) Format(st fmt.State, verb rune) {
 	if len(s) == 0 {
 		return
