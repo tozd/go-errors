@@ -134,7 +134,7 @@ func TestStackFormat(t *testing.T) {
 		New("ooh"),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:132\n",
+			"\t.+/stack_test.go:134\n",
 	}, {
 		Wrap(
 			New("ooh"),
@@ -142,7 +142,7 @@ func TestStackFormat(t *testing.T) {
 		),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:137\n",
+			"\t.+/stack_test.go:139\n",
 	}, {
 		func() error {
 			noinline()
@@ -150,9 +150,9 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func1\n" +
-			"\t.+/stack_test.go:147\n" +
+			"\t.+/stack_test.go:149\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:148\n",
+			"\t.+/stack_test.go:150\n",
 	}, {
 		func() error {
 			return func() error {
@@ -162,11 +162,11 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func2.1\n" +
-			"\t.+/stack_test.go:158\n" +
+			"\t.+/stack_test.go:160\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat.func2\n" +
-			"\t.+/stack_test.go:159\n" +
+			"\t.+/stack_test.go:161\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:160\n",
+			"\t.+/stack_test.go:162\n",
 	}}
 
 	for k, tt := range tests {
