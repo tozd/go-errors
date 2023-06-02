@@ -5,10 +5,11 @@ import (
 	"fmt"
 )
 
-// Is reports whether any error in err's chain matches target.
+// Is reports whether any error in err's tree matches target.
 //
-// The chain consists of err itself followed by the sequence of errors obtained by
-// repeatedly calling Unwrap.
+// The tree consists of err itself, followed by the errors obtained by repeatedly
+// calling Unwrap. When err wraps multiple errors, Is examines err followed by a
+// depth-first traversal of its children.
 //
 // An error is considered to match a target if it is equal to that target or if
 // it implements a method Is(error) bool such that Is(target) returns true.
@@ -19,18 +20,20 @@ import (
 //	func (m MyError) Is(target error) bool { return target == fs.ErrExist }
 //
 // then Is(MyError{}, fs.ErrExist) returns true. See syscall.Errno.Is for
-// an example in the standard library.
+// an example in the standard library. An Is method should only shallowly
+// compare err and the target and not call Unwrap on either.
 //
 // This function is a proxy for standard errors.Is.
 func Is(err, target error) bool {
 	return stderrors.Is(err, target)
 }
 
-// As finds the first error in err's chain that matches target, and if so, sets
+// As finds the first error in err's tree that matches target, and if one is found, sets
 // target to that error value and returns true. Otherwise, it returns false.
 //
-// The chain consists of err itself followed by the sequence of errors obtained by
-// repeatedly calling Unwrap.
+// The tree consists of err itself, followed by the errors obtained by repeatedly
+// calling Unwrap. When err wraps multiple errors, As examines err followed by a
+// depth-first traversal of its children.
 //
 // An error matches target if the error's concrete value is assignable to the value
 // pointed to by target, or if the error has a method As(interface{}) bool such that
@@ -51,6 +54,8 @@ func As(err error, target interface{}) bool {
 // Unwrap returns the result of calling the Unwrap method on err, if err's
 // type contains an Unwrap method returning error.
 // Otherwise, Unwrap returns nil.
+//
+// Unwrap returns nil if the Unwrap method returns []error.
 //
 // This function is a proxy for standard errors.Unwrap.
 func Unwrap(err error) error {
