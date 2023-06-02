@@ -11,11 +11,8 @@ test-ci:
 lint:
 	golangci-lint run --timeout 4m --color always
 
-# TODO: Output both formats at the same time, once it is supported.
-# See: https://github.com/golangci/golangci-lint/issues/481
 lint-ci:
-	-golangci-lint run --timeout 4m --color always
-	golangci-lint run --timeout 4m --out-format code-climate > codeclimate.json
+	golangci-lint run --timeout 4m --out-format colored-line-number,code-climate:codeclimate.json
 
 fmt:
 	go mod tidy
@@ -29,10 +26,10 @@ clean:
 	rm -f coverage.* codeclimate.json tests.xml
 
 release:
-	npx --yes --package 'release-it@14.14.2' --package '@release-it/keep-a-changelog@2.5.0' -- release-it
+	npx --yes --package 'release-it@15.4.2' --package '@release-it/keep-a-changelog@3.1.0' -- release-it
 
 lint-docs:
-	npx --yes --package 'markdownlint-cli@~0.30.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ '**/*.md'
+	npx --yes --package 'markdownlint-cli@~0.34.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ '**/*.md'
 
 audit:
 	go list -json -deps | nancy sleuth --skip-update-check
