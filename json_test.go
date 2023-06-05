@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,9 +18,16 @@ import (
 func equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 	t.Helper()
 
-	// We do not compare JSON arrays (which are used to represent stack traces).
-	opt := cmp.Transformer("stack", func(_ []interface{}) []interface{} {
-		return []interface{}{}
+	// We do not compare stack frames.
+	opt := cmpopts.IgnoreSliceElements(func(el interface{}) bool {
+		v, ok := el.(map[string]interface{})
+		if !ok {
+			return false
+		}
+		_, name := v["name"]
+		_, file := v["file"]
+		_, line := v["line"]
+		return name && file && line
 	})
 
 	if !cmp.Equal(expected, actual, opt) {
@@ -31,7 +39,7 @@ func equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}
 	return true
 }
 
-// jsonEqual ignores and does not compare JSON arrays (which are used to represent stack traces).
+// jsonEqual ignores and does not compare frames.
 func jsonEqual(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
 	t.Helper()
 	var expectedJSONAsInterface, actualJSONAsInterface interface{}
@@ -99,6 +107,12 @@ func TestJSON(t *testing.T) {
 	}, {
 		errors.Wrap(pkgerrors.WithMessage(errors.Base("foo"), "bar"), "error"),
 		`{"error":"error","stack":[],"cause":{"error":"bar: foo","cause":{"error":"foo"}}}`,
+	}, {
+		errors.Join(errors.Base("foobar1"), errors.Base("foobar2")),
+		`{"errors":[{"error":"foobar1"},{"error":"foobar2"}],"stack":[]}`,
+	}, {
+		errors.Join(errors.New("foobar1"), errors.New("foobar2")),
+		`{"errors":[{"error":"foobar1","stack":[]},{"error":"foobar2","stack":[]}],"stack":[]}`,
 	}}
 
 	for k, tt := range tests {

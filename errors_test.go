@@ -251,6 +251,10 @@ func TestErrors(t *testing.T) {
 		// Wrap behaves like New and Errorf if provided error is nil.
 		{errors.Wrap(nil, "foo"), "foo", currentStackSize, 1},
 		{errors.Wrap(nil, "read error without format specifiers"), "read error without format specifiers", currentStackSize, 1},
+
+		// errors.Join.
+		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", currentStackSize, 4},
+		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", 3 * currentStackSize, 6},
 	}
 
 	for k, tt := range tests {
@@ -282,6 +286,11 @@ func TestWithMessageNil(t *testing.T) {
 
 func TestWithMessagefNil(t *testing.T) {
 	assert.Nil(t, errors.WithMessagef(nil, "no error"), nil)
+}
+
+func TestJoinNil(t *testing.T) {
+	assert.Nil(t, errors.Join(nil))
+	assert.Nil(t, errors.Join(nil, nil))
 }
 
 // stderrors.New, etc values are not expected to be compared by value.

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support wrapping multiple errors with `errors.Join`.
+  [#4](https://gitlab.com/tozd/go/errors/-/issues/4)
+
 ## Changed
 
 - `Wrap` behaves like `New` and `Wrapf` like `Errorf` if provided error is nil

@@ -258,3 +258,61 @@ func ExampleIs() {
 	fmt.Println(errors.Is(valueError, base))
 	// Output: true
 }
+
+func ExampleJoin() {
+	err1 := errors.New("error1")
+	err2 := errors.New("error2")
+	err := errors.Join(err1, err2)
+	fmt.Printf("%+v", err)
+
+	// Example output:
+	// multiple errors at (most recent call first):
+	// gitlab.com/tozd/go/errors_test.ExampleJoin
+	// 	/home/user/errors/example_test.go:265
+	// testing.runExample
+	// 	/usr/local/go/src/testing/run_example.go:63
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
+	// testing.(*M).Run
+	// 	/usr/local/go/src/testing/testing.go:1908
+	// main.main
+	// 	_testmain.go:152
+	// runtime.main
+	// 	/usr/local/go/src/runtime/proc.go:250
+	// runtime.goexit
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1598
+	//
+	// 	error1
+	// 	stack trace (most recent call first):
+	// 	gitlab.com/tozd/go/errors_test.ExampleJoin
+	// 		/home/user/errors/example_test.go:263
+	// 	testing.runExample
+	// 		/usr/local/go/src/testing/run_example.go:63
+	// 	testing.runExamples
+	// 		/usr/local/go/src/testing/example.go:44
+	// 	testing.(*M).Run
+	// 		/usr/local/go/src/testing/testing.go:1908
+	// 	main.main
+	// 		_testmain.go:152
+	// 	runtime.main
+	// 		/usr/local/go/src/runtime/proc.go:250
+	// 	runtime.goexit
+	// 		/usr/local/go/src/runtime/asm_amd64.s:1598
+	//
+	// 	error2
+	// 	stack trace (most recent call first):
+	// 	gitlab.com/tozd/go/errors_test.ExampleJoin
+	// 		/home/user/errors/example_test.go:264
+	// 	testing.runExample
+	// 		/usr/local/go/src/testing/run_example.go:63
+	// 	testing.runExamples
+	// 		/usr/local/go/src/testing/example.go:44
+	// 	testing.(*M).Run
+	// 		/usr/local/go/src/testing/testing.go:1908
+	// 	main.main
+	// 		_testmain.go:152
+	// 	runtime.main
+	// 		/usr/local/go/src/runtime/proc.go:250
+	// 	runtime.goexit
+	// 		/usr/local/go/src/runtime/asm_amd64.s:1598
+}

@@ -65,8 +65,8 @@
 //	}
 //
 // In the example above we returned a new error with a new message,
-// hidding the low-level details. The returned error implements the
-// following interface
+// hiding the low-level details. The returned error implements the
+// following interface:
 //
 //	type causer interface {
 //	        Cause() error
@@ -92,7 +92,7 @@
 //
 // # Adding details to an error
 //
-// Errors returned by this package implement the detailer interface
+// Errors returned by this package implement the detailer interface:
 //
 //	type detailer interface {
 //	        Details() map[string]interface{}
@@ -105,7 +105,7 @@
 //
 // # Working with the hierarchy of errors
 //
-// Errors which implement the following standard unwrapper interface
+// Errors which implement the following standard unwrapper interface:
 //
 //	type unwrapper interface {
 //	        Unwrap() error
@@ -142,6 +142,17 @@
 //	        fmt.Println("Failed to unlock the doors.")
 //	}
 //
+// # Joining multiple errors
+//
+// You can join multiple errors into one error by calling errors.Join.
+// Join also records the stack trace at the point it was called.
+//
+// The resulting error implements the following standard unwrapper interface:
+//
+//	type unwrapper interface {
+//	        Unwrap() []error
+//	}
+//
 // # Formatting errors
 //
 // All errors with a stack trace returned from this package implement fmt.Formatter
@@ -156,6 +167,7 @@ package errors
 import (
 	"fmt"
 	"io"
+	"strings"
 	"unsafe"
 
 	pkgerrors "github.com/pkg/errors"
@@ -959,4 +971,113 @@ func WithDetails(err error) E {
 		// We always initialize map.
 		make(map[string]interface{}),
 	}
+}
+
+type joinError struct {
+	errs []error
+	stack
+	details map[string]interface{}
+}
+
+func (e *joinError) Error() string {
+	var b []byte
+	for i, err := range e.errs {
+		if i > 0 {
+			b = append(b, '\n')
+		}
+		b = append(b, err.Error()...)
+	}
+	return string(b)
+}
+
+func (e *joinError) Unwrap() []error {
+	return e.errs
+}
+
+func (e *joinError) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			fmt.Fprintf(s, "multiple errors at (most recent call first):\n")
+			e.stack.Format(s, verb)
+			for _, err := range e.errs {
+				unwrap := fmt.Sprintf("%+v", err)
+				unwrap = strings.TrimRight(unwrap, "\n")
+				lines := strings.Split(unwrap, "\n")
+				for i := range lines {
+					lines[i] = "\t" + lines[i]
+				}
+				io.WriteString(s, "\n")
+				io.WriteString(s, strings.Join(lines, "\n"))
+				io.WriteString(s, "\n")
+			}
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(s, e.Error())
+	case 'q':
+		fmt.Fprintf(s, "%q", e.Error())
+	}
+}
+
+func (e *joinError) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
+	}
+	return e.details
+}
+
+// Join returns an error that wraps the given errors.
+// Join also records the stack trace at the point it was called.
+// Any nil error values are discarded.
+// Join returns nil if errs contains no non-nil values.
+// If there is only one non-nil value, it is returned as is
+// if it already has a stack trace, otherwise Join behaves
+// like WithStack on the non-nil value.
+// The error formats as the concatenation of the strings obtained
+// by calling the Error method of each element of errs, with a newline
+// between each string.
+func Join(errs ...error) E {
+	n := 0
+	for _, err := range errs {
+		if err != nil {
+			n++
+		}
+	}
+	if n == 0 {
+		return nil
+	} else if n == 1 {
+		for _, err := range errs {
+			if err != nil {
+				if e, ok := err.(E); ok {
+					return e
+				} else if _, ok := err.(pkgStackTracer); ok {
+					return &withPkgStack{
+						err,
+						nil,
+					}
+				}
+
+				return &withStack{
+					err,
+					callers(),
+					nil,
+				}
+			}
+		}
+	}
+
+	e := &joinError{
+		make([]error, 0, n),
+		callers(),
+		nil,
+	}
+	for _, err := range errs {
+		if err != nil {
+			e.errs = append(e.errs, err)
+		}
+	}
+
+	return e
 }

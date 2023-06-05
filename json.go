@@ -64,6 +64,25 @@ func marshalJSONError(err error) ([]byte, E) {
 	return jsonErr, nil
 }
 
+// marshalJSONAnyError marshals our and foreign errors.
+func marshalJSONAnyError(err error) ([]byte, E) {
+	var eStack E
+	jsonWrap, e := marshalWithoutEscapeHTML(err)
+	if e != nil {
+		return nil, WithStack(e)
+	}
+	if len(jsonWrap) == 0 || bytes.Equal(jsonWrap, []byte("{}")) {
+		jsonWrap, eStack = marshalJSONError(err)
+		if eStack != nil {
+			return nil, eStack
+		}
+	}
+	if bytes.Equal(jsonWrap, []byte("{}")) {
+		jsonWrap = []byte{}
+	}
+	return jsonWrap, nil
+}
+
 func (f fundamental) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error string `json:"error,omitempty"`
@@ -115,18 +134,9 @@ func (w withPkgStack) MarshalJSON() ([]byte, error) {
 }
 
 func (w wrapped) MarshalJSON() ([]byte, error) {
-	jsonWrap, err := marshalWithoutEscapeHTML(w.error)
+	jsonWrap, err := marshalJSONAnyError(w.error)
 	if err != nil {
-		return nil, WithStack(err)
-	}
-	if len(jsonWrap) == 0 || bytes.Equal(jsonWrap, []byte("{}")) {
-		jsonWrap, err = marshalJSONError(w.error)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if bytes.Equal(jsonWrap, []byte("{}")) {
-		jsonWrap = []byte{}
+		return nil, err
 	}
 	return marshalWithoutEscapeHTML(&struct {
 		Error string          `json:"error,omitempty"`
@@ -161,4 +171,22 @@ func (w withMessageAndStack) MarshalJSON() ([]byte, error) {
 
 func (w withDetails) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(w.error)
+}
+
+func (e joinError) MarshalJSON() ([]byte, error) {
+	jsonWraps := make([]json.RawMessage, 0, len(e.errs))
+	for _, err := range e.errs {
+		jsonWrap, e := marshalJSONAnyError(err)
+		if e != nil {
+			return nil, e
+		}
+		jsonWraps = append(jsonWraps, jsonWrap)
+	}
+	return marshalWithoutEscapeHTML(&struct {
+		Errors []json.RawMessage `json:"errors,omitempty"`
+		Stack  stack             `json:"stack,omitempty"`
+	}{
+		Errors: jsonWraps,
+		Stack:  e.stack,
+	})
 }
