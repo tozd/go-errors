@@ -160,3 +160,15 @@ func funcname(name string) string {
 	i = strings.Index(name, ".")
 	return name[i+1:]
 }
+
+// StackFormat formats the provided stack trace as text.
+func StackFormat(w io.Writer, s []uintptr) (int, E) {
+	n, err := fmt.Fprintf(w, "%+v", stack(s))
+	return n, WithStack(err)
+}
+
+// StackMarshalJSON marshals the provided stack trace as JSON.
+func StackMarshalJSON(s []uintptr) ([]byte, E) {
+	b, err := stack(s).MarshalJSON()
+	return b, WithStack(err)
+}

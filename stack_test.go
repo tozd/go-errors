@@ -1,11 +1,15 @@
 package errors
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -58,7 +62,7 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%d",
-		"^12$",
+		"^16$",
 	}, {
 		zeropc,
 		"%d",
@@ -88,12 +92,12 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%v",
-		"^stack_test.go:12$",
+		"^stack_test.go:16$",
 	}, {
 		initpc,
 		"%+v",
 		"^gitlab.com/tozd/go/errors.init\n" +
-			"\t.+/stack_test.go:12$",
+			"\t.+/stack_test.go:16$",
 	}, {
 		zeropc,
 		"%v",
@@ -134,7 +138,7 @@ func TestStackFormat(t *testing.T) {
 		New("ooh"),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:134\n",
+			"\t.+/stack_test.go:138\n",
 	}, {
 		Wrap(
 			New("ooh"),
@@ -142,7 +146,7 @@ func TestStackFormat(t *testing.T) {
 		),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:139\n",
+			"\t.+/stack_test.go:143\n",
 	}, {
 		func() error {
 			noinline()
@@ -150,9 +154,9 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func1\n" +
-			"\t.+/stack_test.go:149\n" +
+			"\t.+/stack_test.go:153\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:150\n",
+			"\t.+/stack_test.go:154\n",
 	}, {
 		func() error {
 			return func() error {
@@ -162,11 +166,11 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func2.1\n" +
-			"\t.+/stack_test.go:160\n" +
+			"\t.+/stack_test.go:164\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat.func2\n" +
-			"\t.+/stack_test.go:161\n" +
+			"\t.+/stack_test.go:165\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:162\n",
+			"\t.+/stack_test.go:166\n",
 	}}
 
 	for k, tt := range tests {
@@ -174,6 +178,44 @@ func TestStackFormat(t *testing.T) {
 			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, stack(tt.err.(stackTracer).StackTrace())))
 		})
 	}
+}
+
+func TestStackFormatFunc(t *testing.T) {
+	stack := func() []uintptr {
+		return func() []uintptr {
+			noinline()
+			return callers().StackTrace()
+		}()
+	}()
+	buf := &strings.Builder{}
+	_, err := StackFormat(buf, stack)
+	require.NoError(t, err)
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
+		"\t.+/stack_test.go:188\n"+
+		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
+		"\t.+/stack_test.go:189\n", buf.String())
+}
+
+func TestStackMarshalJSON(t *testing.T) {
+	stack := func() []uintptr {
+		return func() []uintptr {
+			noinline()
+			return callers().StackTrace()
+		}()
+	}()
+	j, err := StackMarshalJSON(stack)
+	require.NoError(t, err)
+	var d []struct {
+		Name string `json:"name"`
+		File string `json:"file"`
+		Line int    `json:"line"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(j))
+	decoder.DisallowUnknownFields()
+	e := decoder.Decode(&d)
+	require.NoError(t, e)
+	assert.Equal(t, 204, d[0].Line)
+	assert.Equal(t, 205, d[1].Line)
 }
 
 // A version of runtime.Caller that returns a frame, not a uintptr.
