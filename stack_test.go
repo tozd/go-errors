@@ -188,7 +188,7 @@ func TestStackFormatFunc(t *testing.T) {
 		}()
 	}()
 	buf := &strings.Builder{}
-	_, err := StackFormat(buf, stack)
+	_, err := StackFormat(buf, "%+v", stack)
 	require.NoError(t, err)
 	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
 		"\t.+/stack_test.go:188\n"+

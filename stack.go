@@ -162,8 +162,8 @@ func funcname(name string) string {
 }
 
 // StackFormat formats the provided stack trace as text.
-func StackFormat(w io.Writer, s []uintptr) (int, E) {
-	n, err := fmt.Fprintf(w, "%+v", stack(s))
+func StackFormat(w io.Writer, format string, s []uintptr) (int, E) {
+	n, err := fmt.Fprintf(w, format, stack(s))
 	return n, WithStack(err)
 }
 
