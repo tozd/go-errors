@@ -830,7 +830,7 @@ func (w *withMessageAndStack) Details() map[string]interface{} {
 }
 
 // Cause returns the result of calling the Cause method on err, if err's
-// type contains an Cause method returning error.
+// type contains a Cause method returning error.
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Cause returns nil.
 func Cause(err error) error {
@@ -860,7 +860,7 @@ func Details(err error) map[string]interface{} {
 	return nil
 }
 
-// AllDetails returns a map build from calling The Details method on err
+// AllDetails returns a map build from calling the Details method on err
 // and populating the map with key/value pairs which are not yet
 // present. Afterwards, the err is unwrapped and the process is repeated.
 func AllDetails(err error) map[string]interface{} {
