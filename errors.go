@@ -938,9 +938,26 @@ func (w *withDetails) Details() map[string]interface{} {
 // goroutines), adding different details each time. Calling WithDetails
 // wraps err and adds an additional and independent layer of details on
 // top of any existing details.
-func WithDetails(err error) E {
+//
+// You can provide initial details by providing pairs of keys (strings)
+// and values (interface{}).
+func WithDetails(err error, kv ...interface{}) E {
 	if err == nil {
 		return nil
+	}
+
+	if len(kv)%2 != 0 {
+		panic(New("odd number of arguments for initial details"))
+	}
+
+	// We always initialize map.
+	initMap := make(map[string]interface{})
+	for i := 0; i < len(kv); i += 2 {
+		key, ok := kv[i].(string)
+		if !ok {
+			panic(Errorf(`key "%v" must be a string, not %T`, kv[i], kv[i]))
+		}
+		initMap[key] = kv[i+1]
 	}
 
 	// Details were explicitly asked for, so we initialize them across
@@ -954,22 +971,19 @@ func WithDetails(err error) E {
 		// This is where it is different from WithStack.
 		return &withDetails{
 			err,
-			// We always initialize map.
-			make(map[string]interface{}),
+			initMap,
 		}
 	} else if _, ok := err.(pkgStackTracer); ok {
 		return &withPkgStack{
 			err,
-			// We always initialize map.
-			make(map[string]interface{}),
+			initMap,
 		}
 	}
 
 	return &withStack{
 		err,
 		callers(),
-		// We always initialize map.
-		make(map[string]interface{}),
+		initMap,
 	}
 }
 

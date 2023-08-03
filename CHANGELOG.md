@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- `WithDetails` now accepts optional pairs of keys and values as initial details.
+
 ## [0.5.0] - 2023-06-06
 
 ### Added

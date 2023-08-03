@@ -368,4 +368,6 @@ func TestDetails(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(err))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.Details(err2))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(err2))
+	err3 := errors.WithDetails(err, "foo", "baz", "foo2", "bar2")
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(err3))
 }
