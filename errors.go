@@ -189,6 +189,10 @@ type unwrapper interface {
 	Unwrap() error
 }
 
+type unwrapperJoined interface {
+	Unwrap() []error
+}
+
 type detailer interface {
 	Details() map[string]interface{}
 }
@@ -219,15 +223,32 @@ func New(message string) E {
 // It supports %w format verb to wrap an existing error.
 // Errorf also records the stack trace at the point it was called,
 // unless wrapped error already have a stack trace.
+// If %w is provided multiple times, then a stack trace is always recorded.
 //
 // When formatting the returned error using %+v, formatting
 // is not delegated to the wrapped error (when there is one),
 // giving you full control of the message and formatted error.
 func Errorf(format string, args ...interface{}) E {
 	err := fmt.Errorf(format, args...)
-	u, ok := err.(unwrapper)
+	var errs []error
+	uj, ok := err.(unwrapperJoined)
 	if ok {
-		unwrap := u.Unwrap()
+		errs = uj.Unwrap()
+	} else {
+		u, ok := err.(unwrapper)
+		if ok {
+			errs = []error{u.Unwrap()}
+		}
+	}
+	if len(errs) > 1 {
+		return &errorfJoined{
+			errs,
+			err.Error(),
+			callers(),
+			nil,
+		}
+	} else if len(errs) == 1 {
+		unwrap := errs[0]
 		if _, ok := unwrap.(stackTracer); ok {
 			return &errorf{
 				unwrap,
@@ -390,6 +411,61 @@ func (w *errorfWithStack) Format(s fmt.State, verb rune) {
 }
 
 func (w *errorfWithStack) Details() map[string]interface{} {
+	if w.details == nil {
+		w.details = make(map[string]interface{})
+	}
+	return w.details
+}
+
+type errorfJoined struct {
+	errs []error
+	msg  string
+	stack
+	details map[string]interface{}
+}
+
+func (w *errorfJoined) Error() string {
+	return w.msg
+}
+
+func (w *errorfJoined) Unwrap() []error {
+	return w.errs
+}
+
+func (w *errorfJoined) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			if len(w.msg) > 0 {
+				io.WriteString(s, w.msg)
+				if w.msg[len(w.msg)-1] != '\n' {
+					io.WriteString(s, "\n")
+				}
+			}
+			fmt.Fprintf(s, "multiple errors at (most recent call first):\n")
+			w.stack.Format(s, verb)
+			for _, err := range w.errs {
+				unwrap := fmt.Sprintf("%+v", err)
+				unwrap = strings.TrimRight(unwrap, "\n")
+				lines := strings.Split(unwrap, "\n")
+				for i := range lines {
+					lines[i] = "\t" + lines[i]
+				}
+				io.WriteString(s, "\n")
+				io.WriteString(s, strings.Join(lines, "\n"))
+				io.WriteString(s, "\n")
+			}
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(s, w.msg)
+	case 'q':
+		fmt.Fprintf(s, "%q", w.msg)
+	}
+}
+
+func (w *errorfJoined) Details() map[string]interface{} {
 	if w.details == nil {
 		w.details = make(map[string]interface{})
 	}
