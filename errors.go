@@ -98,22 +98,38 @@
 //	        Details() map[string]interface{}
 //	}
 //
-// which enables access to a map with optional additional information about
-// the error. Returned map can be modified in-place to store additional
-// information. You can also use errors.Details and errors.AllDetails to
-// access details.
+// which enables access to a map with optional additional details about
+// the error. Returned map can be modified in-place. You can also use
+// errors.Details and errors.AllDetails to access details:
 //
-// # Working with the hierarchy of errors
+// errors.Details(err)["url"] = "http://example.com"
 //
-// Errors which implement the following standard unwrapper interface:
+// You can also use errors.WithDetails as an alternative to errors.WithStack
+// if you also want to add details while recording the stack trace:
+//
+//	func readAll(r io.Reader, filename string) ([]byte, errors.E) {
+//	        data, err := ioutil.ReadAll(r)
+//	        if err != nil {
+//	                return nil, errors.WithDetails(err, "filename", filename)
+//	        }
+//	        return data, nil
+//	}
+//
+// # Working with the tree of errors
+//
+// Errors which implement the following standard unwrapper interfaces:
 //
 //	type unwrapper interface {
 //	        Unwrap() error
 //	}
 //
-// form a hierarchy of errors where a wrapping error points its parent,
-// wrapped, error. Errors returned from this package implement this
-// interface to return the original error, when there is one.
+//	type unwrapper interface {
+//	        Unwrap() error[]
+//	}
+//
+// form a tree of errors where a wrapping error points its parent,
+// wrapped, error(s). Errors returned from this package implement this
+// interface to return the original error or errors, when they are.
 // This enables us to have constant base errors which we annotate
 // with a stack trace before we return them:
 //
@@ -130,28 +146,35 @@
 //	        return nil
 //	}
 //
+// Or with details:
+//
+//	func authenticate(username, passphrase string) errors.E {
+//	        if passphrase == "" {
+//	                return errors.WithDetails(MissingPassphraseError, "username", username)
+//	        } else if passphrase != "open sesame" {
+//	                return errors.WithDetails(InvalidPassphraseError, "username", username)
+//	        }
+//	        return nil
+//	}
+//
 // We can use errors.Is to determine which error has been returned:
 //
 //	if errors.Is(err, MissingPassphraseError) {
 //	        fmt.Println("Please provide a passphrase to unlock the doors.")
 //	}
 //
-// Works across the hierarchy, too:
+// Works across the tree, too:
 //
 //	if errors.Is(err, AuthenticationError) {
 //	        fmt.Println("Failed to unlock the doors.")
 //	}
 //
-// # Joining multiple errors
+// To access details, use:
+//
+//	errors.AllDetails(err)["username"]
 //
 // You can join multiple errors into one error by calling errors.Join.
 // Join also records the stack trace at the point it was called.
-//
-// The resulting error implements the following standard unwrapper interface:
-//
-//	type unwrapper interface {
-//	        Unwrap() []error
-//	}
 //
 // # Formatting errors
 //
@@ -1001,7 +1024,7 @@ func (w *withDetails) Details() map[string]interface{} {
 }
 
 // WithDetails wraps err implementing the detailer interface to access
-// a map with optional additional information about the error.
+// a map with optional additional details about the error.
 //
 // If err does not have a stack trace, then this call is equivalent
 // to calling WithStack, annotating err with a stack trace as well.
