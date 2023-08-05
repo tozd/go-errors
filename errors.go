@@ -950,7 +950,7 @@ func WithDetails(err error, kv ...interface{}) E {
 		panic(New("odd number of arguments for initial details"))
 	}
 
-	// We always initialize map.
+	// We always initialize map because details were explicitly asked for.
 	initMap := make(map[string]interface{})
 	for i := 0; i < len(kv); i += 2 {
 		key, ok := kv[i].(string)
