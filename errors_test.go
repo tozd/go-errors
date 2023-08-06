@@ -70,7 +70,16 @@ func (e *errorWithCauseAndWrap) Unwrap() error {
 	return e.wrap
 }
 
-func TestErrors(t *testing.T) {
+type testStruct struct {
+	err   error
+	want  string
+	stack int
+	extra int
+}
+
+var tests []testStruct
+
+func init() {
 	// We make errors inside a function so that the stack trace is
 	// different from errors made through errors.* call.
 	parentErr, noMsgErr := func() (errors.E, errors.E) {
@@ -90,12 +99,7 @@ func TestErrors(t *testing.T) {
 	currentStackSize := len(callers()) + 1
 	parentErrStackSize := len(parentErr.StackTrace())
 
-	tests := []struct {
-		err   error
-		want  string
-		stack int
-		extra int
-	}{
+	tests = append(tests, []testStruct{
 		// errors.New
 		{errors.New(""), "", currentStackSize, 0},
 		{errors.New("foo"), "foo", currentStackSize, 1},
@@ -255,23 +259,10 @@ func TestErrors(t *testing.T) {
 		// errors.Join.
 		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", currentStackSize, 4},
 		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", 3 * currentStackSize, 6},
-	}
+	}...)
+}
 
-	if !strings.HasPrefix(runtime.Version(), "go1.1") {
-		tests = append(tests, []struct {
-			err   error
-			want  string
-			stack int
-			extra int
-		}{
-			// errors.Errorf with multiple %w without stack
-			{errors.Errorf("%w, %w", errors.Base("foo1"), errors.Base("foo2")), "foo1, foo2", currentStackSize, 5},
-
-			// errors.Errorf with multiple %w with stack
-			{errors.Errorf("%w, %w", errors.New("foo1"), errors.New("foo2")), "foo1, foo2", 3 * currentStackSize, 7},
-		}...)
-	}
-
+func TestErrors(t *testing.T) {
 	for k, tt := range tests {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			assert.EqualError(t, tt.err, tt.want)
