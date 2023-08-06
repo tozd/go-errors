@@ -112,7 +112,7 @@ issues:
     - path: json_test\.go
       linters:
         - lll
-    - path: errors_test\.go
+    - path: errors_test.*\.go
       linters:
         - revive
         - staticcheck
