@@ -263,6 +263,21 @@ func TestErrors(t *testing.T) {
 		{errors.Errorf("%w, %w", errors.New("foo1"), errors.New("foo2")), "foo1, foo2", 3 * currentStackSize, 7},
 	}
 
+	if !strings.HasPrefix(runtime.Version(), "go1.1") {
+		tests = append(tests, []struct {
+			err   error
+			want  string
+			stack int
+			extra int
+		}{
+			// errors.Errorf with multiple %w without stack
+			{errors.Errorf("%w, %w", errors.Base("foo1"), errors.Base("foo2")), "foo1, foo2", currentStackSize, 5},
+
+			// errors.Errorf with multiple %w with stack
+			{errors.Errorf("%w, %w", errors.New("foo1"), errors.New("foo2")), "foo1, foo2", 3 * currentStackSize, 7},
+		}...)
+	}
+
 	for k, tt := range tests {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			assert.EqualError(t, tt.err, tt.want)
