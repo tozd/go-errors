@@ -2,6 +2,8 @@ package errors_test
 
 import (
 	"fmt"
+	"os"
+	"runtime"
 
 	"gitlab.com/tozd/go/errors"
 )
@@ -315,4 +317,20 @@ func ExampleJoin() {
 	// 		/usr/local/go/src/runtime/proc.go:250
 	// 	runtime.goexit
 	// 		/usr/local/go/src/runtime/asm_amd64.s:1598
+}
+
+func ExampleStackMarshalJSON() {
+	stack := make([]uintptr, 32)
+	n := runtime.Callers(1, stack)
+	j, err := errors.StackMarshalJSON(stack[0:n])
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(j))
+}
+
+func ExampleStackFormat() {
+	stack := make([]uintptr, 32)
+	n := runtime.Callers(1, stack)
+	_, _ = errors.StackFormat(os.Stdout, "%+v", stack[0:n])
 }

@@ -89,7 +89,7 @@ func (f frame) MarshalJSON() ([]byte, error) {
 type stack []uintptr
 
 // Format formats the stack of frames according to the fmt.Formatter interface.
-// For each frame in the stack, separated by \n:
+// For each frame in the stack, ended by \n:
 //
 //	%s	  lists the source file
 //	%d    lists the source line
@@ -162,12 +162,30 @@ func funcname(name string) string {
 }
 
 // StackFormat formats the provided stack trace as text.
+//
+// For each frame in the stack, separated by \n:
+//
+//	%s	  lists the source file
+//	%d    lists the source line
+//	%n    lists the function name
+//	%v	  lists the source file and source line
+//
+// Format accepts flags that alter the formatting of some verbs, as follows:
+//
+//	%+s   lists the full function name and full compile-time path of the source file,
+//	      separated by \n\t (<funcname>\n\t<path>)
+//	%+v   lists the full function name and full compile-time path of the source file
+//	      with the source line, separated by \n\t
+//	      (<funcname>\n\t<path>:<line>)
 func StackFormat(w io.Writer, format string, s []uintptr) (int, E) {
 	n, err := fmt.Fprintf(w, format, stack(s))
 	return n, WithStack(err)
 }
 
 // StackMarshalJSON marshals the provided stack trace as JSON.
+//
+// JSON consists of an array of frame objects, each with
+// (function) name, file (name), and line fields.
 func StackMarshalJSON(s []uintptr) ([]byte, E) {
 	b, err := stack(s).MarshalJSON()
 	return b, WithStack(err)
