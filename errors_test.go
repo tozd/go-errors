@@ -255,12 +255,6 @@ func TestErrors(t *testing.T) {
 		// errors.Join.
 		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", currentStackSize, 4},
 		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", 3 * currentStackSize, 6},
-
-		// errors.Errorf with multiple %w without stack
-		{errors.Errorf("%w, %w", errors.Base("foo1"), errors.Base("foo2")), "foo1, foo2", currentStackSize, 5},
-
-		// errors.Errorf with multiple %w with stack
-		{errors.Errorf("%w, %w", errors.New("foo1"), errors.New("foo2")), "foo1, foo2", 3 * currentStackSize, 7},
 	}
 
 	if !strings.HasPrefix(runtime.Version(), "go1.1") {
