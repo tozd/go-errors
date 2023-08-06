@@ -2,7 +2,6 @@ package errors_test
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 
 	"gitlab.com/tozd/go/errors"
@@ -332,5 +331,5 @@ func ExampleStackMarshalJSON() {
 func ExampleStackFormat() {
 	stack := make([]uintptr, 32)
 	n := runtime.Callers(1, stack)
-	_, _ = errors.StackFormat(os.Stdout, "%+v", stack[0:n])
+	fmt.Println(errors.StackFormat("%+v", stack[0:n]))
 }

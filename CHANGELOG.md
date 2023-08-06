@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `WithDetails` now accepts optional pairs of keys and values as initial details.
 - `Errorf` supports multiple `%w`.
 
+## Changed
+
+- Change `StackFormat` to return a string instead of writing to a writer.
+
 ## [0.5.0] - 2023-06-06
 
 ### Added

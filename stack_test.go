@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -187,13 +186,11 @@ func TestStackFormatFunc(t *testing.T) {
 			return callers().StackTrace()
 		}()
 	}()
-	buf := &strings.Builder{}
-	_, err := StackFormat(buf, "%+v", stack)
-	require.NoError(t, err)
+	output := StackFormat("%+v", stack)
 	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
 		"\t.+/stack_test.go:188\n"+
 		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
-		"\t.+/stack_test.go:189\n", buf.String())
+		"\t.+/stack_test.go:189\n", output)
 }
 
 func TestStackMarshalJSON(t *testing.T) {
