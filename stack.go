@@ -173,7 +173,7 @@ func funcname(name string) string {
 //	%n    lists the function name
 //	%v	  lists the source file and source line
 //
-// Format accepts flags that alter the formatting of some verbs, as follows:
+// StackFormat accepts flags that alter the formatting of some verbs, as follows:
 //
 //	%+s   lists the full function name and full compile-time path of the source file,
 //	      separated by \n\t (<funcname>\n\t<path>)
