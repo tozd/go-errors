@@ -191,6 +191,8 @@ func TestStackFormatFunc(t *testing.T) {
 		"\t.+/stack_test.go:187\n"+
 		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
 		"\t.+/stack_test.go:188\n", output)
+
+	assert.Equal(t, "", StackFormat("%+v", nil))
 }
 
 func TestStackMarshalJSON(t *testing.T) {
@@ -211,8 +213,12 @@ func TestStackMarshalJSON(t *testing.T) {
 	decoder.DisallowUnknownFields()
 	e := decoder.Decode(&d)
 	require.NoError(t, e)
-	assert.Equal(t, 201, d[0].Line)
-	assert.Equal(t, 202, d[1].Line)
+	assert.Equal(t, 203, d[0].Line)
+	assert.Equal(t, 204, d[1].Line)
+
+	j, err = StackMarshalJSON(nil)
+	require.NoError(t, err)
+	assert.Equal(t, "[]", string(j))
 }
 
 // A version of runtime.Caller that returns a frame, not a uintptr.

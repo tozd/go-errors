@@ -88,8 +88,11 @@ func (f frame) MarshalJSON() ([]byte, error) {
 // stack represents a stack of program counters.
 type stack []uintptr
 
-// Format formats the stack of frames according to the fmt.Formatter interface.
-// For each frame in the stack, ended by \n:
+// Format formats the stack of frames as text according to the fmt.Formatter interface.
+//
+// Each frame in the stack is formatted according to the format and is ended by a newline.
+//
+// The following verbs are supported:
 //
 //	%s	  lists the source file
 //	%d    lists the source line
@@ -119,6 +122,10 @@ func (s stack) Format(st fmt.State, verb rune) {
 }
 
 func (s stack) MarshalJSON() ([]byte, error) {
+	if len(s) == 0 {
+		return []byte("[]"), nil
+	}
+
 	output := []byte{'['}
 	frames := runtime.CallersFrames(s)
 	first := true
@@ -166,7 +173,9 @@ func funcname(name string) string {
 // The stack trace can come from errors in this package, from
 // runtime.Callers, or from somewhere else.
 //
-// For each frame in the stack, ended by \n:
+// Each frame in the stack is formatted according to the format and is ended by a newline.
+//
+// The following verbs are supported:
 //
 //	%s	  lists the source file
 //	%d    lists the source line
