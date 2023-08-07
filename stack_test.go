@@ -61,7 +61,7 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%d",
-		"^16$",
+		"^15$",
 	}, {
 		zeropc,
 		"%d",
@@ -91,12 +91,12 @@ func TestFrameFormat(t *testing.T) {
 	}, {
 		initpc,
 		"%v",
-		"^stack_test.go:16$",
+		"^stack_test.go:15$",
 	}, {
 		initpc,
 		"%+v",
 		"^gitlab.com/tozd/go/errors.init\n" +
-			"\t.+/stack_test.go:16$",
+			"\t.+/stack_test.go:15$",
 	}, {
 		zeropc,
 		"%v",
@@ -137,7 +137,7 @@ func TestStackFormat(t *testing.T) {
 		New("ooh"),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:138\n",
+			"\t.+/stack_test.go:137\n",
 	}, {
 		Wrap(
 			New("ooh"),
@@ -145,7 +145,7 @@ func TestStackFormat(t *testing.T) {
 		),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:143\n",
+			"\t.+/stack_test.go:142\n",
 	}, {
 		func() error {
 			noinline()
@@ -153,9 +153,9 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func1\n" +
-			"\t.+/stack_test.go:153\n" +
+			"\t.+/stack_test.go:152\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:154\n",
+			"\t.+/stack_test.go:153\n",
 	}, {
 		func() error {
 			return func() error {
@@ -165,11 +165,11 @@ func TestStackFormat(t *testing.T) {
 		}(),
 		"%+v",
 		"^gitlab.com/tozd/go/errors.TestStackFormat.func2.1\n" +
-			"\t.+/stack_test.go:164\n" +
+			"\t.+/stack_test.go:163\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat.func2\n" +
-			"\t.+/stack_test.go:165\n" +
+			"\t.+/stack_test.go:164\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
-			"\t.+/stack_test.go:166\n",
+			"\t.+/stack_test.go:165\n",
 	}}
 
 	for k, tt := range tests {
@@ -188,9 +188,9 @@ func TestStackFormatFunc(t *testing.T) {
 	}()
 	output := StackFormat("%+v", stack)
 	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
-		"\t.+/stack_test.go:188\n"+
+		"\t.+/stack_test.go:187\n"+
 		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
-		"\t.+/stack_test.go:189\n", output)
+		"\t.+/stack_test.go:188\n", output)
 }
 
 func TestStackMarshalJSON(t *testing.T) {
@@ -211,8 +211,8 @@ func TestStackMarshalJSON(t *testing.T) {
 	decoder.DisallowUnknownFields()
 	e := decoder.Decode(&d)
 	require.NoError(t, e)
-	assert.Equal(t, 204, d[0].Line)
-	assert.Equal(t, 205, d[1].Line)
+	assert.Equal(t, 201, d[0].Line)
+	assert.Equal(t, 202, d[1].Line)
 }
 
 // A version of runtime.Caller that returns a frame, not a uintptr.
