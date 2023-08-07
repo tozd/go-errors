@@ -163,6 +163,9 @@ func funcname(name string) string {
 
 // StackFormat formats the provided stack trace as text.
 //
+// The stack trace can come from errors in this package, from
+// runtime.Callers, or from somewhere else.
+//
 // For each frame in the stack, ended by \n:
 //
 //	%s	  lists the source file
@@ -182,6 +185,9 @@ func StackFormat(format string, s []uintptr) string {
 }
 
 // StackMarshalJSON marshals the provided stack trace as JSON.
+//
+// The stack trace can come from errors in this package, from
+// runtime.Callers, or from somewhere else.
 //
 // JSON consists of an array of frame objects, each with
 // (function) name, file (name), and line fields.

@@ -78,10 +78,11 @@ func Base(message string) error {
 // formatted according to a format specifier.
 // Each call to Basef returns a distinct error value even if the message is identical.
 // It does not record a stack trace. It supports %w format verb to wrap an existing error.
+// %w can be provided multiple times.
 //
 // Use this for a constant base error you convert to an actual error you return with
-// WithStack. This base error you can then use in Is and As calls. Use  %w format verb
-// when you want to create a hierarchy of base errors.
+// WithStack. This base error you can then use in Is and As calls. Use %w format verb
+// when you want to create a tree of base errors.
 //
 // This function is a proxy for standard fmt.Errorf.
 func Basef(format string, args ...interface{}) error {
@@ -93,7 +94,7 @@ func Basef(format string, args ...interface{}) error {
 // Each call to BaseWrap returns a distinct error value even if the message is identical.
 // It does not record a stack trace.
 //
-// Use this when you want to create a hierarchy of base errors and you want to fully
+// Use this when you want to create a tree of base errors and you want to fully
 // control the error message.
 func BaseWrap(err error, message string) error {
 	return &base{
@@ -105,9 +106,11 @@ func BaseWrap(err error, message string) error {
 // BaseWrapf returns an error with the supplied message
 // formatted according to a format specifier.
 // Each call to BaseWrapf returns a distinct error value even if the message is identical.
-// It does not record a stack trace. It does not support %w format verb. Use Basef if you need it.
+// It does not record a stack trace. It does not support %w format verb
+// (use %s instead if you need to incorporate error's error message, but then you can
+// also just use Basef).
 //
-// Use this when you want to create a hierarchy of base errors and you want to fully
+// Use this when you want to create a tree of base errors and you want to fully
 // control the error message.
 func BaseWrapf(err error, format string, args ...interface{}) error {
 	return &base{
