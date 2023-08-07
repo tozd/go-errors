@@ -237,6 +237,9 @@ func getExistingStackTrace(err error) []uintptr {
 	}
 }
 
+// prefixMessage eagerly builds a new message with the provided prefix.
+// This is a trade-off which consumes more memory but allows one to cheaply
+// call Error multiple times.
 func prefixMessage(msg, prefix string) string {
 	message := strings.Builder{}
 	if len(prefix) > 0 {
@@ -251,12 +254,27 @@ func prefixMessage(msg, prefix string) string {
 	return message.String()
 }
 
+// This is a trade-off which consumes more memory but allows one to cheaply
+// call Error multiple times.
+func joinMessages(errs []error) string {
+	// Same implementation as standard library's joinError's Error.
+	var b []byte
+	for i, err := range errs {
+		if i > 0 {
+			b = append(b, '\n')
+		}
+		b = append(b, err.Error()...)
+	}
+	return string(b)
+}
+
 // E interface can be used in as a return type instead of the standard error
 // interface to annotate which functions return an error with a stack trace
 // and details.
 // This is useful so that you know when you should use WithStack or WithDetails
 // (for functions which do not return E) and when not (for functions which do
 // return E).
+//
 // If you call WithStack on an error with a stack trace nothing bad happens
 // (same error is simply returned), it just pollutes the code. So this
 // interface is defined to help. (Calling WithDetails on an error with details
@@ -272,8 +290,9 @@ type E interface {
 // New also records the stack trace at the point it was called.
 func New(message string) E {
 	return &fundamental{
-		msg:   message,
-		stack: callers(),
+		msg:     message,
+		stack:   callers(),
+		details: nil,
 	}
 }
 
@@ -297,33 +316,34 @@ func Errorf(format string, args ...interface{}) E {
 	}
 	if len(errs) > 1 {
 		return &msgJoined{
-			errs,
-			err.Error(),
-			callers(),
-			nil,
+			errs:    errs,
+			msg:     err.Error(),
+			stack:   callers(),
+			details: nil,
 		}
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
 		switch unwrap.(type) {
 		case stackTracer, pkgStackTracer, goErrorsStackTracer:
 			return &msgWithStack{
-				unwrap,
-				err.Error(),
-				nil,
+				err:     unwrap,
+				msg:     err.Error(),
+				details: nil,
 			}
 		}
 
 		return &msgWithoutStack{
-			unwrap,
-			err.Error(),
-			callers(),
-			nil,
+			err:     unwrap,
+			msg:     err.Error(),
+			stack:   callers(),
+			details: nil,
 		}
 	}
 
 	return &fundamental{
-		msg:   err.Error(),
-		stack: callers(),
+		msg:     err.Error(),
+		stack:   callers(),
+		details: nil,
 	}
 }
 
@@ -450,15 +470,15 @@ func WithStack(err error) E {
 		return e
 	case stackTracer, pkgStackTracer, goErrorsStackTracer:
 		return &withStack{
-			err,
-			nil,
+			err:     err,
+			details: nil,
 		}
 	}
 
 	return &withoutStack{
-		err,
-		callers(),
-		nil,
+		err:     err,
+		stack:   callers(),
+		details: nil,
 	}
 }
 
@@ -531,10 +551,10 @@ func Wrap(err error, message string) E {
 		}
 	}
 	return &cause{
-		err,
-		message,
-		callers(),
-		nil,
+		err:     err,
+		msg:     message,
+		stack:   callers(),
+		details: nil,
 	}
 }
 
@@ -558,10 +578,10 @@ func Wrapf(err error, format string, args ...interface{}) E {
 		}
 	}
 	return &cause{
-		err,
-		fmt.Sprintf(format, args...),
-		callers(),
-		nil,
+		err:     err,
+		msg:     fmt.Sprintf(format, args...),
+		stack:   callers(),
+		details: nil,
 	}
 }
 
@@ -611,17 +631,17 @@ func WithMessage(err error, prefix string) E {
 	switch err.(type) {
 	case stackTracer, pkgStackTracer, goErrorsStackTracer:
 		return &msgWithStack{
-			err,
-			prefixMessage(err.Error(), prefix),
-			nil,
+			err:     err,
+			msg:     prefixMessage(err.Error(), prefix),
+			details: nil,
 		}
 	}
 
 	return &msgWithoutStack{
-		err,
-		prefixMessage(err.Error(), prefix),
-		callers(),
-		nil,
+		err:     err,
+		msg:     prefixMessage(err.Error(), prefix),
+		stack:   callers(),
+		details: nil,
 	}
 }
 
@@ -641,17 +661,17 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 	switch err.(type) {
 	case stackTracer, pkgStackTracer, goErrorsStackTracer:
 		return &msgWithStack{
-			err,
-			prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
-			nil,
+			err:     err,
+			msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
+			details: nil,
 		}
 	}
 
 	return &msgWithoutStack{
-		err,
-		prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
-		callers(),
-		nil,
+		err:     err,
+		msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
+		stack:   callers(),
+		details: nil,
 	}
 }
 
@@ -756,55 +776,21 @@ func WithDetails(err error, kv ...interface{}) E {
 	case E:
 		// This is where it is different from WithStack.
 		return &withStack{
-			err,
-			initMap,
+			err:     err,
+			details: initMap,
 		}
 	case stackTracer, pkgStackTracer, goErrorsStackTracer:
 		return &withStack{
-			err,
-			initMap,
+			err:     err,
+			details: initMap,
 		}
 	}
 
 	return &withoutStack{
-		err,
-		callers(),
-		initMap,
+		err:     err,
+		stack:   callers(),
+		details: initMap,
 	}
-}
-
-// joined wraps multiple errors
-// and has its own stack but no msg.
-type joined struct {
-	errs    []error
-	stack   stack
-	details map[string]interface{}
-}
-
-func (e *joined) Error() string {
-	var b []byte
-	for i, err := range e.errs {
-		if i > 0 {
-			b = append(b, '\n')
-		}
-		b = append(b, err.Error()...)
-	}
-	return string(b)
-}
-
-func (e *joined) Unwrap() []error {
-	return e.errs
-}
-
-func (e *joined) StackTrace() []uintptr {
-	return e.stack
-}
-
-func (e *joined) Details() map[string]interface{} {
-	if e.details == nil {
-		e.details = make(map[string]interface{})
-	}
-	return e.details
 }
 
 // Join returns an error that wraps the given errors.
@@ -817,46 +803,38 @@ func (e *joined) Details() map[string]interface{} {
 // by calling the Error method of each element of errs, with a newline
 // between each string.
 func Join(errs ...error) E {
-	n := 0
+	nonNilErrs := make([]error, 0, len(errs))
 	for _, err := range errs {
 		if err != nil {
-			n++
+			nonNilErrs = append(nonNilErrs, err)
 		}
 	}
-	if n == 0 {
-		return nil
-	} else if n == 1 {
-		for _, err := range errs {
-			if err != nil {
-				switch e := err.(type) {
-				case E:
-					return e
-				case stackTracer, pkgStackTracer, goErrorsStackTracer:
-					return &withStack{
-						err,
-						nil,
-					}
-				}
 
-				return &withoutStack{
-					err,
-					callers(),
-					nil,
-				}
+	if len(nonNilErrs) == 0 {
+		return nil
+	} else if len(nonNilErrs) == 1 {
+		err := nonNilErrs[0]
+		switch e := err.(type) {
+		case E:
+			return e
+		case stackTracer, pkgStackTracer, goErrorsStackTracer:
+			return &withStack{
+				err:     err,
+				details: nil,
 			}
 		}
-	}
 
-	e := &joined{
-		make([]error, 0, n),
-		callers(),
-		nil,
-	}
-	for _, err := range errs {
-		if err != nil {
-			e.errs = append(e.errs, err)
+		return &withoutStack{
+			err:     err,
+			stack:   callers(),
+			details: nil,
 		}
 	}
 
-	return e
+	return &msgJoined{
+		errs:    nonNilErrs,
+		msg:     joinMessages(nonNilErrs),
+		stack:   callers(),
+		details: nil,
+	}
 }

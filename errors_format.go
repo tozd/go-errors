@@ -172,30 +172,3 @@ func (e *cause) Format(s fmt.State, verb rune) {
 		fmt.Fprintf(s, "%q", e.msg)
 	}
 }
-
-func (e *joined) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			fmt.Fprintf(s, "multiple errors at (most recent call first):\n")
-			e.stack.Format(s, verb)
-			for _, err := range e.errs {
-				unwrap := fmt.Sprintf("%+v", err)
-				unwrap = strings.TrimRight(unwrap, "\n")
-				lines := strings.Split(unwrap, "\n")
-				for i := range lines {
-					lines[i] = "\t" + lines[i]
-				}
-				io.WriteString(s, "\n")
-				io.WriteString(s, strings.Join(lines, "\n"))
-				io.WriteString(s, "\n")
-			}
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, e.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", e.Error())
-	}
-}

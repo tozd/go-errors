@@ -87,21 +87,3 @@ func (e cause) MarshalJSON() ([]byte, error) {
 		Cause: jsonWrap,
 	})
 }
-
-func (e joined) MarshalJSON() ([]byte, error) {
-	jsonWraps := make([]json.RawMessage, 0, len(e.errs))
-	for _, err := range e.errs {
-		jsonWrap, e := marshalJSONAnyError(err)
-		if e != nil {
-			return nil, e
-		}
-		jsonWraps = append(jsonWraps, jsonWrap)
-	}
-	return marshalWithoutEscapeHTML(&struct {
-		Errors []json.RawMessage `json:"errors,omitempty"`
-		Stack  stack             `json:"stack,omitempty"`
-	}{
-		Errors: jsonWraps,
-		Stack:  e.stack,
-	})
-}
