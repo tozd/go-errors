@@ -189,7 +189,6 @@ package errors
 
 import (
 	"fmt"
-	"io"
 	"strings"
 	"unsafe"
 
@@ -202,6 +201,10 @@ type stackTracer interface {
 
 type pkgStackTracer interface {
 	StackTrace() pkgerrors.StackTrace
+}
+
+type goErrorsStackTracer interface {
+	Callers() []uintptr
 }
 
 type causer interface {
@@ -220,16 +223,49 @@ type detailer interface {
 	Details() map[string]interface{}
 }
 
+func getExistingStackTrace(err error) []uintptr {
+	switch e := err.(type) {
+	case stackTracer:
+		return e.StackTrace()
+	case pkgStackTracer:
+		st := e.StackTrace()
+		return *(*[]uintptr)(unsafe.Pointer(&st))
+	case goErrorsStackTracer:
+		return e.Callers()
+	default:
+		panic(New("not possible"))
+	}
+}
+
+func prefixMessage(msg, prefix string) string {
+	message := strings.Builder{}
+	if len(prefix) > 0 {
+		message.WriteString(prefix)
+		if prefix[len(prefix)-1] != '\n' && len(msg) > 0 {
+			message.WriteString(": ")
+		}
+	}
+	if len(msg) > 0 {
+		message.WriteString(msg)
+	}
+	return message.String()
+}
+
 // E interface can be used in as a return type instead of the standard error
-// interface to annotate which functions return an error with a stack trace.
-// This is useful so that you know when you should use WithStack (for functions
-// which do not return E) and when not (for functions which do return E).
+// interface to annotate which functions return an error with a stack trace
+// and details.
+// This is useful so that you know when you should use WithStack or WithDetails
+// (for functions which do not return E) and when not (for functions which do
+// return E).
 // If you call WithStack on an error with a stack trace nothing bad happens
 // (same error is simply returned), it just pollutes the code. So this
-// interface is defined to help.
+// interface is defined to help. (Calling WithDetails on an error with details
+// adds an additional and independent layer of details on
+// top of any existing details.)
 type E interface {
 	error
 	stackTracer
+	detailer
 }
 
 // New returns an error with the supplied message.
@@ -247,10 +283,6 @@ func New(message string) E {
 // Errorf also records the stack trace at the point it was called,
 // unless wrapped error already have a stack trace.
 // If %w is provided multiple times, then a stack trace is always recorded.
-//
-// When formatting the returned error using %+v, formatting
-// is not delegated to the wrapped error (when there is one),
-// giving you full control of the message and formatted error.
 func Errorf(format string, args ...interface{}) E {
 	err := fmt.Errorf(format, args...)
 	var errs []error
@@ -264,7 +296,7 @@ func Errorf(format string, args ...interface{}) E {
 		}
 	}
 	if len(errs) > 1 {
-		return &errorfJoined{
+		return &msgJoined{
 			errs,
 			err.Error(),
 			callers(),
@@ -272,21 +304,16 @@ func Errorf(format string, args ...interface{}) E {
 		}
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
-		if _, ok := unwrap.(stackTracer); ok {
-			return &errorf{
-				unwrap,
-				err.Error(),
-				nil,
-			}
-		} else if _, ok := unwrap.(pkgStackTracer); ok {
-			return &errorf{
+		switch unwrap.(type) {
+		case stackTracer, pkgStackTracer, goErrorsStackTracer:
+			return &msgWithStack{
 				unwrap,
 				err.Error(),
 				nil,
 			}
 		}
 
-		return &errorfWithStack{
+		return &msgWithoutStack{
 			unwrap,
 			err.Error(),
 			callers(),
@@ -303,205 +330,112 @@ func Errorf(format string, args ...interface{}) E {
 // fundamental is an error that has a message and a stack,
 // but does not wrap another error.
 type fundamental struct {
-	msg string
-	stack
+	msg     string
+	stack   stack
 	details map[string]interface{}
 }
 
-func (f *fundamental) Error() string {
-	return f.msg
+func (e *fundamental) Error() string {
+	return e.msg
 }
 
-func (f *fundamental) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			if len(f.msg) > 0 {
-				io.WriteString(s, f.msg)
-				if f.msg[len(f.msg)-1] != '\n' {
-					io.WriteString(s, "\n")
-				}
-			}
-			fmt.Fprintf(s, "stack trace (most recent call first):\n")
-			f.stack.Format(s, verb)
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, f.msg)
-	case 'q':
-		fmt.Fprintf(s, "%q", f.msg)
+func (e *fundamental) StackTrace() []uintptr {
+	return e.stack
+}
+
+func (e *fundamental) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
 	}
+	return e.details
 }
 
-func (f *fundamental) Details() map[string]interface{} {
-	if f.details == nil {
-		f.details = make(map[string]interface{})
-	}
-	return f.details
-}
-
-type errorf struct {
-	error
+// msgWithStack wraps another error with a stack
+// and has its own msg.
+type msgWithStack struct {
+	err     error
 	msg     string
 	details map[string]interface{}
 }
 
-func (w *errorf) Error() string {
-	return w.msg
+func (e *msgWithStack) Error() string {
+	return e.msg
 }
 
-func (w *errorf) Unwrap() error {
-	return w.error
+func (e *msgWithStack) Unwrap() error {
+	return e.err
 }
 
-func (w *errorf) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			if len(w.msg) > 0 {
-				io.WriteString(s, w.msg)
-				if w.msg[len(w.msg)-1] != '\n' {
-					io.WriteString(s, "\n")
-				}
-			}
-			fmt.Fprintf(s, "stack trace (most recent call first):\n")
-			stack(w.StackTrace()).Format(s, verb)
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.msg)
-	case 'q':
-		fmt.Fprintf(s, "%q", w.msg)
+func (e *msgWithStack) StackTrace() []uintptr {
+	return getExistingStackTrace(e.err)
+}
+
+func (e *msgWithStack) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
 	}
+	return e.details
 }
 
-func (w *errorf) StackTrace() []uintptr {
-	switch e := w.error.(type) {
-	case stackTracer:
-		return e.StackTrace()
-	case pkgStackTracer:
-		st := e.StackTrace()
-		return *(*[]uintptr)(unsafe.Pointer(&st))
-	default:
-		panic(New("not possible"))
-	}
-}
-
-func (w *errorf) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
-}
-
-type errorfWithStack struct {
-	error
-	msg string
-	stack
+// msgWithoutStack wraps another error without a stack
+// and has its own msg.
+type msgWithoutStack struct {
+	err     error
+	msg     string
+	stack   stack
 	details map[string]interface{}
 }
 
-func (w *errorfWithStack) Error() string {
-	return w.msg
+func (e *msgWithoutStack) Error() string {
+	return e.msg
 }
 
-func (w *errorfWithStack) Unwrap() error {
-	return w.error
+func (e *msgWithoutStack) Unwrap() error {
+	return e.err
 }
 
-func (w *errorfWithStack) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			if len(w.msg) > 0 {
-				io.WriteString(s, w.msg)
-				if w.msg[len(w.msg)-1] != '\n' {
-					io.WriteString(s, "\n")
-				}
-			}
-			fmt.Fprintf(s, "stack trace (most recent call first):\n")
-			w.stack.Format(s, verb)
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.msg)
-	case 'q':
-		fmt.Fprintf(s, "%q", w.msg)
+func (e *msgWithoutStack) StackTrace() []uintptr {
+	return e.stack
+}
+
+func (e *msgWithoutStack) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
 	}
+	return e.details
 }
 
-func (w *errorfWithStack) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
-}
-
-type errorfJoined struct {
-	errs []error
-	msg  string
-	stack
+// msgJoined wraps multiple errors
+// and has its own stack and msg.
+type msgJoined struct {
+	errs    []error
+	msg     string
+	stack   stack
 	details map[string]interface{}
 }
 
-func (w *errorfJoined) Error() string {
-	return w.msg
+func (e *msgJoined) Error() string {
+	return e.msg
 }
 
-func (w *errorfJoined) Unwrap() []error {
-	return w.errs
+func (e *msgJoined) Unwrap() []error {
+	return e.errs
 }
 
-func (w *errorfJoined) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			if len(w.msg) > 0 {
-				io.WriteString(s, w.msg)
-				if w.msg[len(w.msg)-1] != '\n' {
-					io.WriteString(s, "\n")
-				}
-			}
-			fmt.Fprintf(s, "multiple errors at (most recent call first):\n")
-			w.stack.Format(s, verb)
-			for _, err := range w.errs {
-				unwrap := fmt.Sprintf("%+v", err)
-				unwrap = strings.TrimRight(unwrap, "\n")
-				lines := strings.Split(unwrap, "\n")
-				for i := range lines {
-					lines[i] = "\t" + lines[i]
-				}
-				io.WriteString(s, "\n")
-				io.WriteString(s, strings.Join(lines, "\n"))
-				io.WriteString(s, "\n")
-			}
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.msg)
-	case 'q':
-		fmt.Fprintf(s, "%q", w.msg)
+func (e *msgJoined) StackTrace() []uintptr {
+	return e.stack
+}
+
+func (e *msgJoined) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
 	}
-}
-
-func (w *errorfJoined) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
+	return e.details
 }
 
 // WithStack annotates err with a stack trace at the point WithStack was called,
 // if err does not already have a stack trace.
 // If err is nil, WithStack returns nil.
-//
-// When formatting the returned error using %+v, formatting
-// is delegated to the wrapped error. The stack trace is added only
-// if the wrapped error does not already have it.
 //
 // Use this instead of Wrap when you just want to convert an existing error
 // into one with a stack trace. Use it as close to where the error originated
@@ -510,97 +444,75 @@ func WithStack(err error) E {
 	if err == nil {
 		return nil
 	}
-	if e, ok := err.(E); ok {
+
+	switch e := err.(type) {
+	case E:
 		return e
-	} else if _, ok := err.(pkgStackTracer); ok {
-		return &withPkgStack{
+	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+		return &withStack{
 			err,
 			nil,
 		}
 	}
 
-	return &withStack{
+	return &withoutStack{
 		err,
 		callers(),
 		nil,
 	}
 }
 
+// withStack wraps another error with a stack
+// and does not have its own msg.
 type withStack struct {
-	error
-	stack
+	err     error
 	details map[string]interface{}
 }
 
-func (w *withStack) Unwrap() error {
-	return w.error
+func (e *withStack) Error() string {
+	return e.err.Error()
 }
 
-func (w *withStack) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			unwrap := fmt.Sprintf("%+v", w.error)
-			if len(unwrap) > 0 {
-				io.WriteString(s, unwrap)
-				if unwrap[len(unwrap)-1] != '\n' {
-					io.WriteString(s, "\n")
-				}
-			}
-			fmt.Fprintf(s, "stack trace (most recent call first):\n")
-			w.stack.Format(s, verb)
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", w.Error())
+func (e *withStack) Unwrap() error {
+	return e.err
+}
+
+func (e *withStack) StackTrace() []uintptr {
+	return getExistingStackTrace(e.err)
+}
+
+func (e *withStack) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
 	}
+	return e.details
 }
 
-func (w *withStack) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
-}
-
-type withPkgStack struct {
-	error
+// withoutStack wraps another error without a stack
+// and does not have its own msg.
+type withoutStack struct {
+	err     error
+	stack   stack
 	details map[string]interface{}
 }
 
-func (w *withPkgStack) Unwrap() error {
-	return w.error
+func (e *withoutStack) Error() string {
+	return e.err.Error()
 }
 
-func (w *withPkgStack) StackTrace() []uintptr {
-	// We know error has pkgStackTracer interface because we construct it only then.
-	st := w.error.(pkgStackTracer).StackTrace()
-	return *(*[]uintptr)(unsafe.Pointer(&st))
+func (e *withoutStack) Unwrap() error {
+	return e.err
 }
 
-func (w *withPkgStack) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			fmt.Fprintf(s, "%+v", w.error)
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", w.Error())
+func (e *withoutStack) StackTrace() []uintptr {
+	return e.stack
+}
+
+func (e *withoutStack) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
 	}
-}
-
-func (w *withPkgStack) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
+	return e.details
 }
 
 // Wrap returns an error annotating err with a stack trace
@@ -608,9 +520,6 @@ func (w *withPkgStack) Details() map[string]interface{} {
 // Wrapping is done even if err already has a stack trace.
 // It records the original error as a cause.
 // If err is nil, Wrap behaves like New.
-//
-// When formatting the returned error using %+v, formatting
-// of the cause is delegated to the wrapped error.
 //
 // Use this when you want to make a new error,
 // preserving the cause of the new error.
@@ -621,7 +530,7 @@ func Wrap(err error, message string) E {
 			stack: callers(),
 		}
 	}
-	return &wrapped{
+	return &cause{
 		err,
 		message,
 		callers(),
@@ -634,12 +543,10 @@ func Wrap(err error, message string) E {
 // formatted according to a format specifier.
 // Wrapping is done even if err already has a stack trace.
 // It records the original error as a cause.
-// It does not support %w format verb.
+// It does not support %w format verb (use %s instead if you
+// need to incorporate cause's error message).
 // If err is nil, Wrapf behaves like Errorf, but without
 // support for %w format verb.
-//
-// When formatting the returned error using %+v, formatting
-// of the cause is delegated to the wrapped error.
 //
 // Use this when you want to make a new error,
 // preserving the cause of the new error.
@@ -650,7 +557,7 @@ func Wrapf(err error, format string, args ...interface{}) E {
 			stack: callers(),
 		}
 	}
-	return &wrapped{
+	return &cause{
 		err,
 		fmt.Sprintf(format, args...),
 		callers(),
@@ -658,60 +565,36 @@ func Wrapf(err error, format string, args ...interface{}) E {
 	}
 }
 
-type wrapped struct {
-	error
-	msg string
-	stack
+// cause records another error as a cause
+// and has its own stack and msg.
+type cause struct {
+	err     error
+	msg     string
+	stack   stack
 	details map[string]interface{}
 }
 
-func (w *wrapped) Error() string {
-	return w.msg
+func (e *cause) Error() string {
+	return e.msg
 }
 
-func (w *wrapped) Unwrap() error {
-	return w.error
+func (e *cause) Unwrap() error {
+	return e.err
 }
 
-func (w *wrapped) Cause() error {
-	return w.error
+func (e *cause) Cause() error {
+	return e.err
 }
 
-func (w *wrapped) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			if len(w.msg) > 0 {
-				io.WriteString(s, w.msg)
-				if w.msg[len(w.msg)-1] != '\n' {
-					io.WriteString(s, "\n")
-				}
-			}
-			fmt.Fprintf(s, "stack trace (most recent call first):\n")
-			w.stack.Format(s, verb)
-			unwrap := fmt.Sprintf("%+v", w.error)
-			if len(unwrap) > 0 {
-				io.WriteString(s, "\nthe above error was caused by the following error:\n\n")
-				io.WriteString(s, unwrap)
-				if unwrap[len(unwrap)-1] != '\n' {
-					io.WriteString(s, "\n")
-				}
-			}
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.msg)
-	case 'q':
-		fmt.Fprintf(s, "%q", w.msg)
+func (e *cause) StackTrace() []uintptr {
+	return e.stack
+}
+
+func (e *cause) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
 	}
-}
-
-func (w *wrapped) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
+	return e.details
 }
 
 // WithMessage annotates err with a prefix message.
@@ -719,33 +602,24 @@ func (w *wrapped) Details() map[string]interface{} {
 //
 // It does not support controlling the delimiter. Use Errorf if you need that.
 //
-// When formatting the returned error using %+v, formatting
-// is delegated to the wrapped error, prefixing it
-// with the message. The stack trace is added only
-// if the wrapped error does not already have it.
-//
 // If err is nil, WithMessage returns nil.
-func WithMessage(err error, message string) E {
+func WithMessage(err error, prefix string) E {
 	if err == nil {
 		return nil
 	}
-	if e, ok := err.(E); ok {
-		return &withMessage{
-			e,
-			message,
-			nil,
-		}
-	} else if _, ok := err.(pkgStackTracer); ok {
-		return &withMessage{
+
+	switch err.(type) {
+	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+		return &msgWithStack{
 			err,
-			message,
+			prefixMessage(err.Error(), prefix),
 			nil,
 		}
 	}
 
-	return &withMessageAndStack{
+	return &msgWithoutStack{
 		err,
-		message,
+		prefixMessage(err.Error(), prefix),
 		callers(),
 		nil,
 	}
@@ -758,174 +632,27 @@ func WithMessage(err error, message string) E {
 // It does not support %w format verb or controlling the delimiter.
 // Use Errorf if you need that.
 //
-// When formatting the returned error using %+v, formatting
-// is delegated to the wrapped error, prefixing it
-// with the message. The stack trace is added only
-// if the wrapped error does not already have it.
-//
 // If err is nil, WithMessagef returns nil.
 func WithMessagef(err error, format string, args ...interface{}) E {
 	if err == nil {
 		return nil
 	}
-	if _, ok := err.(stackTracer); ok {
-		return &withMessage{
+
+	switch err.(type) {
+	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+		return &msgWithStack{
 			err,
-			fmt.Sprintf(format, args...),
-			nil,
-		}
-	} else if _, ok := err.(pkgStackTracer); ok {
-		return &withMessage{
-			err,
-			fmt.Sprintf(format, args...),
+			prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
 			nil,
 		}
 	}
 
-	return &withMessageAndStack{
+	return &msgWithoutStack{
 		err,
-		fmt.Sprintf(format, args...),
+		prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
 		callers(),
 		nil,
 	}
-}
-
-type withMessage struct {
-	error
-	msg     string
-	details map[string]interface{}
-}
-
-func (w *withMessage) Error() string {
-	message := ""
-	unwrap := w.error.Error()
-	if len(w.msg) > 0 {
-		message += w.msg
-		if w.msg[len(w.msg)-1] != '\n' && len(unwrap) > 0 {
-			message += ": "
-		}
-	}
-	if len(unwrap) > 0 {
-		message += unwrap
-	}
-	return message
-}
-
-func (w *withMessage) Unwrap() error {
-	return w.error
-}
-
-func (w *withMessage) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			unwrap := fmt.Sprintf("%+v", w.error)
-			if len(w.msg) > 0 {
-				io.WriteString(s, w.msg)
-				if w.msg[len(w.msg)-1] != '\n' && len(unwrap) > 0 {
-					io.WriteString(s, ": ")
-				}
-			}
-			if len(unwrap) > 0 {
-				io.WriteString(s, unwrap)
-			}
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", w.Error())
-	}
-}
-
-func (w *withMessage) StackTrace() []uintptr {
-	switch e := w.error.(type) {
-	case stackTracer:
-		return e.StackTrace()
-	case pkgStackTracer:
-		st := e.StackTrace()
-		return *(*[]uintptr)(unsafe.Pointer(&st))
-	default:
-		panic(New("not possible"))
-	}
-}
-
-func (w *withMessage) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
-}
-
-type withMessageAndStack struct {
-	error
-	msg string
-	stack
-	details map[string]interface{}
-}
-
-func (w *withMessageAndStack) Error() string {
-	message := ""
-	unwrap := w.error.Error()
-	if len(w.msg) > 0 {
-		message += w.msg
-		if w.msg[len(w.msg)-1] != '\n' && len(unwrap) > 0 {
-			message += ": "
-		}
-	}
-	if len(unwrap) > 0 {
-		message += unwrap
-	}
-	return message
-}
-
-func (w *withMessageAndStack) Unwrap() error {
-	return w.error
-}
-
-func (w *withMessageAndStack) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			needsNewline := false
-			unwrap := fmt.Sprintf("%+v", w.error)
-			if len(w.msg) > 0 {
-				io.WriteString(s, w.msg)
-				if w.msg[len(w.msg)-1] != '\n' {
-					if len(unwrap) > 0 {
-						io.WriteString(s, ": ")
-					} else {
-						needsNewline = true
-					}
-				}
-			}
-			if len(unwrap) > 0 {
-				io.WriteString(s, unwrap)
-				if unwrap[len(unwrap)-1] != '\n' {
-					needsNewline = true
-				}
-			}
-			if needsNewline {
-				io.WriteString(s, "\n")
-			}
-			fmt.Fprintf(s, "stack trace (most recent call first):\n")
-			w.stack.Format(s, verb)
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", w.Error())
-	}
-}
-
-func (w *withMessageAndStack) Details() map[string]interface{} {
-	if w.details == nil {
-		w.details = make(map[string]interface{})
-	}
-	return w.details
 }
 
 // Cause returns the result of calling the Cause method on err, if err's
@@ -982,47 +709,6 @@ func initializeDetails(err error) {
 	}
 }
 
-type withDetails struct {
-	error
-	details map[string]interface{}
-}
-
-func (w *withDetails) Unwrap() error {
-	return w.error
-}
-
-func (w *withDetails) Format(s fmt.State, verb rune) {
-	if f, ok := w.error.(interface {
-		Format(s fmt.State, verb rune)
-	}); ok {
-		f.Format(s, verb)
-		return
-	}
-
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			fmt.Fprintf(s, "%+v", w.error)
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, w.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", w.Error())
-	}
-}
-
-func (w *withDetails) StackTrace() []uintptr {
-	// We know error has stackTracer interface because we construct it only then.
-	return w.error.(stackTracer).StackTrace()
-}
-
-func (w *withDetails) Details() map[string]interface{} {
-	// Map is always initialized when constructing withDetails.
-	return w.details
-}
-
 // WithDetails wraps err implementing the detailer interface to access
 // a map with optional additional details about the error.
 //
@@ -1032,7 +718,7 @@ func (w *withDetails) Details() map[string]interface{} {
 // Use this when you have an err which implements stackTracer interface
 // but does not implement detailer interface as well.
 //
-// It is useful when err does implement detailer interface, but you want
+// It is also useful when err does implement detailer interface, but you want
 // to reuse same err multiple times (e.g., pass same err to multiple
 // goroutines), adding different details each time. Calling WithDetails
 // wraps err and adds an additional and independent layer of details on
@@ -1066,33 +752,36 @@ func WithDetails(err error, kv ...interface{}) E {
 	// nil maps first.
 	initializeDetails(err)
 
-	if _, ok := err.(E); ok {
+	switch err.(type) {
+	case E:
 		// This is where it is different from WithStack.
-		return &withDetails{
+		return &withStack{
 			err,
 			initMap,
 		}
-	} else if _, ok := err.(pkgStackTracer); ok {
-		return &withPkgStack{
+	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+		return &withStack{
 			err,
 			initMap,
 		}
 	}
 
-	return &withStack{
+	return &withoutStack{
 		err,
 		callers(),
 		initMap,
 	}
 }
 
-type joinError struct {
-	errs []error
-	stack
+// joined wraps multiple errors
+// and has its own stack but no msg.
+type joined struct {
+	errs    []error
+	stack   stack
 	details map[string]interface{}
 }
 
-func (e *joinError) Error() string {
+func (e *joined) Error() string {
 	var b []byte
 	for i, err := range e.errs {
 		if i > 0 {
@@ -1103,38 +792,15 @@ func (e *joinError) Error() string {
 	return string(b)
 }
 
-func (e *joinError) Unwrap() []error {
+func (e *joined) Unwrap() []error {
 	return e.errs
 }
 
-func (e *joinError) Format(s fmt.State, verb rune) {
-	switch verb {
-	case 'v':
-		if s.Flag('+') {
-			fmt.Fprintf(s, "multiple errors at (most recent call first):\n")
-			e.stack.Format(s, verb)
-			for _, err := range e.errs {
-				unwrap := fmt.Sprintf("%+v", err)
-				unwrap = strings.TrimRight(unwrap, "\n")
-				lines := strings.Split(unwrap, "\n")
-				for i := range lines {
-					lines[i] = "\t" + lines[i]
-				}
-				io.WriteString(s, "\n")
-				io.WriteString(s, strings.Join(lines, "\n"))
-				io.WriteString(s, "\n")
-			}
-			return
-		}
-		fallthrough
-	case 's':
-		io.WriteString(s, e.Error())
-	case 'q':
-		fmt.Fprintf(s, "%q", e.Error())
-	}
+func (e *joined) StackTrace() []uintptr {
+	return e.stack
 }
 
-func (e *joinError) Details() map[string]interface{} {
+func (e *joined) Details() map[string]interface{} {
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -1145,8 +811,7 @@ func (e *joinError) Details() map[string]interface{} {
 // Join also records the stack trace at the point it was called.
 // Any nil error values are discarded.
 // Join returns nil if errs contains no non-nil values.
-// If there is only one non-nil value, it is returned as is
-// if it already has a stack trace, otherwise Join behaves
+// If there is only one non-nil value, Join behaves
 // like WithStack on the non-nil value.
 // The error formats as the concatenation of the strings obtained
 // by calling the Error method of each element of errs, with a newline
@@ -1163,16 +828,17 @@ func Join(errs ...error) E {
 	} else if n == 1 {
 		for _, err := range errs {
 			if err != nil {
-				if e, ok := err.(E); ok {
+				switch e := err.(type) {
+				case E:
 					return e
-				} else if _, ok := err.(pkgStackTracer); ok {
-					return &withPkgStack{
+				case stackTracer, pkgStackTracer, goErrorsStackTracer:
+					return &withStack{
 						err,
 						nil,
 					}
 				}
 
-				return &withStack{
+				return &withoutStack{
 					err,
 					callers(),
 					nil,
@@ -1181,7 +847,7 @@ func Join(errs ...error) E {
 		}
 	}
 
-	e := &joinError{
+	e := &joined{
 		make([]error, 0, n),
 		callers(),
 		nil,
