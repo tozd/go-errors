@@ -35,25 +35,22 @@ func (f frame) name() string {
 	return f.Function
 }
 
-// Format formats the frame according to the fmt.Formatter interface.
-//
-//	%s    the source file
-//	%d    the source line
-//	%n    the function name
-//	%v    equivalent to %s:%d
-//
-// Format accepts flags that alter the formatting of some verbs, as follows:
-//
-//	%+s   the full function name and full compile-time path of the source file,
-//	      separated by \n\t (<funcname>\n\t<path>)
-//	%+v   equivalent to %+s:%d
+// Format formats the frame as text according to the fmt.Formatter interface.
 func (f frame) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
 		switch {
 		case s.Flag('+'):
 			io.WriteString(s, f.name())
-			io.WriteString(s, "\n\t")
+			width, ok := s.Width()
+			if ok {
+				io.WriteString(s, "\n")
+				for i := 0; i < width; i++ {
+					io.WriteString(s, " ")
+				}
+			} else {
+				io.WriteString(s, "\n\t")
+			}
 			io.WriteString(s, f.file())
 		default:
 			io.WriteString(s, path.Base(f.file()))
@@ -91,23 +88,6 @@ func (f frame) MarshalJSON() ([]byte, error) {
 type stack []uintptr
 
 // Format formats the stack of frames as text according to the fmt.Formatter interface.
-//
-// Each frame in the stack is formatted according to the format and is ended by a newline.
-//
-// The following verbs are supported:
-//
-//	%s	  lists the source file
-//	%d    lists the source line
-//	%n    lists the function name
-//	%v	  lists the source file and source line
-//
-// Format accepts flags that alter the formatting of some verbs, as follows:
-//
-//	%+s   lists the full function name and full compile-time path of the source file,
-//	      separated by \n\t (<funcname>\n\t<path>)
-//	%+v   lists the full function name and full compile-time path of the source file
-//	      with the source line, separated by \n\t
-//	      (<funcname>\n\t<path>:<line>)
 func (s stack) Format(st fmt.State, verb rune) {
 	if len(s) == 0 {
 		return
@@ -179,18 +159,21 @@ func funcname(name string) string {
 //
 // The following verbs are supported:
 //
-//	%s	  lists the source file
-//	%d    lists the source line
-//	%n    lists the function name
-//	%v	  lists the source file and source line
+//	%s	  lists the source file basename
+//	%d    lists the source line number
+//	%n    lists the short function name
+//	%v	  equivalent to %s:%d
 //
 // StackFormat accepts flags that alter the formatting of some verbs, as follows:
 //
 //	%+s   lists the full function name and full compile-time path of the source file,
 //	      separated by \n\t (<funcname>\n\t<path>)
 //	%+v   lists the full function name and full compile-time path of the source file
-//	      with the source line, separated by \n\t
+//	      with the source line number, separated by \n\t
 //	      (<funcname>\n\t<path>:<line>)
+//
+// StackFormat also accepts the width argument, which controls the width of the indent
+// in spaces. The default (no width argument) indents with a tab.
 func StackFormat(format string, s []uintptr) string {
 	return fmt.Sprintf(format, stack(s))
 }

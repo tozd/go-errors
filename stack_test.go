@@ -192,10 +192,37 @@ func TestStackFormatFunc(t *testing.T) {
 		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
 		"\t.+/stack_test.go:188\n", StackFormat("%+v", stack))
 
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
+		"\t.+/stack_test.go\n"+
+		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
+		"\t.+/stack_test.go\n", StackFormat("%+s", stack))
+
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
+		"  .+/stack_test.go:187\n"+
+		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
+		"  .+/stack_test.go:188\n", StackFormat("%+2v", stack))
+
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
+		"  .+/stack_test.go\n"+
+		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
+		"  .+/stack_test.go\n", StackFormat("%+2s", stack))
+
 	assert.Equal(t, "", StackFormat("%+v", nil))
 
 	assert.Regexp(t, "^%!f\\(errors.frame=stack_test.go:187\\)\n"+
 		"%!f\\(errors.frame=stack_test.go:188\\)\n", StackFormat("%f", stack))
+
+	assert.Regexp(t, "^stack_test.go\n"+
+		"stack_test.go\n", StackFormat("%s", stack))
+
+	assert.Regexp(t, "^187\n"+
+		"188\n", StackFormat("%d", stack))
+
+	assert.Regexp(t, "^TestStackFormatFunc.func1\n"+
+		"TestStackFormatFunc\n", StackFormat("%n", stack))
+
+	assert.Regexp(t, "^stack_test.go:187\n"+
+		"stack_test.go:188\n", StackFormat("%v", stack))
 }
 
 func TestStackMarshalJSON(t *testing.T) {
