@@ -186,13 +186,16 @@ func TestStackFormatFunc(t *testing.T) {
 			return callers().StackTrace()
 		}()
 	}()
-	output := StackFormat("%+v", stack)
+
 	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
 		"\t.+/stack_test.go:187\n"+
 		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
-		"\t.+/stack_test.go:188\n", output)
+		"\t.+/stack_test.go:188\n", StackFormat("%+v", stack))
 
 	assert.Equal(t, "", StackFormat("%+v", nil))
+
+	assert.Regexp(t, "^%!f\\(errors.frame=stack_test.go:187\\)\n"+
+		"%!f\\(errors.frame=stack_test.go:188\\)\n", StackFormat("%f", stack))
 }
 
 func TestStackMarshalJSON(t *testing.T) {
@@ -213,8 +216,8 @@ func TestStackMarshalJSON(t *testing.T) {
 	decoder.DisallowUnknownFields()
 	e := decoder.Decode(&d)
 	require.NoError(t, e)
-	assert.Equal(t, 203, d[0].Line)
-	assert.Equal(t, 204, d[1].Line)
+	assert.Equal(t, 206, d[0].Line)
+	assert.Equal(t, 207, d[1].Line)
 
 	j, err = StackMarshalJSON(nil)
 	require.NoError(t, err)

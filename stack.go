@@ -66,6 +66,8 @@ func (f frame) Format(s fmt.State, verb rune) {
 		f.Format(s, 's')
 		io.WriteString(s, ":")
 		f.Format(s, 'd')
+	default:
+		badVerb(s, verb, f)
 	}
 }
 
