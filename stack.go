@@ -172,7 +172,7 @@ func funcname(name string) string {
 //	      with the source line number, separated by \n\t
 //	      (<funcname>\n\t<path>:<line>)
 //
-// StackFormat also accepts the width argument, which controls the width of the indent
+// StackFormat also accepts the width argument which controls the width of the indent
 // in spaces. The default (no width argument) indents with a tab.
 func StackFormat(format string, s []uintptr) string {
 	return fmt.Sprintf(format, stack(s))
