@@ -134,9 +134,9 @@ func init() {
 		{errors.WithStack(parentErr), "parent", parentErrStackSize, 1},
 		{errors.WithStack(noMsgErr), "", parentErrStackSize, 0},
 
-		// errors.WithStack and parent with custom %+v
-		{errors.WithStack(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 2},
-		{errors.WithStack(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 2},
+		// errors.WithStack and parent with custom %+v which is ignored
+		{errors.WithStack(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 1},
+		{errors.WithStack(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 1},
 
 		// errors.WithDetails and parent without stack
 		{errors.WithDetails(io.EOF), "EOF", currentStackSize, 1},
@@ -148,9 +148,9 @@ func init() {
 		{errors.WithDetails(parentErr), "parent", parentErrStackSize, 1},
 		{errors.WithDetails(noMsgErr), "", parentErrStackSize, 0},
 
-		// errors.WithDetails and parent with custom %+v
-		{errors.WithDetails(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 2},
-		{errors.WithDetails(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 2},
+		// errors.WithDetails and parent with custom %+v which is ignored
+		{errors.WithDetails(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 1},
+		{errors.WithDetails(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 1},
 
 		// errors.WithMessage and parent without stack
 		{errors.WithMessage(parentNoStackErr, "read error"), "read error: parent", currentStackSize, 1},
@@ -168,16 +168,15 @@ func init() {
 		{errors.WithMessage(parentErr, ""), "parent", parentErrStackSize, 1},
 		{errors.WithMessage(parentErr, "read error\n"), "read error\nparent", parentErrStackSize, 2},
 		{errors.WithMessage(noMsgErr, ""), "", parentErrStackSize, 0},
-		// "read error" is prefixed to the parent's stack trace output, so there is no extra line for the error message
-		{errors.WithMessage(noMsgErr, "read error"), "read error", parentErrStackSize, 0},
+		{errors.WithMessage(noMsgErr, "read error"), "read error", parentErrStackSize, 1},
 
-		// errors.WithMessage and parent with custom %+v and no stack
-		{errors.WithMessage(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error: foobar", currentStackSize, 2},
-		{errors.WithMessage(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error: foobar", currentStackSize, 2},
+		// errors.WithMessage and parent with custom %+v which is ignored and no stack
+		{errors.WithMessage(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error: foobar", currentStackSize, 1},
+		{errors.WithMessage(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error: foobar", currentStackSize, 1},
 
-		// errors.WithMessage and parent with custom %+v and stack
-		{errors.WithMessage(parentWithFormat1Err, "read error"), "read error: foobar", parentErrStackSize, 2},
-		{errors.WithMessage(parentWithFormat2Err, "read error"), "read error: foobar", parentErrStackSize, 2},
+		// errors.WithMessage and parent with custom %+v which is ignored and stack
+		{errors.WithMessage(parentWithFormat1Err, "read error"), "read error: foobar", parentErrStackSize, 1},
+		{errors.WithMessage(parentWithFormat2Err, "read error"), "read error: foobar", parentErrStackSize, 1},
 
 		// errors.WithMessagef
 		{errors.WithMessagef(parentNoStackErr, "read error %d", 1), "read error 1: parent", currentStackSize, 1},
@@ -191,8 +190,8 @@ func init() {
 		{errors.Wrap(parentNoStackErr, "read error\n"), "read error\n", currentStackSize, 3 + 2},
 		{errors.Wrap(io.EOF, "read error"), "read error", currentStackSize, 3 + 2},
 		// There is no "the above error was caused by the following error" message.
-		{errors.Wrap(noMsgNoStackErr, "read error"), "read error", currentStackSize, 1},
-		{errors.Wrap(noMsgNoStackErr, ""), "", currentStackSize, 0},
+		{errors.Wrap(noMsgNoStackErr, "read error"), "read error", currentStackSize, 3 + 1},
+		{errors.Wrap(noMsgNoStackErr, ""), "", currentStackSize, 3 + 0},
 
 		// errors.Wrap and parent with stack, there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
@@ -208,11 +207,11 @@ func init() {
 		{errors.Wrap(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error", currentStackSize, 3 + 3},
 		{errors.Wrap(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error", currentStackSize, 3 + 3},
 
-		// errors.Wrap and parent with custom %+v and stack there are three lines extra for
+		// errors.Wrap and parent with custom %+v (which is ignored) and stack there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
 		// + 1 for additional stack trace (most recent call first)" line
-		{errors.Wrap(parentWithFormat1Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3 + 1},
-		{errors.Wrap(parentWithFormat2Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3 + 1},
+		{errors.Wrap(parentWithFormat1Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.Wrap(parentWithFormat2Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2 + 1},
 
 		// errors.Wrapf
 		{errors.Wrapf(parentNoStackErr, "read error %d", 1), "read error 1", currentStackSize, 3 + 2},
@@ -224,18 +223,12 @@ func init() {
 		{errors.Errorf("read error with parent: %w", parentPkgError), "read error with parent: parent", parentErrStackSize, 1},
 
 		// errors.WithStack and github.com/pkg/errors parent,
-		// formatting is fully done by parentPkgError in this case,
-		// there is still one line for the error message, but
-		// there is no "stack trace (most recent call first)" line,
-		// and no final newline
-		{errors.WithStack(parentPkgError), "parent", parentErrStackSize, 1 - 1 - 1},
+		// we format the stack trace in this case
+		{errors.WithStack(parentPkgError), "parent", parentErrStackSize, 1},
 
 		// errors.WithDetails and github.com/pkg/errors parent,
-		// formatting is fully done by parentPkgError in this case,
-		// there is still one line for the error message, but
-		// there is no "stack trace (most recent call first)" line,
-		// and no final newline
-		{errors.WithDetails(parentPkgError), "parent", parentErrStackSize, 1 - 1 - 1},
+		// we format the stack trace in this case
+		{errors.WithDetails(parentPkgError), "parent", parentErrStackSize, 1},
 
 		// errors.Wrap and github.com/pkg/errors parent,
 		// formatting of the cause is fully done by parentPkgError in this case,
@@ -246,19 +239,16 @@ func init() {
 		{errors.Wrap(parentPkgError, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2},
 
 		// errors.WithMessage and github.com/pkg/errors parent,
-		// formatting of the cause is fully done by parentPkgError in this case,
-		// additional message is just prefixed, there is still one line for the
-		// error message, but there is no "stack trace (most recent call first)" line,
-		// and no final newline
-		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", parentErrStackSize, 1 - 1 - 1},
+		// we format the stack trace in this case
+		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", parentErrStackSize, 1},
 
 		// Wrap behaves like New and Errorf if provided error is nil.
 		{errors.Wrap(nil, "foo"), "foo", currentStackSize, 1},
 		{errors.Wrap(nil, "read error without format specifiers"), "read error without format specifiers", currentStackSize, 1},
 
 		// errors.Join.
-		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", currentStackSize, 4},
-		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", 3 * currentStackSize, 6},
+		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", currentStackSize, 2 + 3 + 1 + 1 + 1},
+		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", 3 * currentStackSize, 2 + 3 + 2 + 3},
 	}...)
 }
 
@@ -270,8 +260,8 @@ func TestErrors(t *testing.T) {
 			assert.Equal(t, tt.want, fmt.Sprintf("%s", tt.err))
 			assert.Equal(t, tt.want, fmt.Sprintf("%v", tt.err))
 			assert.Equal(t, fmt.Sprintf("%q", tt.want), fmt.Sprintf("%q", tt.err))
-			stackTrace := fmt.Sprintf("%+v", tt.err)
-			// Expected stack size (2 lines per frame), plus "Stack trace
+			stackTrace := fmt.Sprintf("% +-.1v", tt.err)
+			// Expected stack size (2 lines per frame), plus "stack trace
 			// (most recent call first)" line, plus extra lines.
 			assert.Equal(t, tt.stack*2+1+tt.extra, strings.Count(stackTrace, "\n"), stackTrace)
 		})
@@ -334,8 +324,8 @@ func TestBases(t *testing.T) {
 	err := errors.WithStack(parent)
 	assert.EqualError(t, err, "parent")
 	assert.Implements(t, (*stackTracer)(nil), err)
-	stackTrace := fmt.Sprintf("%+v", err)
-	// Expected stack size (2 lines per frame), plus "Stack trace
+	stackTrace := fmt.Sprintf("% +-v", err)
+	// Expected stack size (2 lines per frame), plus "stack trace
 	// (most recent call first)" line, plus extra lines.
 	assert.Equal(t, currentStackSize*2+1+1, strings.Count(stackTrace, "\n"), stackTrace)
 	assert.ErrorIs(t, err, parent)

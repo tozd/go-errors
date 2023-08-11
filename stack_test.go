@@ -128,7 +128,7 @@ func TestFuncname(t *testing.T) {
 	}
 }
 
-func TestStackFormat(t *testing.T) {
+func TestStackFormatter(t *testing.T) {
 	tests := []struct {
 		err    error
 		format string
@@ -136,7 +136,7 @@ func TestStackFormat(t *testing.T) {
 	}{{
 		New("ooh"),
 		"%+v",
-		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
+		"^gitlab.com/tozd/go/errors.TestStackFormatter\n" +
 			"\t.+/stack_test.go:137\n",
 	}, {
 		Wrap(
@@ -144,7 +144,7 @@ func TestStackFormat(t *testing.T) {
 			"ahh",
 		),
 		"%+v",
-		"^gitlab.com/tozd/go/errors.TestStackFormat\n" +
+		"^gitlab.com/tozd/go/errors.TestStackFormatter\n" +
 			"\t.+/stack_test.go:142\n",
 	}, {
 		func() error {
@@ -152,9 +152,9 @@ func TestStackFormat(t *testing.T) {
 			return New("ooh")
 		}(),
 		"%+v",
-		"^gitlab.com/tozd/go/errors.TestStackFormat.func1\n" +
+		"^gitlab.com/tozd/go/errors.TestStackFormatter.func1\n" +
 			"\t.+/stack_test.go:152\n" +
-			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
+			"gitlab.com/tozd/go/errors.TestStackFormatter\n" +
 			"\t.+/stack_test.go:153\n",
 	}, {
 		func() error {
@@ -164,75 +164,73 @@ func TestStackFormat(t *testing.T) {
 			}()
 		}(),
 		"%+v",
-		"^gitlab.com/tozd/go/errors.TestStackFormat.func2.1\n" +
+		"^gitlab.com/tozd/go/errors.TestStackFormatter.func2.1\n" +
 			"\t.+/stack_test.go:163\n" +
-			"gitlab.com/tozd/go/errors.TestStackFormat.func2\n" +
+			"gitlab.com/tozd/go/errors.TestStackFormatter.func2\n" +
 			"\t.+/stack_test.go:164\n" +
-			"gitlab.com/tozd/go/errors.TestStackFormat\n" +
+			"gitlab.com/tozd/go/errors.TestStackFormatter\n" +
 			"\t.+/stack_test.go:165\n",
 	}}
 
 	for k, tt := range tests {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, stack(tt.err.(stackTracer).StackTrace())))
+			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, StackFormatter(tt.err.(stackTracer).StackTrace())))
 		})
 	}
-}
 
-func TestStackFormatFunc(t *testing.T) {
 	stack := func() []uintptr {
 		return func() []uintptr {
 			noinline()
-			return callers().StackTrace()
+			return []uintptr(callers())
 		}()
 	}()
 
-	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
-		"\t.+/stack_test.go:187\n"+
-		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
-		"\t.+/stack_test.go:188\n", StackFormat("%+v", stack))
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatter.func4\n"+
+		"\t.+/stack_test.go:185\n"+
+		"gitlab.com/tozd/go/errors.TestStackFormatter\n"+
+		"\t.+/stack_test.go:186\n", fmt.Sprintf("%+v", StackFormatter(stack)))
 
-	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatter.func4\n"+
 		"\t.+/stack_test.go\n"+
-		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
-		"\t.+/stack_test.go\n", StackFormat("%+s", stack))
+		"gitlab.com/tozd/go/errors.TestStackFormatter\n"+
+		"\t.+/stack_test.go\n", fmt.Sprintf("%+s", StackFormatter(stack)))
 
-	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
-		"  .+/stack_test.go:187\n"+
-		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
-		"  .+/stack_test.go:188\n", StackFormat("%+2v", stack))
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatter.func4\n"+
+		"  .+/stack_test.go:185\n"+
+		"gitlab.com/tozd/go/errors.TestStackFormatter\n"+
+		"  .+/stack_test.go:186\n", fmt.Sprintf("%+2v", StackFormatter(stack)))
 
-	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatFunc.func1\n"+
+	assert.Regexp(t, "^gitlab.com/tozd/go/errors.TestStackFormatter.func4\n"+
 		"  .+/stack_test.go\n"+
-		"gitlab.com/tozd/go/errors.TestStackFormatFunc\n"+
-		"  .+/stack_test.go\n", StackFormat("%+2s", stack))
+		"gitlab.com/tozd/go/errors.TestStackFormatter\n"+
+		"  .+/stack_test.go\n", fmt.Sprintf("%+2s", StackFormatter(stack)))
 
-	assert.Equal(t, "", StackFormat("%+v", nil))
+	assert.Equal(t, "", fmt.Sprintf("%+v", StackFormatter(nil)))
 
-	assert.Regexp(t, "^%!f\\(errors.frame=stack_test.go:187\\)\n"+
-		"%!f\\(errors.frame=stack_test.go:188\\)\n", StackFormat("%f", stack))
+	assert.Regexp(t, "^%!f\\(errors.frame=stack_test.go:185\\)\n"+
+		"%!f\\(errors.frame=stack_test.go:186\\)\n", fmt.Sprintf("%f", StackFormatter(stack)))
 
 	assert.Regexp(t, "^stack_test.go\n"+
-		"stack_test.go\n", StackFormat("%s", stack))
+		"stack_test.go\n", fmt.Sprintf("%s", StackFormatter(stack)))
 
-	assert.Regexp(t, "^187\n"+
-		"188\n", StackFormat("%d", stack))
+	assert.Regexp(t, "^185\n"+
+		"186\n", fmt.Sprintf("%d", StackFormatter(stack)))
 
-	assert.Regexp(t, "^TestStackFormatFunc.func1\n"+
-		"TestStackFormatFunc\n", StackFormat("%n", stack))
+	assert.Regexp(t, "^TestStackFormatter.func4\n"+
+		"TestStackFormatter\n", fmt.Sprintf("%n", StackFormatter(stack)))
 
-	assert.Regexp(t, "^stack_test.go:187\n"+
-		"stack_test.go:188\n", StackFormat("%v", stack))
+	assert.Regexp(t, "^stack_test.go:185\n"+
+		"stack_test.go:186\n", fmt.Sprintf("%v", StackFormatter(stack)))
 }
 
 func TestStackMarshalJSON(t *testing.T) {
 	stack := func() []uintptr {
 		return func() []uintptr {
 			noinline()
-			return callers().StackTrace()
+			return []uintptr(callers())
 		}()
 	}()
-	j, err := StackMarshalJSON(stack)
+	j, err := json.Marshal(StackFormatter(stack))
 	require.NoError(t, err)
 	var d []struct {
 		Name string `json:"name"`
@@ -243,10 +241,10 @@ func TestStackMarshalJSON(t *testing.T) {
 	decoder.DisallowUnknownFields()
 	e := decoder.Decode(&d)
 	require.NoError(t, e)
-	assert.Equal(t, 206, d[0].Line)
-	assert.Equal(t, 207, d[1].Line)
+	assert.Equal(t, 231, d[0].Line)
+	assert.Equal(t, 232, d[1].Line)
 
-	j, err = StackMarshalJSON(nil)
+	j, err = json.Marshal(StackFormatter(nil))
 	require.NoError(t, err)
 	assert.Equal(t, "[]", string(j))
 }

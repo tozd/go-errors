@@ -45,9 +45,7 @@ func (f frame) Format(s fmt.State, verb rune) {
 			width, ok := s.Width()
 			if ok {
 				io.WriteString(s, "\n")
-				for i := 0; i < width; i++ {
-					io.WriteString(s, " ")
-				}
+				io.WriteString(s, strings.Repeat(" ", width))
 			} else {
 				io.WriteString(s, "\n\t")
 			}
@@ -84,11 +82,41 @@ func (f frame) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// stack represents a stack of program counters.
-type stack []uintptr
+// StackFormatter formats a provided stack trace as text using
+// the fmt.Formatter interface and marshals the provided stack
+// trace as JSON.
+//
+// Examples:
+//
+//	fmt.Sprintf("%+v", errors.StackFormatter{stack})
+//	json.Marshal(errors.StackFormatter{stack})
+//
+// The stack trace can come from errors in this package, from
+// runtime.Callers, or from somewhere else.
+//
+// Each frame in the stack is formatted according to the format and is ended by a newline.
+//
+// The following verbs are supported:
+//
+//	%s	  lists the source file basename
+//	%d    lists the source line number
+//	%n    lists the short function name
+//	%v	  equivalent to %s:%d
+//
+// StackFormat accepts flags that alter the formatting of some verbs, as follows:
+//
+//	%+s   lists the full function name and full compile-time path of the source file,
+//	      separated by \n\t (<funcname>\n\t<path>)
+//	%+v   lists the full function name and full compile-time path of the source file
+//	      with the source line number, separated by \n\t
+//	      (<funcname>\n\t<path>:<line>)
+//
+// StackFormat also accepts the width argument which controls the width of the indent
+// step in spaces. The default (no width argument) indents with a tab step.
+type StackFormatter []uintptr
 
 // Format formats the stack of frames as text according to the fmt.Formatter interface.
-func (s stack) Format(st fmt.State, verb rune) {
+func (s StackFormatter) Format(st fmt.State, verb rune) {
 	if len(s) == 0 {
 		return
 	}
@@ -103,7 +131,11 @@ func (s stack) Format(st fmt.State, verb rune) {
 	}
 }
 
-func (s stack) MarshalJSON() ([]byte, error) {
+// MarshalJSON marshals the stack of frames as JSON.
+//
+// JSON consists of an array of frame objects, each with
+// (function) name, file (name), and line fields.
+func (s StackFormatter) MarshalJSON() ([]byte, error) {
 	if len(s) == 0 {
 		return []byte("[]"), nil
 	}
@@ -130,15 +162,11 @@ func (s stack) MarshalJSON() ([]byte, error) {
 	return output, nil
 }
 
-func (s stack) StackTrace() []uintptr {
-	return s
-}
-
-func callers() stack {
+func callers() StackFormatter {
 	const depth = 32
 	var pcs [depth]uintptr
 	n := runtime.Callers(3, pcs[:]) //nolint:gomnd
-	var st stack = pcs[0:n]
+	var st StackFormatter = pcs[0:n]
 	return st
 }
 
@@ -148,44 +176,4 @@ func funcname(name string) string {
 	name = name[i+1:]
 	i = strings.Index(name, ".")
 	return name[i+1:]
-}
-
-// StackFormat formats the provided stack trace as text.
-//
-// The stack trace can come from errors in this package, from
-// runtime.Callers, or from somewhere else.
-//
-// Each frame in the stack is formatted according to the format and is ended by a newline.
-//
-// The following verbs are supported:
-//
-//	%s	  lists the source file basename
-//	%d    lists the source line number
-//	%n    lists the short function name
-//	%v	  equivalent to %s:%d
-//
-// StackFormat accepts flags that alter the formatting of some verbs, as follows:
-//
-//	%+s   lists the full function name and full compile-time path of the source file,
-//	      separated by \n\t (<funcname>\n\t<path>)
-//	%+v   lists the full function name and full compile-time path of the source file
-//	      with the source line number, separated by \n\t
-//	      (<funcname>\n\t<path>:<line>)
-//
-// StackFormat also accepts the width argument which controls the width of the indent
-// in spaces. The default (no width argument) indents with a tab.
-func StackFormat(format string, s []uintptr) string {
-	return fmt.Sprintf(format, stack(s))
-}
-
-// StackMarshalJSON marshals the provided stack trace as JSON.
-//
-// The stack trace can come from errors in this package, from
-// runtime.Callers, or from somewhere else.
-//
-// JSON consists of an array of frame objects, each with
-// (function) name, file (name), and line fields.
-func StackMarshalJSON(s []uintptr) ([]byte, E) {
-	b, err := stack(s).MarshalJSON()
-	return b, WithStack(err)
 }

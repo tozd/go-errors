@@ -11,10 +11,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `WithDetails` now accepts optional pairs of keys and values as initial details.
 - `Errorf` supports multiple `%w`.
+- `StackFormatter` which allows you to format stacks and marshal them to JSON.
+- `Formatter` which allows you to format errors (including ones not from this package)
+  and marshal them to JSON.
+- Error formatting accepts multiple flags to control the output, including `#`
+  flag to enable formatting of any details available on an error.
 
 ## Changed
 
-- Change `StackFormat` to return a string instead of writing to a writer.
+- Formatting of errors has been changed so that `%+v` resembles
+  the formatting of `github.com/pkg/errors` while additional formatting flags
+  are necessary to obtain more verbose formatting previously done by this
+  package (e.g., `-` for human-friendly messages to delimit parts of the text,
+  ' ' to add extra newlines to separate parts of the text better). You can
+  replace all `%+v` in your code with `% +-.1v` to obtain previous verbose formatting
+  and `% #+-.1v` if you want to include new support for formatting details.
+- Error formatting now uses `fmt.Formatter` implementation of an error only
+  if the error does not implement interfaces used by this package (`stackTracer`
+  or `detailer`). This is to assure consistent error formatting when possible.
+
+## Removed
+
+- Remove `StackFormat` and `StackMarshalJSON` in favor of `StackFormatter`.
 
 ## [0.5.0] - 2023-06-06
 

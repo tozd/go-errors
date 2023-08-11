@@ -351,12 +351,16 @@ func Errorf(format string, args ...interface{}) E {
 // but does not wrap another error.
 type fundamental struct {
 	msg     string
-	stack   stack
+	stack   []uintptr
 	details map[string]interface{}
 }
 
 func (e *fundamental) Error() string {
 	return e.msg
+}
+
+func (e *fundamental) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
 func (e *fundamental) StackTrace() []uintptr {
@@ -382,6 +386,10 @@ func (e *msgWithStack) Error() string {
 	return e.msg
 }
 
+func (e *msgWithStack) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+}
+
 func (e *msgWithStack) Unwrap() error {
 	return e.err
 }
@@ -402,12 +410,16 @@ func (e *msgWithStack) Details() map[string]interface{} {
 type msgWithoutStack struct {
 	err     error
 	msg     string
-	stack   stack
+	stack   []uintptr
 	details map[string]interface{}
 }
 
 func (e *msgWithoutStack) Error() string {
 	return e.msg
+}
+
+func (e *msgWithoutStack) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
 func (e *msgWithoutStack) Unwrap() error {
@@ -430,12 +442,16 @@ func (e *msgWithoutStack) Details() map[string]interface{} {
 type msgJoined struct {
 	errs    []error
 	msg     string
-	stack   stack
+	stack   []uintptr
 	details map[string]interface{}
 }
 
 func (e *msgJoined) Error() string {
 	return e.msg
+}
+
+func (e *msgJoined) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
 func (e *msgJoined) Unwrap() []error {
@@ -493,6 +509,10 @@ func (e *withStack) Error() string {
 	return e.err.Error()
 }
 
+func (e *withStack) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+}
+
 func (e *withStack) Unwrap() error {
 	return e.err
 }
@@ -512,12 +532,16 @@ func (e *withStack) Details() map[string]interface{} {
 // and does not have its own msg.
 type withoutStack struct {
 	err     error
-	stack   stack
+	stack   []uintptr
 	details map[string]interface{}
 }
 
 func (e *withoutStack) Error() string {
 	return e.err.Error()
+}
+
+func (e *withoutStack) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
 func (e *withoutStack) Unwrap() error {
@@ -590,12 +614,16 @@ func Wrapf(err error, format string, args ...interface{}) E {
 type cause struct {
 	err     error
 	msg     string
-	stack   stack
+	stack   []uintptr
 	details map[string]interface{}
 }
 
 func (e *cause) Error() string {
 	return e.msg
+}
+
+func (e *cause) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
 func (e *cause) Unwrap() error {
@@ -720,6 +748,28 @@ func AllDetails(err error) map[string]interface{} {
 		err = Unwrap(err)
 	}
 	return res
+}
+
+// allDetailsUntilCause builds a map with details unwrapping errors
+// until it hits a cause, which it then also returns.
+func allDetailsUntilCause(err error) (map[string]interface{}, error) {
+	res := make(map[string]interface{})
+	for err != nil {
+		for key, value := range Details(err) {
+			if _, ok := res[key]; !ok {
+				res[key] = value
+			}
+		}
+		c, ok := err.(causer)
+		if ok {
+			cause := c.Cause()
+			if cause != nil {
+				return res, cause
+			}
+		}
+		err = Unwrap(err)
+	}
+	return res, nil
 }
 
 func initializeDetails(err error) {

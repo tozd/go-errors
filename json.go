@@ -16,6 +16,7 @@ func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
 	}
 	b := buf.Bytes()
 	if len(b) > 0 {
+		// Remove trailing \n which is added by Encode.
 		return b[:len(b)-1], nil
 	}
 	return b, nil
@@ -24,12 +25,12 @@ func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
 // marshalJSONError marshals foreign errors.
 func marshalJSONError(err error) ([]byte, E) {
 	var e error
-	var s stack
+	var s StackFormatter
 	if stackErr, ok := err.(stackTracer); ok {
 		s = stackErr.StackTrace()
 	} else if stackErr, ok := err.(pkgStackTracer); ok {
 		st := stackErr.StackTrace()
-		s = stack(*(*[]uintptr)(unsafe.Pointer(&st)))
+		s = StackFormatter(*(*[]uintptr)(unsafe.Pointer(&st)))
 	}
 	var jsonCause []byte
 	cause := Cause(err)
@@ -51,7 +52,7 @@ func marshalJSONError(err error) ([]byte, E) {
 	}
 	jsonErr, e := marshalWithoutEscapeHTML(&struct {
 		Error string          `json:"error,omitempty"`
-		Stack stack           `json:"stack,omitempty"`
+		Stack StackFormatter  `json:"stack,omitempty"`
 		Cause json.RawMessage `json:"cause,omitempty"`
 	}{
 		Error: err.Error(),

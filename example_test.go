@@ -2,7 +2,6 @@ package errors_test
 
 import (
 	"fmt"
-	"runtime"
 
 	"gitlab.com/tozd/go/errors"
 )
@@ -15,7 +14,7 @@ func ExampleNew() {
 
 func ExampleNew_printf() {
 	err := errors.New("whoops")
-	fmt.Printf("%+v", err)
+	fmt.Printf("%+-v", err)
 
 	// Example output:
 	// whoops
@@ -46,7 +45,7 @@ func ExampleWithMessage() {
 func ExampleWithMessage_printf() {
 	cause := errors.New("whoops")
 	err := errors.WithMessage(cause, "oh noes")
-	fmt.Printf("%+v", err)
+	fmt.Printf("%+-v", err)
 
 	// Example output:
 	// oh noes: whoops
@@ -84,7 +83,7 @@ func ExampleWithStack() {
 func ExampleWithStack_printf() {
 	base := errors.Base("whoops")
 	err := errors.WithStack(base)
-	fmt.Printf("%+v", err)
+	fmt.Printf("%+-v", err)
 
 	// Example output:
 	// whoops
@@ -115,7 +114,7 @@ func ExampleWrap() {
 func ExampleWrap_printf() {
 	cause := errors.New("whoops")
 	err := errors.Wrap(cause, "oh noes")
-	fmt.Printf("%+v", err)
+	fmt.Printf("% +-.1v", err)
 
 	// Example output:
 	// oh noes
@@ -164,7 +163,7 @@ func ExampleWrapf() {
 
 func ExampleErrorf() {
 	err := errors.Errorf("whoops: %s", "foo")
-	fmt.Printf("%+v", err)
+	fmt.Printf("%+-v", err)
 
 	// Example output:
 	// whoops: foo
@@ -188,7 +187,7 @@ func ExampleErrorf() {
 func ExampleErrorf_wrap() {
 	base := errors.Base("whoops")
 	err := errors.Errorf("oh noes (%w)", base)
-	fmt.Printf("%+v", err)
+	fmt.Printf("%+-v", err)
 
 	// Example output:
 	// oh noes (whoops)
@@ -264,10 +263,12 @@ func ExampleJoin() {
 	err1 := errors.New("error1")
 	err2 := errors.New("error2")
 	err := errors.Join(err1, err2)
-	fmt.Printf("%+v", err)
+	fmt.Printf("% +-.1v", err)
 
 	// Example output:
-	// multiple errors at (most recent call first):
+	// error1
+	// error2
+	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleJoin
 	// 	/home/user/errors/example_test.go:265
 	// testing.runExample
@@ -277,11 +278,13 @@ func ExampleJoin() {
 	// testing.(*M).Run
 	// 	/usr/local/go/src/testing/testing.go:1908
 	// main.main
-	// 	_testmain.go:152
+	// 	_testmain.go:125
 	// runtime.main
 	// 	/usr/local/go/src/runtime/proc.go:250
 	// runtime.goexit
 	// 	/usr/local/go/src/runtime/asm_amd64.s:1598
+	//
+	// the above error joins multiple errors:
 	//
 	// 	error1
 	// 	stack trace (most recent call first):
@@ -294,7 +297,7 @@ func ExampleJoin() {
 	// 	testing.(*M).Run
 	// 		/usr/local/go/src/testing/testing.go:1908
 	// 	main.main
-	// 		_testmain.go:152
+	// 		_testmain.go:125
 	// 	runtime.main
 	// 		/usr/local/go/src/runtime/proc.go:250
 	// 	runtime.goexit
@@ -311,25 +314,9 @@ func ExampleJoin() {
 	// 	testing.(*M).Run
 	// 		/usr/local/go/src/testing/testing.go:1908
 	// 	main.main
-	// 		_testmain.go:152
+	// 		_testmain.go:125
 	// 	runtime.main
 	// 		/usr/local/go/src/runtime/proc.go:250
 	// 	runtime.goexit
 	// 		/usr/local/go/src/runtime/asm_amd64.s:1598
-}
-
-func ExampleStackMarshalJSON() {
-	stack := make([]uintptr, 32)
-	n := runtime.Callers(1, stack)
-	j, err := errors.StackMarshalJSON(stack[0:n])
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(j))
-}
-
-func ExampleStackFormat() {
-	stack := make([]uintptr, 32)
-	n := runtime.Callers(1, stack)
-	fmt.Println(errors.StackFormat("%+v", stack[0:n]))
 }

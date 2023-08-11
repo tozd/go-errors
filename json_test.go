@@ -109,10 +109,10 @@ func TestJSON(t *testing.T) {
 		`{"error":"error","stack":[],"cause":{"error":"bar: foo","cause":{"error":"foo"}}}`,
 	}, {
 		errors.Join(errors.Base("foobar1"), errors.Base("foobar2")),
-		`{"errors":[{"error":"foobar1"},{"error":"foobar2"}],"stack":[]}`,
+		`{"error":"foobar1\nfoobar2","errors":[{"error":"foobar1"},{"error":"foobar2"}],"stack":[]}`,
 	}, {
 		errors.Join(errors.New("foobar1"), errors.New("foobar2")),
-		`{"errors":[{"error":"foobar1","stack":[]},{"error":"foobar2","stack":[]}],"stack":[]}`,
+		`{"error":"foobar1\nfoobar2","errors":[{"error":"foobar1","stack":[]},{"error":"foobar2","stack":[]}],"stack":[]}`,
 	}}
 
 	for k, tt := range tests {

@@ -4,8 +4,8 @@ import "encoding/json"
 
 func (e fundamental) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
-		Error string `json:"error,omitempty"`
-		Stack stack  `json:"stack,omitempty"`
+		Error string         `json:"error,omitempty"`
+		Stack StackFormatter `json:"stack,omitempty"`
 	}{
 		Error: e.msg,
 		Stack: e.stack,
@@ -14,8 +14,8 @@ func (e fundamental) MarshalJSON() ([]byte, error) {
 
 func (e msgWithStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
-		Error string `json:"error,omitempty"`
-		Stack stack  `json:"stack,omitempty"`
+		Error string         `json:"error,omitempty"`
+		Stack StackFormatter `json:"stack,omitempty"`
 	}{
 		Error: e.msg,
 		Stack: e.StackTrace(),
@@ -24,8 +24,8 @@ func (e msgWithStack) MarshalJSON() ([]byte, error) {
 
 func (e msgWithoutStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
-		Error string `json:"error,omitempty"`
-		Stack stack  `json:"stack,omitempty"`
+		Error string         `json:"error,omitempty"`
+		Stack StackFormatter `json:"stack,omitempty"`
 	}{
 		Error: e.msg,
 		Stack: e.stack,
@@ -44,7 +44,7 @@ func (e msgJoined) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
 		Error  string            `json:"error,omitempty"`
 		Errors []json.RawMessage `json:"errors,omitempty"`
-		Stack  stack             `json:"stack,omitempty"`
+		Stack  StackFormatter    `json:"stack,omitempty"`
 	}{
 		Error:  e.msg,
 		Errors: jsonWraps,
@@ -54,8 +54,8 @@ func (e msgJoined) MarshalJSON() ([]byte, error) {
 
 func (e withStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
-		Error string `json:"error,omitempty"`
-		Stack stack  `json:"stack,omitempty"`
+		Error string         `json:"error,omitempty"`
+		Stack StackFormatter `json:"stack,omitempty"`
 	}{
 		Error: e.Error(),
 		Stack: e.StackTrace(),
@@ -64,8 +64,8 @@ func (e withStack) MarshalJSON() ([]byte, error) {
 
 func (e withoutStack) MarshalJSON() ([]byte, error) {
 	return marshalWithoutEscapeHTML(&struct {
-		Error string `json:"error,omitempty"`
-		Stack stack  `json:"stack,omitempty"`
+		Error string         `json:"error,omitempty"`
+		Stack StackFormatter `json:"stack,omitempty"`
 	}{
 		Error: e.Error(),
 		Stack: e.stack,
@@ -79,7 +79,7 @@ func (e cause) MarshalJSON() ([]byte, error) {
 	}
 	return marshalWithoutEscapeHTML(&struct {
 		Error string          `json:"error,omitempty"`
-		Stack stack           `json:"stack,omitempty"`
+		Stack StackFormatter  `json:"stack,omitempty"`
 		Cause json.RawMessage `json:"cause,omitempty"`
 	}{
 		Error: e.msg,
