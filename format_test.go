@@ -426,6 +426,38 @@ func TestFormatWrap(t *testing.T) {
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
+			pkgerrors.New("error"),
+			"error2",
+		),
+		"% +-.3v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
+			"\t.+/format_test.go:428\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
+			"\t.+/format_test.go:429\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.Wrap(
+			pkgerrors.New("error"),
+			"error2",
+		),
+		"% +-2.3v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
+			"  .+/format_test.go:444\n" +
+			"(.+\n  .+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
+			"\t.+/format_test.go:445\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.Wrap(
 			errors.New("error"),
 			"error2",
 		),
@@ -433,13 +465,13 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:428\n" +
+			"\t.+/format_test.go:460\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"the above error was caused by the following error:\n" +
 			"error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:429\n" +
+			"\t.+/format_test.go:461\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -449,11 +481,11 @@ func TestFormatWrap(t *testing.T) {
 		"%+.1v",
 		"^error2\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:445\n" +
+			"\t.+/format_test.go:477\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:446\n" +
+			"\t.+/format_test.go:478\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -463,12 +495,12 @@ func TestFormatWrap(t *testing.T) {
 		"% +.1v",
 		"^error2\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:459\n" +
+			"\t.+/format_test.go:491\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\n" +
 			"error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:460\n" +
+			"\t.+/format_test.go:492\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -479,7 +511,7 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:474\n" +
+			"\t.+/format_test.go:506\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -535,7 +567,7 @@ func TestFormatWrapf(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:533\n" +
+			"\t.+/format_test.go:565\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"EOF\n$",
@@ -562,13 +594,13 @@ func TestFormatWrapf(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:557\n" +
+			"\t.+/format_test.go:589\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:558\n" +
+			"\t.+/format_test.go:590\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
@@ -604,7 +636,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:601\n" +
+			"\t.+/format_test.go:633\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(io.EOF, "addition1"),
@@ -620,7 +652,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^addition1: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:618\n" +
+			"\t.+/format_test.go:650\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -638,7 +670,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^addition2: addition1: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:634\n" +
+			"\t.+/format_test.go:666\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -649,13 +681,13 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:644\n" +
+			"\t.+/format_test.go:676\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error1: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:645\n" +
+			"\t.+/format_test.go:677\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -666,7 +698,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:662\n" +
+			"\t.+/format_test.go:694\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -677,7 +709,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:673\n" +
+			"\t.+/format_test.go:705\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -691,13 +723,13 @@ func TestFormatWithMessage(t *testing.T) {
 		"^outside-error: inside-error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:684\n" +
+			"\t.+/format_test.go:716\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:685\n" +
+			"\t.+/format_test.go:717\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -719,7 +751,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:716\n" +
+			"\t.+/format_test.go:748\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -733,7 +765,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^outside-error: inside-error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:726\n" +
+			"\t.+/format_test.go:758\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -746,11 +778,11 @@ func TestFormatWithMessage(t *testing.T) {
 		"%+.1v",
 		"^outside-error: inside-error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:740\n" +
+			"\t.+/format_test.go:772\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"EOF\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:741\n" +
+			"\t.+/format_test.go:773\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -800,9 +832,9 @@ func TestFormatWrappedNew(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.wrappedNew\n" +
-			"\t.+/format_test.go:789\n" +
+			"\t.+/format_test.go:821\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrappedNew\n" +
-			"\t.+/format_test.go:798\n",
+			"\t.+/format_test.go:830\n",
 	}}
 
 	for k, tt := range tests {
@@ -831,7 +863,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		"^EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:829\n" +
+			"\t.+/format_test.go:861\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -853,7 +885,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:850\n" +
+			"\t.+/format_test.go:882\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -875,7 +907,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:871\n" +
+			"\t.+/format_test.go:903\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -885,7 +917,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		"^EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:882\n" +
+			"\t.+/format_test.go:914\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -895,7 +927,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		"error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:892\n" +
+			"\t.+/format_test.go:924\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -917,7 +949,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:914\n" +
+			"\t.+/format_test.go:946\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -926,7 +958,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		"%+#v",
 		"^error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:924\n" +
+			"\t.+/format_test.go:956\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -941,7 +973,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 			"foo=1\n" +
 			"quote=\"one\\\\ntwo\"\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:933\n" +
+			"\t.+/format_test.go:965\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -981,7 +1013,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 			"quote=\"one\\\\ntwo\"\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:972\n" +
+			"\t.+/format_test.go:1004\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -997,7 +1029,7 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 			"quote=\"one\\\\ntwo\"\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:988\n" +
+			"\t.+/format_test.go:1020\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
@@ -1035,7 +1067,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1033\n" +
+			"\t.+/format_test.go:1065\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1045,7 +1077,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1043\n" +
+			"\t.+/format_test.go:1075\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1055,7 +1087,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1053\n" +
+			"\t.+/format_test.go:1085\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1065,7 +1097,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1063\n" +
+			"\t.+/format_test.go:1095\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1147,7 +1179,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1145\n" +
+			"\t.+/format_test.go:1177\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1157,7 +1189,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1155\n" +
+			"\t.+/format_test.go:1187\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\n$",
@@ -1167,7 +1199,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1165\n" +
+			"\t.+/format_test.go:1197\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1177,7 +1209,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1175\n" +
+			"\t.+/format_test.go:1207\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\n$",
