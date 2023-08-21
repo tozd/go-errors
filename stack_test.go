@@ -164,7 +164,8 @@ func TestStackFormatter(t *testing.T) {
 			}()
 		}(),
 		"%+v",
-		"^gitlab.com/tozd/go/errors.TestStackFormatter.func2.1\n" +
+		// Nested function names changed in Go 1.21: https://github.com/golang/go/issues/62132
+		"^gitlab.com/tozd/go/errors.(TestStackFormatter.){1,2}func2.(1|func5)\n" +
 			"\t.+/stack_test.go:163\n" +
 			"gitlab.com/tozd/go/errors.TestStackFormatter.func2\n" +
 			"\t.+/stack_test.go:164\n" +
