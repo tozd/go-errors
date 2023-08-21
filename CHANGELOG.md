@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   flag to enable formatting of any details available on an error. It also accepts
   width to control indentation and precision to control if formatting recurses and/or
   uses error's `fmt.Formatter` implementation.
+- Support for Go 1.21.
 
 ## Changed
 
