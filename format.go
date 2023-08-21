@@ -87,6 +87,7 @@ func formatError(s fmt.State, indent int, err error) {
 	}
 
 	var cause error
+	var errs []error
 	precision, ok := s.Precision()
 	if !ok {
 		// We explicitly set it to 0.
@@ -96,12 +97,12 @@ func formatError(s fmt.State, indent int, err error) {
 
 	if useFormatter(err) {
 		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
-		cause = Cause(err)
+		cause, errs = causeOrJoined(err)
 	} else {
 		formatMsg(s, linePrefix, err)
 		var details map[string]interface{}
 		if s.Flag('#') || precision > 0 {
-			details, cause = allDetailsUntilCause(err)
+			details, cause, errs = allDetailsUntilCauseOrJoined(err)
 		}
 		if s.Flag('#') {
 			formatDetails(s, linePrefix, details)
@@ -112,19 +113,26 @@ func formatError(s fmt.State, indent int, err error) {
 	}
 
 	if precision > 0 {
-		uj, ok := err.(unwrapperJoined)
-		if ok {
+		// It is possible that both cause and errs is set. A bit strange, but we allow it.
+		// In that case we first recurse into errs and then into the cause, so that it is
+		// clear which "error above" joins the errors (not the cause). Because cause is
+		// not indented it is hopefully clearer that "error above" does not mean the last
+		// error among joined but the one higher up before indentation.
+		if len(errs) > 0 {
 			if s.Flag('-') {
 				if s.Flag(' ') {
 					io.WriteString(s, "\n")
 				}
 				writeLinesPrefixed(s, linePrefix, multipleErrorsHelp)
 			}
-			for _, e := range uj.Unwrap() {
-				if s.Flag(' ') {
-					io.WriteString(s, "\n")
+			for _, e := range errs {
+				// e should never be nil, but we still check.
+				if e != nil {
+					if s.Flag(' ') {
+						io.WriteString(s, "\n")
+					}
+					formatError(s, indent+1, e)
 				}
-				formatError(s, indent+1, e)
 			}
 		}
 		if cause != nil {

@@ -750,10 +750,13 @@ func AllDetails(err error) map[string]interface{} {
 	return res
 }
 
-// allDetailsUntilCause builds a map with details unwrapping errors
-// until it hits a cause, which it then also returns.
-func allDetailsUntilCause(err error) (map[string]interface{}, error) {
-	res := make(map[string]interface{})
+// allDetailsUntilCauseOrJoined builds a map with details unwrapping errors
+// until it hits a cause or joined errors, also returning it or them.
+func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,stylecheck
+	res = make(map[string]interface{})
+	cause = nil
+	errs = nil
+
 	for err != nil {
 		for key, value := range Details(err) {
 			if _, ok := res[key]; !ok {
@@ -762,14 +765,45 @@ func allDetailsUntilCause(err error) (map[string]interface{}, error) {
 		}
 		c, ok := err.(causer)
 		if ok {
-			cause := c.Cause()
-			if cause != nil {
-				return res, cause
-			}
+			cause = c.Cause()
+		}
+		e, ok := err.(unwrapperJoined)
+		if ok {
+			errs = e.Unwrap()
+		}
+		if cause != nil || len(errs) > 0 {
+			// It is possible that both cause and errs is set. A bit strange, but we allow it.
+			return
 		}
 		err = Unwrap(err)
 	}
-	return res, nil
+
+	return
+}
+
+// causeOrJoined unwraps err repeatedly until it hits a cause or joined errors,
+// returning it or them.
+func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,stylecheck
+	cause = nil
+	errs = nil
+
+	for err != nil {
+		c, ok := err.(causer)
+		if ok {
+			cause = c.Cause()
+		}
+		e, ok := err.(unwrapperJoined)
+		if ok {
+			errs = e.Unwrap()
+		}
+		if cause != nil || len(errs) > 0 {
+			// It is possible that both cause and errs is set. A bit strange, but we allow it.
+			return
+		}
+		err = Unwrap(err)
+	}
+
+	return
 }
 
 func initializeDetails(err error) {
