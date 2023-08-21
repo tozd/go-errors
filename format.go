@@ -75,6 +75,18 @@ func useFormatter(err error) bool {
 	return ok
 }
 
+func isForeignFormatter(err error) bool {
+	// Our errors implement fmt.Formatter but we want to return false for them because
+	// they just call into our Formatter which would lead to infinite recursion.
+	switch err.(type) {
+	case *fundamental, *msgWithStack, *msgWithoutStack, *msgJoined, *withStack, *withoutStack, *cause:
+		return false
+	}
+
+	_, ok := err.(fmt.Formatter)
+	return ok
+}
+
 func formatError(s fmt.State, indent int, err error) {
 	linePrefix := ""
 	if indent > 0 {
@@ -95,14 +107,11 @@ func formatError(s fmt.State, indent int, err error) {
 		precision = 0
 	}
 
-	if precision >= 2 { //nolint:gomnd
-		_, ok := err.(fmt.Formatter)
-		if ok {
-			writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
-			// Here we return because we assume formatting does recurse itself or at least
-			// the user requested us to not recuse if the error implements fmt.Formatter.
-			return
-		}
+	if precision >= 2 && isForeignFormatter(err) {
+		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
+		// Here we return because we assume formatting does recurse itself or at least
+		// the user requested us to not recuse if the error implements fmt.Formatter.
+		return
 	}
 
 	if useFormatter(err) {

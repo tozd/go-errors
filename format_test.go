@@ -1007,3 +1007,241 @@ func TestFormatWithDetails(t *testing.T) { //nolint: dupl
 		})
 	}
 }
+
+func TestFormatter(t *testing.T) {
+	tests := []struct {
+		error
+		format string
+		want   string
+	}{{
+		&errorWithFormat{"foobar\nmore data"},
+		"% #-+.3v",
+		"^foobar\nmore data\n$",
+	}, {
+		&errorWithFormat{"foobar\nmore data"},
+		"% #-+.1v",
+		"^foobar\nmore data\n$",
+	}, {
+		&errorWithFormat{"foobar\nmore data\n"},
+		"% #-+.3v",
+		"^foobar\nmore data\n$",
+	}, {
+		&errorWithFormat{"foobar\nmore data\n"},
+		"% #-+.1v",
+		"^foobar\nmore data\n$",
+	}, {
+		errors.Wrap(&errorWithFormat{"foobar\nmore data"}, "read error"),
+		"% #-+.3v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1033\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		errors.Wrap(&errorWithFormat{"foobar\nmore data"}, "read error"),
+		"% #-+.1v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1043\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		errors.Wrap(&errorWithFormat{"foobar\nmore data\n"}, "read error"),
+		"% #-+.3v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1053\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		errors.Wrap(&errorWithFormat{"foobar\nmore data\n"}, "read error"),
+		"% #-+.1v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1063\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% #-+.1v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% #-+.3v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"%v",
+		"^test$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"%.2v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% .2v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, &errorWithFormat{"foobar\nmore data"}},
+		"% #-+.1v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, &errorWithFormat{"foobar\nmore data"}},
+		"% #-+.3v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormat{"foobar\nmore data"}, nil},
+		"% #-+.1v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormat{"foobar\nmore data"}, nil},
+		"% #-+.3v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormat{"foobar\nmore data\n"}, nil},
+		"% #-+.1v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormat{"foobar\nmore data\n"}, nil},
+		"% #-+.3v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		&errorWithFormatAndStack{"foobar\nmore data"},
+		"% #-+.3v",
+		"^foobar\nmore data\n$",
+	}, {
+		&errorWithFormatAndStack{"foobar\nmore data"},
+		"% #-+.1v",
+		"^foobar\n$",
+	}, {
+		&errorWithFormatAndStack{"foobar\nmore data\n"},
+		"% #-+.3v",
+		"^foobar\nmore data\n$",
+	}, {
+		&errorWithFormatAndStack{"foobar\nmore data\n"},
+		"% #-+.1v",
+		"^foobar\n$",
+	}, {
+		errors.Wrap(&errorWithFormatAndStack{"foobar\nmore data"}, "read error"),
+		"% #-+.3v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1145\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		errors.Wrap(&errorWithFormatAndStack{"foobar\nmore data"}, "read error"),
+		"% #-+.1v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1155\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\n$",
+	}, {
+		errors.Wrap(&errorWithFormatAndStack{"foobar\nmore data\n"}, "read error"),
+		"% #-+.3v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1165\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		errors.Wrap(&errorWithFormatAndStack{"foobar\nmore data\n"}, "read error"),
+		"% #-+.1v",
+		"^read error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
+			"\t.+/format_test.go:1175\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% #-+.1v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% #-+.3v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"%v",
+		"^test$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"%.2v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, nil},
+		"% .2v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, &errorWithFormatAndStack{"foobar\nmore data"}},
+		"% #-+.1v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", nil, &errorWithFormatAndStack{"foobar\nmore data"}},
+		"% #-+.3v",
+		"^test\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormatAndStack{"foobar\nmore data"}, nil},
+		"% #-+.1v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormatAndStack{"foobar\nmore data"}, nil},
+		"% #-+.3v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormatAndStack{"foobar\nmore data\n"}, nil},
+		"% #-+.1v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\n$",
+	}, {
+		&errorWithCauseAndWrap{"test", &errorWithFormatAndStack{"foobar\nmore data\n"}, nil},
+		"% #-+.3v",
+		"^test\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"foobar\nmore data\n$",
+	}}
+
+	for k, tt := range tests {
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, errors.Formatter{tt.error}))
+		})
+	}
+}

@@ -52,6 +52,33 @@ func (e *errorWithFormat) Format(s fmt.State, verb rune) {
 	}
 }
 
+type errorWithFormatAndStack struct {
+	vMsg string
+}
+
+func (*errorWithFormatAndStack) Error() string {
+	return "foobar"
+}
+
+func (e *errorWithFormatAndStack) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			io.WriteString(s, e.vMsg)
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(s, "foobar1")
+	case 'q':
+		fmt.Fprintf(s, "%q", "foobar2")
+	}
+}
+
+func (e *errorWithFormatAndStack) StackTrace() []uintptr {
+	return nil
+}
+
 type errorWithCauseAndWrap struct {
 	msg   string
 	cause error
@@ -71,10 +98,11 @@ func (e *errorWithCauseAndWrap) Unwrap() error {
 }
 
 type testStruct struct {
-	err   error
-	want  string
-	stack int
-	extra int
+	err    error
+	want   string
+	format string
+	stack  int
+	extra  int
 }
 
 var tests []testStruct
@@ -101,150 +129,181 @@ func init() {
 
 	tests = append(tests, []testStruct{
 		// errors.New
-		{errors.New(""), "", currentStackSize, 0},
-		{errors.New("foo"), "foo", currentStackSize, 1},
-		{errors.New("string with format specifiers: %v"), "string with format specifiers: %v", currentStackSize, 1},
-		{errors.New("foo with newline\n"), "foo with newline\n", currentStackSize, 1},
+		{errors.New(""), "", "% +-.1v", currentStackSize, 0},
+		{errors.New("foo"), "foo", "% +-.1v", currentStackSize, 1},
+		{errors.New("string with format specifiers: %v"), "string with format specifiers: %v", "% +-.1v", currentStackSize, 1},
+		{errors.New("foo with newline\n"), "foo with newline\n", "% +-.1v", currentStackSize, 1},
 
 		// errors.Errorf without %w
-		{errors.Errorf(""), "", currentStackSize, 0},
-		{errors.Errorf("read error without format specifiers"), "read error without format specifiers", currentStackSize, 1},
-		{errors.Errorf("read error with %d format specifier", 1), "read error with 1 format specifier", currentStackSize, 1},
-		{errors.Errorf("read error with newline\n"), "read error with newline\n", currentStackSize, 1},
+		{errors.Errorf(""), "", "% +-.1v", currentStackSize, 0},
+		{errors.Errorf("read error without format specifiers"), "read error without format specifiers", "% +-.1v", currentStackSize, 1},
+		{errors.Errorf("read error with %d format specifier", 1), "read error with 1 format specifier", "% +-.1v", currentStackSize, 1},
+		{errors.Errorf("read error with newline\n"), "read error with newline\n", "% +-.1v", currentStackSize, 1},
 
 		// errors.Errorf with %w and parent with stack
-		{errors.Errorf("read error with parent: %w", parentErr), "read error with parent: parent", parentErrStackSize, 1},
-		{errors.Errorf(`read error (parent "%w")`, parentErr), `read error (parent "parent")`, parentErrStackSize, 1},
-		{errors.Errorf("read error (%w) and newline\n", parentErr), "read error (parent) and newline\n", parentErrStackSize, 1},
-		{errors.Errorf("%w", noMsgErr), "", parentErrStackSize, 0},
+		{errors.Errorf("read error with parent: %w", parentErr), "read error with parent: parent", "% +-.1v", parentErrStackSize, 1},
+		{errors.Errorf(`read error (parent "%w")`, parentErr), `read error (parent "parent")`, "% +-.1v", parentErrStackSize, 1},
+		{errors.Errorf("read error (%w) and newline\n", parentErr), "read error (parent) and newline\n", "% +-.1v", parentErrStackSize, 1},
+		{errors.Errorf("%w", noMsgErr), "", "% +-.1v", parentErrStackSize, 0},
 
 		// errors.Errorf with %w and parent without stack
-		{errors.Errorf("read error with parent: %w", parentNoStackErr), "read error with parent: parent", currentStackSize, 1},
-		{errors.Errorf(`read error (parent "%w")`, parentNoStackErr), `read error (parent "parent")`, currentStackSize, 1},
-		{errors.Errorf("read error (%w) and newline\n", parentNoStackErr), "read error (parent) and newline\n", currentStackSize, 1},
-		{errors.Errorf("%w", noMsgNoStackErr), "", currentStackSize, 0},
+		{errors.Errorf("read error with parent: %w", parentNoStackErr), "read error with parent: parent", "% +-.1v", currentStackSize, 1},
+		{errors.Errorf(`read error (parent "%w")`, parentNoStackErr), `read error (parent "parent")`, "% +-.1v", currentStackSize, 1},
+		{errors.Errorf("read error (%w) and newline\n", parentNoStackErr), "read error (parent) and newline\n", "% +-.1v", currentStackSize, 1},
+		{errors.Errorf("%w", noMsgNoStackErr), "", "% +-.1v", currentStackSize, 0},
 
 		// errors.WithStack and parent without stack
-		{errors.WithStack(io.EOF), "EOF", currentStackSize, 1},
-		{errors.WithStack(errors.Base("EOF")), "EOF", currentStackSize, 1},
-		{errors.WithStack(errors.Base("")), "", currentStackSize, 0},
-		{errors.WithStack(errors.Base("foobar\n")), "foobar\n", currentStackSize, 1},
+		{errors.WithStack(io.EOF), "EOF", "% +-.1v", currentStackSize, 1},
+		{errors.WithStack(errors.Base("EOF")), "EOF", "% +-.1v", currentStackSize, 1},
+		{errors.WithStack(errors.Base("")), "", "% +-.1v", currentStackSize, 0},
+		{errors.WithStack(errors.Base("foobar\n")), "foobar\n", "% +-.1v", currentStackSize, 1},
 
 		// errors.WithStack and parent with stack
-		{errors.WithStack(parentErr), "parent", parentErrStackSize, 1},
-		{errors.WithStack(noMsgErr), "", parentErrStackSize, 0},
+		{errors.WithStack(parentErr), "parent", "% +-.1v", parentErrStackSize, 1},
+		{errors.WithStack(noMsgErr), "", "% +-.1v", parentErrStackSize, 0},
 
 		// errors.WithStack and parent with custom %+v which is ignored
-		{errors.WithStack(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 1},
-		{errors.WithStack(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 1},
+		{errors.WithStack(&errorWithFormat{"foobar\nmore data"}), "foobar", "% +-.1v", currentStackSize, 1},
+		{errors.WithStack(&errorWithFormat{"foobar\nmore data\n"}), "foobar", "% +-.1v", currentStackSize, 1},
 
 		// errors.WithDetails and parent without stack
-		{errors.WithDetails(io.EOF), "EOF", currentStackSize, 1},
-		{errors.WithDetails(errors.Base("EOF")), "EOF", currentStackSize, 1},
-		{errors.WithDetails(errors.Base("")), "", currentStackSize, 0},
-		{errors.WithDetails(errors.Base("foobar\n")), "foobar\n", currentStackSize, 1},
+		{errors.WithDetails(io.EOF), "EOF", "% +-.1v", currentStackSize, 1},
+		{errors.WithDetails(errors.Base("EOF")), "EOF", "% +-.1v", currentStackSize, 1},
+		{errors.WithDetails(errors.Base("")), "", "% +-.1v", currentStackSize, 0},
+		{errors.WithDetails(errors.Base("foobar\n")), "foobar\n", "% +-.1v", currentStackSize, 1},
 
 		// errors.WithDetails and parent with stack
-		{errors.WithDetails(parentErr), "parent", parentErrStackSize, 1},
-		{errors.WithDetails(noMsgErr), "", parentErrStackSize, 0},
+		{errors.WithDetails(parentErr), "parent", "% +-.1v", parentErrStackSize, 1},
+		{errors.WithDetails(noMsgErr), "", "% +-.1v", parentErrStackSize, 0},
 
 		// errors.WithDetails and parent with custom %+v which is ignored
-		{errors.WithDetails(&errorWithFormat{"foobar\nmore data"}), "foobar", currentStackSize, 1},
-		{errors.WithDetails(&errorWithFormat{"foobar\nmore data\n"}), "foobar", currentStackSize, 1},
+		{errors.WithDetails(&errorWithFormat{"foobar\nmore data"}), "foobar", "% +-.1v", currentStackSize, 1},
+		{errors.WithDetails(&errorWithFormat{"foobar\nmore data\n"}), "foobar", "% +-.1v", currentStackSize, 1},
 
 		// errors.WithMessage and parent without stack
-		{errors.WithMessage(parentNoStackErr, "read error"), "read error: parent", currentStackSize, 1},
-		{errors.WithMessage(parentNoStackErr, ""), "parent", currentStackSize, 1},
-		{errors.WithMessage(parentNoStackErr, "read error\n"), "read error\nparent", currentStackSize, 2},
-		{errors.WithMessage(noMsgNoStackErr, "read error"), "read error", currentStackSize, 1},
-		{errors.WithMessage(noMsgNoStackErr, ""), "", currentStackSize, 0},
-		{errors.WithMessage(io.EOF, "read error"), "read error: EOF", currentStackSize, 1},
+		{errors.WithMessage(parentNoStackErr, "read error"), "read error: parent", "% +-.1v", currentStackSize, 1},
+		{errors.WithMessage(parentNoStackErr, ""), "parent", "% +-.1v", currentStackSize, 1},
+		{errors.WithMessage(parentNoStackErr, "read error\n"), "read error\nparent", "% +-.1v", currentStackSize, 2},
+		{errors.WithMessage(noMsgNoStackErr, "read error"), "read error", "% +-.1v", currentStackSize, 1},
+		{errors.WithMessage(noMsgNoStackErr, ""), "", "% +-.1v", currentStackSize, 0},
+		{errors.WithMessage(io.EOF, "read error"), "read error: EOF", "% +-.1v", currentStackSize, 1},
 
 		// errors.WithMessage twice
-		{errors.WithMessage(errors.WithMessage(io.EOF, "read error"), "client error"), "client error: read error: EOF", currentStackSize, 1},
+		{errors.WithMessage(errors.WithMessage(io.EOF, "read error"), "client error"), "client error: read error: EOF", "% +-.1v", currentStackSize, 1},
 
 		// errors.WithMessage and parent with stack
-		{errors.WithMessage(parentErr, "read error"), "read error: parent", parentErrStackSize, 1},
-		{errors.WithMessage(parentErr, ""), "parent", parentErrStackSize, 1},
-		{errors.WithMessage(parentErr, "read error\n"), "read error\nparent", parentErrStackSize, 2},
-		{errors.WithMessage(noMsgErr, ""), "", parentErrStackSize, 0},
-		{errors.WithMessage(noMsgErr, "read error"), "read error", parentErrStackSize, 1},
+		{errors.WithMessage(parentErr, "read error"), "read error: parent", "% +-.1v", parentErrStackSize, 1},
+		{errors.WithMessage(parentErr, ""), "parent", "% +-.1v", parentErrStackSize, 1},
+		{errors.WithMessage(parentErr, "read error\n"), "read error\nparent", "% +-.1v", parentErrStackSize, 2},
+		{errors.WithMessage(noMsgErr, ""), "", "% +-.1v", parentErrStackSize, 0},
+		{errors.WithMessage(noMsgErr, "read error"), "read error", "% +-.1v", parentErrStackSize, 1},
 
 		// errors.WithMessage and parent with custom %+v which is ignored and no stack
-		{errors.WithMessage(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error: foobar", currentStackSize, 1},
-		{errors.WithMessage(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error: foobar", currentStackSize, 1},
+		{errors.WithMessage(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error: foobar", "% +-.1v", currentStackSize, 1},
+		{errors.WithMessage(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error: foobar", "% +-.1v", currentStackSize, 1},
 
 		// errors.WithMessage and parent with custom %+v which is ignored and stack
-		{errors.WithMessage(parentWithFormat1Err, "read error"), "read error: foobar", parentErrStackSize, 1},
-		{errors.WithMessage(parentWithFormat2Err, "read error"), "read error: foobar", parentErrStackSize, 1},
+		{errors.WithMessage(parentWithFormat1Err, "read error"), "read error: foobar", "% +-.1v", parentErrStackSize, 1},
+		{errors.WithMessage(parentWithFormat2Err, "read error"), "read error: foobar", "% +-.1v", parentErrStackSize, 1},
 
 		// errors.WithMessagef
-		{errors.WithMessagef(parentNoStackErr, "read error %d", 1), "read error 1: parent", currentStackSize, 1},
+		{errors.WithMessagef(parentNoStackErr, "read error %d", 1), "read error 1: parent", "% +-.1v", currentStackSize, 1},
 		// We use w() to prevent static analysis.
-		{errors.WithMessagef(parentNoStackErr, "read error ("+w()+")", noMsgNoStackErr), "read error (%!w(*errors.errorString=&{})): parent", currentStackSize, 1},
+		{errors.WithMessagef(parentNoStackErr, "read error ("+w()+")", noMsgNoStackErr), "read error (%!w(*errors.errorString=&{})): parent", "% +-.1v", currentStackSize, 1},
 
 		// errors.Wrap and parent without stack, there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
-		{errors.Wrap(parentNoStackErr, "read error"), "read error", currentStackSize, 3 + 2},
-		{errors.Wrap(parentNoStackErr, ""), "", currentStackSize, 3 + 1},
-		{errors.Wrap(parentNoStackErr, "read error\n"), "read error\n", currentStackSize, 3 + 2},
-		{errors.Wrap(io.EOF, "read error"), "read error", currentStackSize, 3 + 2},
+		{errors.Wrap(parentNoStackErr, "read error"), "read error", "% +-.1v", currentStackSize, 3 + 2},
+		{errors.Wrap(parentNoStackErr, ""), "", "% +-.1v", currentStackSize, 3 + 1},
+		{errors.Wrap(parentNoStackErr, "read error\n"), "read error\n", "% +-.1v", currentStackSize, 3 + 2},
+		{errors.Wrap(io.EOF, "read error"), "read error", "% +-.1v", currentStackSize, 3 + 2},
 		// There is no "the above error was caused by the following error" message.
-		{errors.Wrap(noMsgNoStackErr, "read error"), "read error", currentStackSize, 3 + 1},
-		{errors.Wrap(noMsgNoStackErr, ""), "", currentStackSize, 3 + 0},
+		{errors.Wrap(noMsgNoStackErr, "read error"), "read error", "% +-.1v", currentStackSize, 3 + 1},
+		{errors.Wrap(noMsgNoStackErr, ""), "", "% +-.1v", currentStackSize, 3 + 0},
 
 		// errors.Wrap and parent with stack, there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
 		// + 1 for additional stack trace (most recent call first)" line
-		{errors.Wrap(parentErr, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2 + 1},
-		{errors.Wrap(parentErr, ""), "", currentStackSize + parentErrStackSize, 3 + 1 + 1},
-		{errors.Wrap(parentErr, "read error\n"), "read error\n", currentStackSize + parentErrStackSize, 3 + 2 + 1},
-		{errors.Wrap(noMsgErr, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 1 + 1},
-		{errors.Wrap(noMsgErr, ""), "", currentStackSize + parentErrStackSize, 3 + 0 + 1},
+		{errors.Wrap(parentErr, "read error"), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.Wrap(parentErr, ""), "", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 1 + 1},
+		{errors.Wrap(parentErr, "read error\n"), "read error\n", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.Wrap(noMsgErr, "read error"), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 1 + 1},
+		{errors.Wrap(noMsgErr, ""), "", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 0 + 1},
 
 		// errors.Wrap and parent with custom %+v and no stack, there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
-		{errors.Wrap(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error", currentStackSize, 3 + 3},
-		{errors.Wrap(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error", currentStackSize, 3 + 3},
+		{errors.Wrap(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error", "% +-.1v", currentStackSize, 3 + 3},
+		{errors.Wrap(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error", "% +-.1v", currentStackSize, 3 + 3},
+
+		// errors.Wrap and parent with custom %+v and no stack, there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		{errors.Wrap(&errorWithFormat{"foobar\nmore data"}, "read error"), "read error", "% +-.3v", currentStackSize, 3 + 3},
+		{errors.Wrap(&errorWithFormat{"foobar\nmore data\n"}, "read error"), "read error", "% +-.3v", currentStackSize, 3 + 3},
 
 		// errors.Wrap and parent with custom %+v (which is ignored) and stack there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
 		// + 1 for additional stack trace (most recent call first)" line
-		{errors.Wrap(parentWithFormat1Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2 + 1},
-		{errors.Wrap(parentWithFormat2Err, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.Wrap(parentWithFormat1Err, "read error"), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.Wrap(parentWithFormat2Err, "read error"), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+
+		// errors.Wrap and parent with custom %+v (which is ignored) and stack there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		// + 1 for additional stack trace (most recent call first)" line
+		{errors.Wrap(parentWithFormat1Err, "read error"), "read error", "% +-.3v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.Wrap(parentWithFormat2Err, "read error"), "read error", "% +-.3v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
 
 		// errors.Wrapf
-		{errors.Wrapf(parentNoStackErr, "read error %d", 1), "read error 1", currentStackSize, 3 + 2},
+		{errors.Wrapf(parentNoStackErr, "read error %d", 1), "read error 1", "% +-.1v", currentStackSize, 3 + 2},
 		// We use w() to prevent static analysis.
-		{errors.Wrapf(parentNoStackErr, "read error ("+w()+")", noMsgNoStackErr), "read error (%!w(*errors.errorString=&{}))", currentStackSize, 3 + 2},
+		{errors.Wrapf(parentNoStackErr, "read error ("+w()+")", noMsgNoStackErr), "read error (%!w(*errors.errorString=&{}))", "% +-.1v", currentStackSize, 3 + 2},
 
 		// errors.Errorf with %w and github.com/pkg/errors parent,
 		// we format the stack trace in this case
-		{errors.Errorf("read error with parent: %w", parentPkgError), "read error with parent: parent", parentErrStackSize, 1},
+		{errors.Errorf("read error with parent: %w", parentPkgError), "read error with parent: parent", "% +-.1v", parentErrStackSize, 1},
 
 		// errors.WithStack and github.com/pkg/errors parent,
 		// we format the stack trace in this case
-		{errors.WithStack(parentPkgError), "parent", parentErrStackSize, 1},
+		{errors.WithStack(parentPkgError), "parent", "% +-.1v", parentErrStackSize, 1},
+
+		// errors.WithStack and github.com/pkg/errors parent,
+		// we format the stack trace in this case
+		{errors.WithStack(parentPkgError), "parent", "% +-.1v", parentErrStackSize, 1},
 
 		// errors.WithDetails and github.com/pkg/errors parent,
 		// we format the stack trace in this case
-		{errors.WithDetails(parentPkgError), "parent", parentErrStackSize, 1},
+		{errors.WithDetails(parentPkgError), "parent", "% +-.1v", parentErrStackSize, 1},
+
+		// errors.WithDetails and github.com/pkg/errors parent,
+		// we format the stack trace in this case
+		{errors.WithDetails(parentPkgError), "parent", "% +-.1v", parentErrStackSize, 1},
 
 		// errors.Wrap and github.com/pkg/errors parent,
 		// we format the stack trace in this case
-		{errors.Wrap(parentPkgError, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3},
+		{errors.Wrap(parentPkgError, "read error"), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 3},
+
+		// errors.Wrap and github.com/pkg/errors parent,
+		// formatting of the cause is fully done by parentPkgError in this case,
+		// there are still three lines extra for "The above error was caused by the
+		// following error" + lines for error messages, but
+		// there is no second "stack trace (most recent call first)" line,
+		// a final newline is still added
+		{errors.Wrap(parentPkgError, "read error"), "read error", "% +-.3v", currentStackSize + parentErrStackSize, 3 + 2},
 
 		// errors.WithMessage and github.com/pkg/errors parent,
 		// we format the stack trace in this case
-		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", parentErrStackSize, 1},
+		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", "% +-.1v", parentErrStackSize, 1},
+
+		// errors.WithMessage and github.com/pkg/errors parent,
+		// we format the stack trace in this case
+		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", "% +-.3v", parentErrStackSize, 1},
 
 		// Wrap behaves like New and Errorf if provided error is nil.
-		{errors.Wrap(nil, "foo"), "foo", currentStackSize, 1},
-		{errors.Wrap(nil, "read error without format specifiers"), "read error without format specifiers", currentStackSize, 1},
+		{errors.Wrap(nil, "foo"), "foo", "% +-.1v", currentStackSize, 1},
+		{errors.Wrap(nil, "read error without format specifiers"), "read error without format specifiers", "% +-.1v", currentStackSize, 1},
 
 		// errors.Join.
-		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", currentStackSize, 2 + 3 + 1 + 1 + 1},
-		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", 3 * currentStackSize, 2 + 3 + 2 + 3},
+		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", "% +-.1v", currentStackSize, 2 + 3 + 1 + 1 + 1},
+		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", "% +-.1v", 3 * currentStackSize, 2 + 3 + 2 + 3},
 	}...)
 }
 
@@ -256,7 +315,7 @@ func TestErrors(t *testing.T) {
 			assert.Equal(t, tt.want, fmt.Sprintf("%s", tt.err))
 			assert.Equal(t, tt.want, fmt.Sprintf("%v", tt.err))
 			assert.Equal(t, fmt.Sprintf("%q", tt.want), fmt.Sprintf("%q", tt.err))
-			stackTrace := fmt.Sprintf("% +-.1v", tt.err)
+			stackTrace := fmt.Sprintf(tt.format, tt.err)
 			// Expected stack size (2 lines per frame), plus "stack trace
 			// (most recent call first)" line, plus extra lines.
 			assert.Equal(t, tt.stack*2+1+tt.extra, strings.Count(stackTrace, "\n"), stackTrace)

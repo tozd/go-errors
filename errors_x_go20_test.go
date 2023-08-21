@@ -11,9 +11,9 @@ func init() {
 
 	tests = append(tests, []testStruct{
 		// errors.Errorf with multiple %w without stack
-		{errors.Errorf("%w, %w", errors.Base("foo1"), errors.Base("foo2")), "foo1, foo2", currentStackSize, 1 + 3 + 2 + 1},
+		{errors.Errorf("%w, %w", errors.Base("foo1"), errors.Base("foo2")), "foo1, foo2", "% +-.1v", currentStackSize, 1 + 3 + 2 + 1},
 
 		// errors.Errorf with multiple %w with stack
-		{errors.Errorf("%w, %w", errors.New("foo1"), errors.New("foo2")), "foo1, foo2", 3 * currentStackSize, 1 + 3 + 2 + 3},
+		{errors.Errorf("%w, %w", errors.New("foo1"), errors.New("foo2")), "foo1, foo2", "% +-.1v", 3 * currentStackSize, 1 + 3 + 2 + 3},
 	}...)
 }
