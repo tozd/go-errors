@@ -66,15 +66,12 @@ func writeLinesPrefixed(st fmt.State, linePrefix, s string) {
 }
 
 func useFormatter(err error) bool {
-	_, ok := err.(stackTracer)
-	if ok {
+	switch err.(type) {
+	case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer:
 		return false
 	}
-	_, ok = err.(detailer)
-	if ok {
-		return false
-	}
-	_, ok = err.(fmt.Formatter)
+
+	_, ok := err.(fmt.Formatter)
 	return ok
 }
 
@@ -183,8 +180,8 @@ func formatDetails(s fmt.State, linePrefix string, details map[string]interface{
 }
 
 func formatStack(s fmt.State, linePrefix string, err error) {
-	st, ok := err.(stackTracer)
-	if !ok {
+	st := getExistingStackTrace(err)
+	if len(st) == 0 {
 		return
 	}
 
@@ -194,9 +191,9 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 	var result string
 	width, ok := s.Width()
 	if ok {
-		result = fmt.Sprintf("%+*v", width, StackFormatter(st.StackTrace()))
+		result = fmt.Sprintf("%+*v", width, StackFormatter(st))
 	} else {
-		result = fmt.Sprintf("%+v", StackFormatter(st.StackTrace()))
+		result = fmt.Sprintf("%+v", StackFormatter(st))
 	}
 	writeLinesPrefixed(s, linePrefix, result)
 }

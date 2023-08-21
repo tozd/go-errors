@@ -231,12 +231,8 @@ func init() {
 		{errors.WithDetails(parentPkgError), "parent", parentErrStackSize, 1},
 
 		// errors.Wrap and github.com/pkg/errors parent,
-		// formatting of the cause is fully done by parentPkgError in this case,
-		// there are still three lines extra for "The above error was caused by the
-		// following error" + lines for error messages, but
-		// there is no second "stack trace (most recent call first)" line,
-		// a final newline is still added
-		{errors.Wrap(parentPkgError, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 2},
+		// we format the stack trace in this case
+		{errors.Wrap(parentPkgError, "read error"), "read error", currentStackSize + parentErrStackSize, 3 + 3},
 
 		// errors.WithMessage and github.com/pkg/errors parent,
 		// we format the stack trace in this case

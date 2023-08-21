@@ -233,7 +233,7 @@ func getExistingStackTrace(err error) []uintptr {
 	case goErrorsStackTracer:
 		return e.Callers()
 	default:
-		panic(New("not possible"))
+		return nil
 	}
 }
 
