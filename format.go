@@ -95,13 +95,27 @@ func formatError(s fmt.State, indent int, err error) {
 		precision = 0
 	}
 
+	if precision >= 2 { //nolint:gomnd
+		_, ok := err.(fmt.Formatter)
+		if ok {
+			writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
+			// Here we return because we assume formatting does recurse itself or at least
+			// the user requested us to not recuse if the error implements fmt.Formatter.
+			return
+		}
+	}
+
 	if useFormatter(err) {
 		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
-		cause, errs = causeOrJoined(err)
+		// Here we still recurse ourselves because we assume formatting just formats the error and
+		// does not recurse if it does not implement those interfaces which we checked in useFormatter.
+		if precision == 1 || precision == 3 {
+			cause, errs = causeOrJoined(err)
+		}
 	} else {
 		formatMsg(s, linePrefix, err)
 		var details map[string]interface{}
-		if s.Flag('#') || precision > 0 {
+		if s.Flag('#') || precision == 1 || precision == 3 {
 			details, cause, errs = allDetailsUntilCauseOrJoined(err)
 		}
 		if s.Flag('#') {
@@ -112,7 +126,7 @@ func formatError(s fmt.State, indent int, err error) {
 		}
 	}
 
-	if precision > 0 {
+	if precision == 1 || precision == 3 {
 		// It is possible that both cause and errs is set. A bit strange, but we allow it.
 		// In that case we first recurse into errs and then into the cause, so that it is
 		// clear which "error above" joins the errors (not the cause). Because cause is
@@ -215,9 +229,10 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 //	json.Marshal(errors.Formatter{err})
 //
 // The error does not have to necessary come from this package and it will be formatted
-// in the same way if it implements stackTracer or detailer interfaces. Only if those
-// interfaces are not implemented, but fmt.Formatter interface is, formatting will be
-// delegated to the error itself.
+// in the same way if it implements interfaces used by this package (e.g., stackTracer
+// or detailer interfaces. By default, only if those interfaces are not implemented,
+// but fmt.Formatter interface is, formatting will be delegated to the error itself.
+// You can change this default through format precision.
 //
 // Errors which do come from this package can be directly formatted by the fmt package
 // in the same way as this function does as they implement fmt.Formatter interface.
@@ -247,6 +262,10 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 //
 //	.0    do not change default behavior, this is the default
 //	.1    recurse into error causes and joined errors
+//	.2    prefer error's fmt.Formatter interface implementation if error implements it
+//	.3    recurse into error causes and joined errors, but prefer fmt.Formatter
+//	      interface implementation if any error implements it; this means that
+//	      recursion stops if error's formatter does not recurse
 //
 // When any flag or non-zero precision mode is used, it is assured that the text
 // ends with a newline, if it does not already do so.
@@ -264,7 +283,7 @@ func (e Formatter) Format(s fmt.State, verb rune) {
 			// See: https://github.com/golang/go/issues/61913
 			precision = 0
 		}
-		if precision < 0 || precision > 1 {
+		if precision < 0 || precision > 3 {
 			io.WriteString(s, badPrecString)
 			break
 		}

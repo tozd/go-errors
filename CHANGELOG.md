@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Formatter` which allows you to format errors (including ones not from this package)
   and marshal them to JSON.
 - Error formatting accepts multiple flags to control the output, including `#`
-  flag to enable formatting of any details available on an error.
+  flag to enable formatting of any details available on an error. It also accepts
+  width to control indentation and precision to control if formatting recurses and/or
+  uses error's `fmt.Formatter` implementation.
 
 ## Changed
 
@@ -24,11 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are necessary to obtain more verbose formatting previously done by this
   package (e.g., `-` for human-friendly messages to delimit parts of the text,
   ' ' to add extra newlines to separate parts of the text better). You can
-  replace all `%+v` in your code with `% +-.1v` to obtain previous verbose formatting
-  and `% #+-.1v` if you want to include new support for formatting details.
-- Error formatting now uses `fmt.Formatter` implementation of an error only
-  if the error does not implement interfaces used by this package (`stackTracer`
-  or `detailer`). This is to assure consistent error formatting when possible.
+  replace all `%+v` in your code with `% +-.3v` to obtain previous verbose formatting
+  and `% #+-.3v` if you want to include new support for formatting details.
+- Error formatting now by default uses `fmt.Formatter` implementation of an error
+  only if the error does not implement interfaces used by this package (e.g.,
+  `stackTracer` or `detailer`). This is to assure consistent error formatting
+  when possible. You can change this default through format precision.
 
 ## Removed
 
