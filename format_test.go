@@ -1331,3 +1331,276 @@ func TestFormatter(t *testing.T) {
 		})
 	}
 }
+
+func TestJoin(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		error
+		format string
+		want   string
+	}{{
+		errors.Join(),
+		"% #-+.3v",
+		"^<nil>\n$",
+	}, {
+		errors.Join(),
+		"%s",
+		"^%!s\\(<nil>\\)$",
+	}, {
+		errors.Join(),
+		"%q",
+		"^%!q\\(<nil>\\)$",
+	}, {
+		errors.Join(errors.New("error")),
+		"% #-+.1v",
+		"^error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1355\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error"), nil),
+		"% #-+.1v",
+		"^error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1363\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"% #-+v",
+		"^error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1371\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"% #-+.1v",
+		"^error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1379\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"\terror1\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1379\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\n" +
+			"\terror2\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1379\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"% #-+2.1v",
+		"^error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"  .+/format_test.go:1399\n" +
+			"(.+\n  .+:\\d+\n)+" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"  error1\n" +
+			"  stack trace \\(most recent call first\\):\n" +
+			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"    .+/format_test.go:1399\n" +
+			"(.+\n    .+:\\d+\n)+" +
+			"\n" +
+			"  error2\n" +
+			"  stack trace \\(most recent call first\\):\n" +
+			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"    .+/format_test.go:1399\n" +
+			"(.+\n    .+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"%#-+.1v",
+		"^error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1419\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"the above error joins multiple errors:\n" +
+			"\terror1\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1419\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\terror2\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1419\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"% #+.1v",
+		"^error1\nerror2\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1438\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\n" +
+			"\terror1\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1438\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\n" +
+			"\terror2\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1438\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"%#+.1v",
+		"^error1\nerror2\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1455\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\terror1\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1455\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\terror2\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1455\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"% #.1v",
+		"^error1\nerror2\n" +
+			"\n" +
+			"\terror1\n" +
+			"\n" +
+			"\terror2\n$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"%#.1v",
+		"^error1\nerror2\n" +
+			"\terror1\n" +
+			"\terror2\n$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"% #-.1v",
+		"^error1\nerror2\n" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"\terror1\n" +
+			"\n" +
+			"\terror2\n$",
+	}, {
+		errors.Join(errors.New("error1"), errors.New("error2")),
+		"%#-.1v",
+		"^error1\nerror2\n" +
+			"the above error joins multiple errors:\n" +
+			"\terror1\n" +
+			"\terror2\n$",
+	}, {
+		errors.Join(pkgerrors.New("error1"), pkgerrors.New("error2")),
+		"% #-+.1v",
+		"^error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1499\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"\terror1\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1499\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\n" +
+			"\terror2\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1499\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(pkgerrors.New("error1"), pkgerrors.New("error2")),
+		"% #-+.3v",
+		"^error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1519\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"\terror1\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1519\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\n" +
+			"\terror2\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1519\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.Join(pkgerrors.New("error1"), pkgerrors.New("error2")),
+		"% #-+2.3v",
+		"^error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"  .+/format_test.go:1537\n" +
+			"(.+\n  .+:\\d+\n)+" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"  error1\n" +
+			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"  \t.+/format_test.go:1537\n" +
+			"(.+\n  \t.+:\\d+\n)+" +
+			"\n" +
+			"  error2\n" +
+			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"  \t.+/format_test.go:1537\n" +
+			"(.+\n  \t.+:\\d+\n)+$",
+	}, {
+		errors.WithMessage(errors.Join(errors.New("error1"), errors.New("error2")), "message"),
+		"% #-+.1v",
+		"^message: error1\nerror2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1555\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"\terror1\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1555\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\n" +
+			"\terror2\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1555\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.WithDetails(errors.Join(errors.New("error1"), errors.New("error2")), "foo", "bar"),
+		"% #-+.1v",
+		"^error1\nerror2\n" +
+			"foo=bar\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t.+/format_test.go:1575\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error joins multiple errors:\n\n" +
+			"\terror1\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1575\n" +
+			"(.+\n\t\t.+:\\d+\n)+" +
+			"\n" +
+			"\terror2\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
+			"\t\t.+/format_test.go:1575\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}}
+
+	for k, tt := range tests {
+		tt := tt
+
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
+			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, errors.Formatter{tt.error}))
+		})
+	}
+}

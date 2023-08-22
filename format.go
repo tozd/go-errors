@@ -107,7 +107,7 @@ func formatError(s fmt.State, indent int, err error) {
 		precision = 0
 	}
 
-	if precision >= 2 && isForeignFormatter(err) {
+	if precision >= 2 && isForeignFormatter(err) || err == nil {
 		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
 		// Here we return because we assume formatting does recurse itself or at least
 		// the user requested us to not recuse if the error implements fmt.Formatter.
@@ -302,9 +302,17 @@ func (e Formatter) Format(s fmt.State, verb rune) {
 		}
 		fallthrough
 	case 's':
-		_, _ = io.WriteString(s, e.Error.Error())
+		if e.Error != nil {
+			_, _ = io.WriteString(s, e.Error.Error())
+		} else {
+			fmt.Fprintf(s, "%s", e.Error)
+		}
 	case 'q':
-		fmt.Fprintf(s, "%q", e.Error.Error())
+		if e.Error != nil {
+			fmt.Fprintf(s, "%q", e.Error.Error())
+		} else {
+			fmt.Fprintf(s, "%q", e.Error)
+		}
 	default:
 		badVerb(s, verb, e.Error)
 	}
