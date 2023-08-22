@@ -16,8 +16,8 @@ func Example_stackTrace() {
 		StackTrace() []uintptr
 	}
 
-	err, ok := getErr().(stackTracer)
-	if !ok {
+	var err stackTracer
+	if !errors.As(getErr(), &err) {
 		panic(errors.New("oops, err does not implement stackTracer"))
 	}
 
@@ -27,5 +27,5 @@ func Example_stackTrace() {
 
 	// Example output:
 	// gitlab.com/tozd/go/errors_test.getErr
-	//	/home/user/errors/example_test.go:213
+	//	/home/user/errors/example_test.go:11
 }

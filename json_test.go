@@ -56,6 +56,8 @@ func jsonEqual(t *testing.T, expected string, actual string, msgAndArgs ...inter
 }
 
 func TestJSON(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		error
 		want string
@@ -116,7 +118,11 @@ func TestJSON(t *testing.T) {
 	}}
 
 	for k, tt := range tests {
+		tt := tt
+
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
 			jsonError, err := json.Marshal(tt.error)
 			require.NoError(t, err)
 			jsonEqual(t, tt.want, string(jsonError))

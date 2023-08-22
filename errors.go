@@ -133,15 +133,15 @@
 // This enables us to have constant base errors which we annotate
 // with a stack trace before we return them:
 //
-//	var AuthenticationError = errors.Base("authentication error")
-//	var MissingPassphraseError = errors.BaseWrap(AuthenticationError, "missing passphrase")
-//	var InvalidPassphraseError = errors.BaseWrap(AuthenticationError, "invalid passphrase")
+//	var ErrAuthentication = errors.Base("authentication error")
+//	var ErrMissingPassphrase = errors.BaseWrap(ErrAuthentication, "missing passphrase")
+//	var ErrInvalidPassphrase = errors.BaseWrap(ErrAuthentication, "invalid passphrase")
 //
 //	func authenticate(passphrase string) errors.E {
 //	        if passphrase == "" {
-//	                return errors.WithStack(MissingPassphraseError)
+//	                return errors.WithStack(ErrMissingPassphrase)
 //	        } else if passphrase != "open sesame" {
-//	                return errors.WithStack(InvalidPassphraseError)
+//	                return errors.WithStack(ErrInvalidPassphrase)
 //	        }
 //	        return nil
 //	}
@@ -150,22 +150,22 @@
 //
 //	func authenticate(username, passphrase string) errors.E {
 //	        if passphrase == "" {
-//	                return errors.WithDetails(MissingPassphraseError, "username", username)
+//	                return errors.WithDetails(ErrMissingPassphrase, "username", username)
 //	        } else if passphrase != "open sesame" {
-//	                return errors.WithDetails(InvalidPassphraseError, "username", username)
+//	                return errors.WithDetails(ErrInvalidPassphrase, "username", username)
 //	        }
 //	        return nil
 //	}
 //
 // We can use errors.Is to determine which error has been returned:
 //
-//	if errors.Is(err, MissingPassphraseError) {
+//	if errors.Is(err, ErrMissingPassphrase) {
 //	        fmt.Println("Please provide a passphrase to unlock the doors.")
 //	}
 //
 // Works across the tree, too:
 //
-//	if errors.Is(err, AuthenticationError) {
+//	if errors.Is(err, ErrAuthentication) {
 //	        fmt.Println("Failed to unlock the doors.")
 //	}
 //
@@ -224,7 +224,7 @@ type detailer interface {
 }
 
 func getExistingStackTrace(err error) []uintptr {
-	switch e := err.(type) {
+	switch e := err.(type) { //nolint:errorlint
 	case stackTracer:
 		return e.StackTrace()
 	case pkgStackTracer:
@@ -303,13 +303,13 @@ func New(message string) E {
 // unless wrapped error already have a stack trace.
 // If %w is provided multiple times, then a stack trace is always recorded.
 func Errorf(format string, args ...interface{}) E {
-	err := fmt.Errorf(format, args...)
+	err := fmt.Errorf(format, args...) //nolint:goerr113
 	var errs []error
-	uj, ok := err.(unwrapperJoined)
+	uj, ok := err.(unwrapperJoined) //nolint:errorlint
 	if ok {
 		errs = uj.Unwrap()
 	} else {
-		u, ok := err.(unwrapper)
+		u, ok := err.(unwrapper) //nolint:errorlint
 		if ok {
 			errs = []error{u.Unwrap()}
 		}
@@ -323,7 +323,7 @@ func Errorf(format string, args ...interface{}) E {
 		}
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
-		switch unwrap.(type) {
+		switch unwrap.(type) { //nolint:errorlint
 		case stackTracer, pkgStackTracer, goErrorsStackTracer:
 			return &msgWithStack{
 				err:     unwrap,
@@ -376,7 +376,7 @@ func (e *fundamental) Details() map[string]interface{} {
 
 // msgWithStack wraps another error with a stack
 // and has its own msg.
-type msgWithStack struct {
+type msgWithStack struct { //nolint:errname
 	err     error
 	msg     string
 	details map[string]interface{}
@@ -407,7 +407,7 @@ func (e *msgWithStack) Details() map[string]interface{} {
 
 // msgWithoutStack wraps another error without a stack
 // and has its own msg.
-type msgWithoutStack struct {
+type msgWithoutStack struct { //nolint:errname
 	err     error
 	msg     string
 	stack   []uintptr
@@ -439,7 +439,7 @@ func (e *msgWithoutStack) Details() map[string]interface{} {
 
 // msgJoined wraps multiple errors
 // and has its own stack and msg.
-type msgJoined struct {
+type msgJoined struct { //nolint:errname
 	errs    []error
 	msg     string
 	stack   []uintptr
@@ -481,7 +481,7 @@ func WithStack(err error) E {
 		return nil
 	}
 
-	switch e := err.(type) {
+	switch e := err.(type) { //nolint:errorlint
 	case E:
 		return e
 	case stackTracer, pkgStackTracer, goErrorsStackTracer:
@@ -500,7 +500,7 @@ func WithStack(err error) E {
 
 // withStack wraps another error with a stack
 // and does not have its own msg.
-type withStack struct {
+type withStack struct { //nolint:errname
 	err     error
 	details map[string]interface{}
 }
@@ -530,7 +530,7 @@ func (e *withStack) Details() map[string]interface{} {
 
 // withoutStack wraps another error without a stack
 // and does not have its own msg.
-type withoutStack struct {
+type withoutStack struct { //nolint:errname
 	err     error
 	stack   []uintptr
 	details map[string]interface{}
@@ -570,8 +570,9 @@ func (e *withoutStack) Details() map[string]interface{} {
 func Wrap(err error, message string) E {
 	if err == nil {
 		return &fundamental{
-			msg:   message,
-			stack: callers(),
+			msg:     message,
+			stack:   callers(),
+			details: nil,
 		}
 	}
 	return &cause{
@@ -597,8 +598,9 @@ func Wrap(err error, message string) E {
 func Wrapf(err error, format string, args ...interface{}) E {
 	if err == nil {
 		return &fundamental{
-			msg:   fmt.Sprintf(format, args...),
-			stack: callers(),
+			msg:     fmt.Sprintf(format, args...),
+			stack:   callers(),
+			details: nil,
 		}
 	}
 	return &cause{
@@ -656,7 +658,7 @@ func WithMessage(err error, prefix string) E {
 		return nil
 	}
 
-	switch err.(type) {
+	switch err.(type) { //nolint:errorlint
 	case stackTracer, pkgStackTracer, goErrorsStackTracer:
 		return &msgWithStack{
 			err:     err,
@@ -686,7 +688,7 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		return nil
 	}
 
-	switch err.(type) {
+	switch err.(type) { //nolint:errorlint
 	case stackTracer, pkgStackTracer, goErrorsStackTracer:
 		return &msgWithStack{
 			err:     err,
@@ -709,11 +711,11 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 // If unwrapping is not possible, Cause returns nil.
 func Cause(err error) error {
 	for err != nil {
-		c, ok := err.(causer)
+		c, ok := err.(causer) //nolint:errorlint
 		if ok {
 			cause := c.Cause()
 			if cause != nil {
-				return cause
+				return cause //nolint:wrapcheck
 			}
 		}
 		err = Unwrap(err)
@@ -722,12 +724,30 @@ func Cause(err error) error {
 }
 
 // Details returns the result of calling the Details method on err,
-// or nil if it is not available.
+// if err's type contains a Details method returning initialized map.
+// Otherwise, the err is unwrapped and the process is repeated.
+// If unwrapping is not possible, Details returns nil.
+//
+// You can modify returned map to modify err's details.
 func Details(err error) map[string]interface{} {
+	for err != nil {
+		d, ok := err.(detailer) //nolint:errorlint
+		if ok {
+			dd := d.Details()
+			if dd != nil {
+				return dd
+			}
+		}
+		err = Unwrap(err)
+	}
+	return nil
+}
+
+func detailsOf(err error) map[string]interface{} {
 	if err == nil {
 		return nil
 	}
-	d, ok := err.(detailer)
+	d, ok := err.(detailer) //nolint:errorlint
 	if ok {
 		return d.Details()
 	}
@@ -740,7 +760,7 @@ func Details(err error) map[string]interface{} {
 func AllDetails(err error) map[string]interface{} {
 	res := make(map[string]interface{})
 	for err != nil {
-		for key, value := range Details(err) {
+		for key, value := range detailsOf(err) {
 			if _, ok := res[key]; !ok {
 				res[key] = value
 			}
@@ -752,22 +772,22 @@ func AllDetails(err error) map[string]interface{} {
 
 // allDetailsUntilCauseOrJoined builds a map with details unwrapping errors
 // until it hits a cause or joined errors, also returning it or them.
-func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,stylecheck
+func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,stylecheck,nonamedreturns
 	res = make(map[string]interface{})
 	cause = nil
 	errs = nil
 
 	for err != nil {
-		for key, value := range Details(err) {
+		for key, value := range detailsOf(err) {
 			if _, ok := res[key]; !ok {
 				res[key] = value
 			}
 		}
-		c, ok := err.(causer)
+		c, ok := err.(causer) //nolint:errorlint
 		if ok {
 			cause = c.Cause()
 		}
-		e, ok := err.(unwrapperJoined)
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
 		if ok {
 			errs = e.Unwrap()
 		}
@@ -783,16 +803,16 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 
 // causeOrJoined unwraps err repeatedly until it hits a cause or joined errors,
 // returning it or them.
-func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,stylecheck
+func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,stylecheck,nonamedreturns
 	cause = nil
 	errs = nil
 
 	for err != nil {
-		c, ok := err.(causer)
+		c, ok := err.(causer) //nolint:errorlint
 		if ok {
 			cause = c.Cause()
 		}
-		e, ok := err.(unwrapperJoined)
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
 		if ok {
 			errs = e.Unwrap()
 		}
@@ -808,7 +828,7 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 
 func initializeDetails(err error) {
 	for err != nil {
-		Details(err)
+		detailsOf(err)
 		err = Unwrap(err)
 	}
 }
@@ -856,7 +876,7 @@ func WithDetails(err error, kv ...interface{}) E {
 	// nil maps first.
 	initializeDetails(err)
 
-	switch err.(type) {
+	switch err.(type) { //nolint:errorlint
 	case E:
 		// This is where it is different from WithStack.
 		return &withStack{
@@ -898,7 +918,7 @@ func Join(errs ...error) E {
 		return nil
 	} else if len(nonNilErrs) == 1 {
 		err := nonNilErrs[0]
-		switch e := err.(type) {
+		switch e := err.(type) { //nolint:errorlint
 		case E:
 			return e
 		case stackTracer, pkgStackTracer, goErrorsStackTracer:

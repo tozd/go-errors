@@ -11,7 +11,7 @@ import (
 )
 
 // See: https://github.com/stretchr/testify/issues/1065
-func notImplements(t *testing.T, interfaceObject interface{}, object interface{}, msgAndArgs ...interface{}) bool {
+func notImplements(t *testing.T, interfaceObject interface{}, object interface{}, msgAndArgs ...interface{}) bool { //nolint:unparam
 	t.Helper()
 	interfaceType := reflect.TypeOf(interfaceObject).Elem()
 
@@ -26,6 +26,8 @@ func notImplements(t *testing.T, interfaceObject interface{}, object interface{}
 }
 
 func TestBase(t *testing.T) {
+	t.Parallel()
+
 	parent := errors.Base("Foobar")
 	assert.EqualError(t, parent, "Foobar")
 	assert.Nil(t, errors.Unwrap(parent))

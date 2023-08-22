@@ -25,17 +25,17 @@ const (
 
 // Similar to one in fmt/print.go.
 func badVerb(s fmt.State, verb rune, arg interface{}) {
-	io.WriteString(s, percentBangString)
-	io.WriteString(s, string([]rune{verb}))
-	io.WriteString(s, "(")
+	_, _ = io.WriteString(s, percentBangString)
+	_, _ = io.WriteString(s, string([]rune{verb}))
+	_, _ = io.WriteString(s, "(")
 	if arg != nil {
-		io.WriteString(s, reflect.TypeOf(arg).String())
-		io.WriteString(s, "=")
+		_, _ = io.WriteString(s, reflect.TypeOf(arg).String())
+		_, _ = io.WriteString(s, "=")
 		fmt.Fprintf(s, "%v", arg)
 	} else {
-		io.WriteString(s, nilAngleString)
+		_, _ = io.WriteString(s, nilAngleString)
 	}
-	io.WriteString(s, ")")
+	_, _ = io.WriteString(s, ")")
 }
 
 // Copied from zerolog/console.go.
@@ -59,31 +59,31 @@ func writeLinesPrefixed(st fmt.State, linePrefix, s string) {
 		lines = lines[:len(lines)-1]
 	}
 	for _, line := range lines {
-		io.WriteString(st, linePrefix)
-		io.WriteString(st, line)
-		io.WriteString(st, "\n")
+		_, _ = io.WriteString(st, linePrefix)
+		_, _ = io.WriteString(st, line)
+		_, _ = io.WriteString(st, "\n")
 	}
 }
 
 func useFormatter(err error) bool {
-	switch err.(type) {
+	switch err.(type) { //nolint:errorlint
 	case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer:
 		return false
 	}
 
-	_, ok := err.(fmt.Formatter)
+	_, ok := err.(fmt.Formatter) //nolint:errorlint
 	return ok
 }
 
 func isForeignFormatter(err error) bool {
 	// Our errors implement fmt.Formatter but we want to return false for them because
 	// they just call into our Formatter which would lead to infinite recursion.
-	switch err.(type) {
+	switch err.(type) { //nolint:errorlint
 	case *fundamental, *msgWithStack, *msgWithoutStack, *msgJoined, *withStack, *withoutStack, *cause:
 		return false
 	}
 
-	_, ok := err.(fmt.Formatter)
+	_, ok := err.(fmt.Formatter) //nolint:errorlint
 	return ok
 }
 
@@ -135,7 +135,7 @@ func formatError(s fmt.State, indent int, err error) {
 		}
 	}
 
-	if precision == 1 || precision == 3 {
+	if precision == 1 || precision == 3 { //nolint:nestif
 		// It is possible that both cause and errs is set. A bit strange, but we allow it.
 		// In that case we first recurse into errs and then into the cause, so that it is
 		// clear which "error above" joins the errors (not the cause). Because cause is
@@ -144,7 +144,7 @@ func formatError(s fmt.State, indent int, err error) {
 		if len(errs) > 0 {
 			if s.Flag('-') {
 				if s.Flag(' ') {
-					io.WriteString(s, "\n")
+					_, _ = io.WriteString(s, "\n")
 				}
 				writeLinesPrefixed(s, linePrefix, multipleErrorsHelp)
 			}
@@ -152,7 +152,7 @@ func formatError(s fmt.State, indent int, err error) {
 				// e should never be nil, but we still check.
 				if e != nil {
 					if s.Flag(' ') {
-						io.WriteString(s, "\n")
+						_, _ = io.WriteString(s, "\n")
 					}
 					formatError(s, indent+1, e)
 				}
@@ -161,12 +161,12 @@ func formatError(s fmt.State, indent int, err error) {
 		if cause != nil {
 			if s.Flag('-') {
 				if s.Flag(' ') {
-					io.WriteString(s, "\n")
+					_, _ = io.WriteString(s, "\n")
 				}
 				writeLinesPrefixed(s, linePrefix, causeHelp)
 			}
 			if s.Flag(' ') {
-				io.WriteString(s, "\n")
+				_, _ = io.WriteString(s, "\n")
 			}
 			formatError(s, indent, cause)
 		}
@@ -293,7 +293,7 @@ func (e Formatter) Format(s fmt.State, verb rune) {
 			precision = 0
 		}
 		if precision < 0 || precision > 3 {
-			io.WriteString(s, badPrecString)
+			_, _ = io.WriteString(s, badPrecString)
 			break
 		}
 		if s.Flag('#') || s.Flag('+') || s.Flag('-') || s.Flag(' ') || precision > 0 {
@@ -302,7 +302,7 @@ func (e Formatter) Format(s fmt.State, verb rune) {
 		}
 		fallthrough
 	case 's':
-		io.WriteString(s, e.Error.Error())
+		_, _ = io.WriteString(s, e.Error.Error())
 	case 'q':
 		fmt.Fprintf(s, "%q", e.Error.Error())
 	default:

@@ -12,7 +12,7 @@ func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(v)
 	if err != nil {
-		return nil, err
+		return nil, err //nolint:wrapcheck
 	}
 	b := buf.Bytes()
 	if len(b) > 0 {
@@ -26,9 +26,9 @@ func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
 func marshalJSONError(err error) ([]byte, E) {
 	var e error
 	var s StackFormatter
-	if stackErr, ok := err.(stackTracer); ok {
+	if stackErr, ok := err.(stackTracer); ok { //nolint:errorlint
 		s = stackErr.StackTrace()
-	} else if stackErr, ok := err.(pkgStackTracer); ok {
+	} else if stackErr, ok := err.(pkgStackTracer); ok { //nolint:errorlint
 		st := stackErr.StackTrace()
 		s = StackFormatter(*(*[]uintptr)(unsafe.Pointer(&st)))
 	}

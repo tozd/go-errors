@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only if the error does not implement interfaces used by this package (e.g.,
   `stackTracer` or `detailer`). This is to assure consistent error formatting
   when possible. You can change this default through format precision.
+- `Details` now unwraps the error to find one providing
+  details.
 
 ## Removed
 

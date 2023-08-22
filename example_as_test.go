@@ -20,12 +20,12 @@ func (e MyError) Code() int {
 }
 
 var (
-	BadRequestError = &MyError{400, "error"}
-	NotFoundError   = &MyError{404, "not found"}
+	ErrBadRequest = &MyError{400, "error"}
+	ErrNotFound   = &MyError{404, "not found"}
 )
 
 func getMyErr() error {
-	return NotFoundError
+	return ErrNotFound
 }
 
 func ExampleAs() {

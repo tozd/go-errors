@@ -308,8 +308,14 @@ func init() {
 }
 
 func TestErrors(t *testing.T) {
+	t.Parallel()
+
 	for k, tt := range tests {
+		tt := tt
+
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
 			assert.EqualError(t, tt.err, tt.want)
 			assert.Implements(t, (*stackTracer)(nil), tt.err)
 			assert.Equal(t, tt.want, fmt.Sprintf("%s", tt.err))
@@ -324,22 +330,32 @@ func TestErrors(t *testing.T) {
 }
 
 func TestWithStackNil(t *testing.T) {
+	t.Parallel()
+
 	assert.Nil(t, errors.WithStack(nil), nil)
 }
 
 func TestWithDetailsNil(t *testing.T) {
+	t.Parallel()
+
 	assert.Nil(t, errors.WithDetails(nil), nil)
 }
 
 func TestWithMessageNil(t *testing.T) {
+	t.Parallel()
+
 	assert.Nil(t, errors.WithMessage(nil, "no error"), nil)
 }
 
 func TestWithMessagefNil(t *testing.T) {
+	t.Parallel()
+
 	assert.Nil(t, errors.WithMessagef(nil, "no error"), nil)
 }
 
 func TestJoinNil(t *testing.T) {
+	t.Parallel()
+
 	assert.Nil(t, errors.Join(nil))
 	assert.Nil(t, errors.Join(nil, nil))
 }
@@ -348,6 +364,8 @@ func TestJoinNil(t *testing.T) {
 // Assert that various kinds of errors have a functional equality operator,
 // even if the result of that equality is always false.
 func TestErrorEquality(t *testing.T) {
+	t.Parallel()
+
 	vals := []error{
 		nil,
 		io.EOF,
@@ -365,12 +383,14 @@ func TestErrorEquality(t *testing.T) {
 	for i := range vals {
 		for j := range vals {
 			// Must not panic.
-			_ = vals[i] == vals[j]
+			_ = vals[i] == vals[j] //nolint:errorlint
 		}
 	}
 }
 
 func TestBases(t *testing.T) {
+	t.Parallel()
+
 	// Current stack plus call to errors.*.
 	currentStackSize := len(callers()) + 1
 
@@ -388,6 +408,8 @@ func TestBases(t *testing.T) {
 }
 
 func TestCause(t *testing.T) {
+	t.Parallel()
+
 	assert.Nil(t, errors.Cause(errors.Base("foo")))
 	assert.Nil(t, errors.Cause(errors.New("foo")))
 	assert.Nil(t, errors.Cause(errors.WithMessage(errors.Base("foo"), "bar")))
@@ -407,6 +429,8 @@ func TestCause(t *testing.T) {
 }
 
 func TestDetails(t *testing.T) {
+	t.Parallel()
+
 	err := errors.New("test")
 	errors.Details(err)["zoo"] = "base"
 	errors.Details(err)["foo"] = "bar"

@@ -41,25 +41,25 @@ func (f frame) Format(s fmt.State, verb rune) {
 	case 's':
 		switch {
 		case s.Flag('+'):
-			io.WriteString(s, f.name())
+			_, _ = io.WriteString(s, f.name())
 			width, ok := s.Width()
 			if ok {
-				io.WriteString(s, "\n")
-				io.WriteString(s, strings.Repeat(" ", width))
+				_, _ = io.WriteString(s, "\n")
+				_, _ = io.WriteString(s, strings.Repeat(" ", width))
 			} else {
-				io.WriteString(s, "\n\t")
+				_, _ = io.WriteString(s, "\n\t")
 			}
-			io.WriteString(s, f.file())
+			_, _ = io.WriteString(s, f.file())
 		default:
-			io.WriteString(s, path.Base(f.file()))
+			_, _ = io.WriteString(s, path.Base(f.file()))
 		}
 	case 'd':
-		io.WriteString(s, strconv.Itoa(f.line()))
+		_, _ = io.WriteString(s, strconv.Itoa(f.line()))
 	case 'n':
-		io.WriteString(s, funcname(f.name()))
+		_, _ = io.WriteString(s, funcname(f.name()))
 	case 'v':
 		f.Format(s, 's')
-		io.WriteString(s, ":")
+		_, _ = io.WriteString(s, ":")
 		f.Format(s, 'd')
 	default:
 		badVerb(s, verb, f)
@@ -124,7 +124,7 @@ func (s StackFormatter) Format(st fmt.State, verb rune) {
 	for {
 		f, more := frames.Next()
 		frame(f).Format(st, verb)
-		io.WriteString(st, "\n")
+		_, _ = io.WriteString(st, "\n")
 		if !more {
 			break
 		}
