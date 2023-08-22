@@ -48,6 +48,7 @@
 //
 // You can use standard runtime.CallersFrames to obtain stack trace frame
 // information (e.g., function name, source code file and line).
+// You can also use errors.StackFormatter to format the stack trace.
 //
 // Although the stackTracer interface is not exported by this package, it is
 // considered a part of its stable public interface.
@@ -102,7 +103,7 @@
 // the error. Returned map can be modified in-place. You can also use
 // errors.Details and errors.AllDetails to access details:
 //
-// errors.Details(err)["url"] = "http://example.com"
+//	errors.Details(err)["url"] = "http://example.com"
 //
 // You can also use errors.WithDetails as an alternative to errors.WithStack
 // if you also want to add details while recording the stack trace:
@@ -129,7 +130,7 @@
 //
 // form a tree of errors where a wrapping error points its parent,
 // wrapped, error(s). Errors returned from this package implement this
-// interface to return the original error or errors, when they are.
+// interface to return the original error or errors, when they exist.
 // This enables us to have constant base errors which we annotate
 // with a stack trace before we return them:
 //

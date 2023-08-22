@@ -231,11 +231,6 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 
 // Formatter formats an error as text using the fmt.Formatter interface
 // and marshals the error as JSON.
-//
-// Examples:
-//
-//	fmt.Sprintf("%+v", errors.Formatter{err})
-//	json.Marshal(errors.Formatter{err})
 type Formatter struct {
 	Error error
 }

@@ -85,11 +85,6 @@ func (f frame) MarshalJSON() ([]byte, error) {
 // StackFormatter formats a provided stack trace as text using
 // the fmt.Formatter interface and marshals the provided stack
 // trace as JSON.
-//
-// Examples:
-//
-//	fmt.Sprintf("%+v", errors.StackFormatter{stack})
-//	json.Marshal(errors.StackFormatter{stack})
 type StackFormatter []uintptr
 
 // Format formats the stack of frames as text according to the fmt.Formatter interface.
@@ -101,10 +96,10 @@ type StackFormatter []uintptr
 //
 // The following verbs are supported:
 //
-//	%s	  lists the source file basename
+//	%s    lists the source file basename
 //	%d    lists the source line number
 //	%n    lists the short function name
-//	%v	  equivalent to %s:%d
+//	%v    equivalent to %s:%d
 //
 // StackFormat accepts flags that alter the formatting of some verbs, as follows:
 //

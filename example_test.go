@@ -1,7 +1,9 @@
 package errors_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"runtime"
 
 	"gitlab.com/tozd/go/errors"
 )
@@ -319,4 +321,101 @@ func ExampleJoin() {
 	// 		/usr/local/go/src/runtime/proc.go:267
 	// 	runtime.goexit
 	// 		/usr/local/go/src/runtime/asm_amd64.s:1650
+}
+
+func ExampleAllDetails() {
+	base := errors.Base("not found")
+	err1 := errors.WithDetails(base, "file", "plans.txt")
+	err2 := errors.WithDetails(err1, "user", "vader")
+	fmt.Println(errors.AllDetails(err1))
+	fmt.Println(errors.AllDetails(err2))
+	// Output:
+	// map[file:plans.txt]
+	// map[file:plans.txt user:vader]
+}
+
+func ExampleDetails() {
+	base := errors.Base("not found")
+	err := errors.WithStack(base)
+	errors.Details(err)["file"] = "plans.txt"
+	errors.Details(err)["user"] = "vader"
+	fmt.Println(errors.Details(err))
+	// Output:
+	// map[file:plans.txt user:vader]
+}
+
+func ExampleWithDetails_printf() {
+	base := errors.Base("not found")
+	err := errors.WithDetails(base, "file", "plans.txt", "user", "vader")
+	fmt.Printf("%#v", err)
+	// Output:
+	// not found
+	// file=plans.txt
+	// user=vader
+}
+
+func ExampleStackFormatter_MarshalJSON() {
+	const depth = 1
+	var cs [depth]uintptr
+	runtime.Callers(1, cs[:])
+	data, err := json.Marshal(errors.StackFormatter(cs[:]))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(data))
+
+	// Example output:
+	// [{"name":"gitlab.com/tozd/go/errors_test.ExampleStackFormatter_MarshalJSON","file":"/home/user/errors/example_test.go","line":360}]
+}
+
+func ExampleStackFormatter_Format() {
+	const depth = 1
+	var cs [depth]uintptr
+	runtime.Callers(1, cs[:])
+	fmt.Printf("%+v", errors.StackFormatter(cs[:]))
+
+	// Example output:
+	// gitlab.com/tozd/go/errors_test.ExampleStackFormatter_Format
+	// 	/home/user/errors/example_test.go:374
+}
+
+func ExampleStackFormatter_Format_width() {
+	const depth = 1
+	var cs [depth]uintptr
+	runtime.Callers(1, cs[:])
+	fmt.Printf("%+2v", errors.StackFormatter(cs[:]))
+
+	// Example output:
+	// gitlab.com/tozd/go/errors_test.ExampleStackFormatter_Format
+	//   /home/user/errors/example_test.go:385
+}
+
+func ExampleFormatter_Format() {
+	base := errors.Base("not found")
+	err := errors.Wrap(base, "image not found")
+	errors.Details(err)["filename"] = "star.png"
+	fmt.Printf("% #+-.1v", err)
+
+	// Example output:
+	// image not found
+	// filename=star.png
+	// stack trace (most recent call first):
+	// gitlab.com/tozd/go/errors_test.ExampleFormatter_Format
+	// 	/home/user/errors/example_test.go:395
+	// testing.runExample
+	// 	/usr/local/go/src/testing/run_example.go:63
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
+	// testing.(*M).Run
+	// 	/usr/local/go/src/testing/testing.go:1927
+	// main.main
+	// 	_testmain.go:137
+	// runtime.main
+	// 	/usr/local/go/src/runtime/proc.go:267
+	// runtime.goexit
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
+	//
+	// the above error was caused by the following error:
+	//
+	// not found
 }
