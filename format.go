@@ -278,7 +278,7 @@ type Formatter struct {
 //
 // When any flag or non-zero precision mode is used, it is assured that the text
 // ends with a newline, if it does not already do so.
-func (e Formatter) Format(s fmt.State, verb rune) {
+func (f Formatter) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		precision, ok := s.Precision()
@@ -292,23 +292,23 @@ func (e Formatter) Format(s fmt.State, verb rune) {
 			break
 		}
 		if s.Flag('#') || s.Flag('+') || s.Flag('-') || s.Flag(' ') || precision > 0 {
-			formatError(s, 0, e.Error)
+			formatError(s, 0, f.Error)
 			break
 		}
 		fallthrough
 	case 's':
-		if e.Error != nil {
-			_, _ = io.WriteString(s, e.Error.Error())
+		if f.Error != nil {
+			_, _ = io.WriteString(s, f.Error.Error())
 		} else {
-			fmt.Fprintf(s, "%s", e.Error)
+			fmt.Fprintf(s, "%s", f.Error)
 		}
 	case 'q':
-		if e.Error != nil {
-			fmt.Fprintf(s, "%q", e.Error.Error())
+		if f.Error != nil {
+			fmt.Fprintf(s, "%q", f.Error.Error())
 		} else {
-			fmt.Fprintf(s, "%q", e.Error)
+			fmt.Fprintf(s, "%q", f.Error)
 		}
 	default:
-		badVerb(s, verb, e.Error)
+		badVerb(s, verb, f.Error)
 	}
 }
