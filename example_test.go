@@ -22,17 +22,17 @@ func ExampleNew_printf() {
 	// gitlab.com/tozd/go/errors_test.ExampleNew_printf
 	// 	/home/user/errors/example_test.go:16
 	// testing.runExample
-	// 	/usr/local/go/src/testing/run_example.go:64
+	// 	/usr/local/go/src/testing/run_example.go:63
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1505
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:87
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:255
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 }
 
 func ExampleWithMessage() {
@@ -47,23 +47,23 @@ func ExampleWithMessage_printf() {
 	err := errors.WithMessage(cause, "oh noes")
 	fmt.Printf("%+-v", err)
 
-	// Example output:
+	// Example Output:
 	// oh noes: whoops
 	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWithMessage_printf
 	// 	/home/user/errors/example_test.go:46
 	// testing.runExample
-	// 	/usr/local/go/src/testing/run_example.go:64
+	// 	/usr/local/go/src/testing/run_example.go:63
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1505
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:97
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:255
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 }
 
 func ExampleWithMessagef() {
@@ -89,19 +89,19 @@ func ExampleWithStack_printf() {
 	// whoops
 	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWithStack_printf
-	// 	/home/user/errors/example_test.go:54
+	// 	/home/user/errors/example_test.go:85
 	// testing.runExample
-	// 	/usr/local/go/src/testing/run_example.go:64
+	// 	/usr/local/go/src/testing/run_example.go:63
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1505
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:91
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:255
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 }
 
 func ExampleWrap() {
@@ -120,38 +120,38 @@ func ExampleWrap_printf() {
 	// oh noes
 	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWrap_printf
-	// 	/home/user/errors/example_test.go:86
+	// 	/home/user/errors/example_test.go:116
 	// testing.runExample
-	// 	/usr/local/go/src/testing/run_example.go:64
+	// 	/usr/local/go/src/testing/run_example.go:63
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1505
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:93
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:255
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 	//
 	// the above error was caused by the following error:
 	//
 	// whoops
 	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleWrap_printf
-	// 	/home/user/errors/example_test.go:85
+	// 	/home/user/errors/example_test.go:115
 	// testing.runExample
-	// 	/usr/local/go/src/testing/run_example.go:64
+	// 	/usr/local/go/src/testing/run_example.go:63
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1505
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:93
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:255
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 }
 
 func ExampleWrapf() {
@@ -169,19 +169,19 @@ func ExampleErrorf() {
 	// whoops: foo
 	// stack trace (most recent call first):
 	// gitlab.com/tozd/go/errors_test.ExampleErrorf
-	// 	/home/user/errors/example_test.go:134
+	// 	/home/user/errors/example_test.go:165
 	// testing.runExample
-	// 	/usr/local/go/src/testing/run_example.go:64
+	// 	/usr/local/go/src/testing/run_example.go:63
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1505
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:95
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:255
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 }
 
 func ExampleErrorf_wrap() {
@@ -195,17 +195,17 @@ func ExampleErrorf_wrap() {
 	// gitlab.com/tozd/go/errors_test.ExampleErrorf_wrap
 	// 	/home/user/errors/example_test.go:189
 	// testing.runExample
-	// 	/usr/local/go/src/testing/run_example.go:64
+	// 	/usr/local/go/src/testing/run_example.go:63
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1505
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:99
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:255
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1581
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 }
 
 func ExampleBase() {
@@ -276,13 +276,13 @@ func ExampleJoin() {
 	// testing.runExamples
 	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	// 	/usr/local/go/src/testing/testing.go:1908
+	// 	/usr/local/go/src/testing/testing.go:1927
 	// main.main
-	// 	_testmain.go:125
+	// 	_testmain.go:131
 	// runtime.main
-	// 	/usr/local/go/src/runtime/proc.go:250
+	// 	/usr/local/go/src/runtime/proc.go:267
 	// runtime.goexit
-	// 	/usr/local/go/src/runtime/asm_amd64.s:1598
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 	//
 	// the above error joins multiple errors:
 	//
@@ -295,13 +295,13 @@ func ExampleJoin() {
 	// 	testing.runExamples
 	// 		/usr/local/go/src/testing/example.go:44
 	// 	testing.(*M).Run
-	// 		/usr/local/go/src/testing/testing.go:1908
+	// 		/usr/local/go/src/testing/testing.go:1927
 	// 	main.main
-	// 		_testmain.go:125
+	// 		_testmain.go:131
 	// 	runtime.main
-	// 		/usr/local/go/src/runtime/proc.go:250
+	// 		/usr/local/go/src/runtime/proc.go:267
 	// 	runtime.goexit
-	// 		/usr/local/go/src/runtime/asm_amd64.s:1598
+	// 		/usr/local/go/src/runtime/asm_amd64.s:1650
 	//
 	// 	error2
 	// 	stack trace (most recent call first):
@@ -312,11 +312,11 @@ func ExampleJoin() {
 	// 	testing.runExamples
 	// 		/usr/local/go/src/testing/example.go:44
 	// 	testing.(*M).Run
-	// 		/usr/local/go/src/testing/testing.go:1908
+	// 		/usr/local/go/src/testing/testing.go:1927
 	// 	main.main
-	// 		_testmain.go:125
+	// 		_testmain.go:131
 	// 	runtime.main
-	// 		/usr/local/go/src/runtime/proc.go:250
+	// 		/usr/local/go/src/runtime/proc.go:267
 	// 	runtime.goexit
-	// 		/usr/local/go/src/runtime/asm_amd64.s:1598
+	// 		/usr/local/go/src/runtime/asm_amd64.s:1650
 }
