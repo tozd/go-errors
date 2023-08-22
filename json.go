@@ -3,7 +3,6 @@ package errors
 import (
 	"bytes"
 	"encoding/json"
-	"unsafe"
 )
 
 func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
@@ -22,43 +21,56 @@ func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
 	return b, nil
 }
 
-// marshalJSONError marshals foreign errors.
+// marshalJSONError marshals errors using interfaces.
 func marshalJSONError(err error) ([]byte, E) {
-	var e error
-	var s StackFormatter
-	if stackErr, ok := err.(stackTracer); ok { //nolint:errorlint
-		s = stackErr.StackTrace()
-	} else if stackErr, ok := err.(pkgStackTracer); ok { //nolint:errorlint
-		st := stackErr.StackTrace()
-		s = StackFormatter(*(*[]uintptr)(unsafe.Pointer(&st)))
+	details, cause, errs := allDetailsUntilCauseOrJoined(err)
+
+	data := map[string]interface{}{}
+
+	// We start with details so that other "standard"
+	// fields can override conflicting fields from details.
+	for key, value := range details {
+		data[key] = value
 	}
-	var jsonCause []byte
-	cause := Cause(err)
-	if cause != nil {
-		jsonCause, e = marshalWithoutEscapeHTML(cause)
-		if e != nil {
-			return nil, WithStack(e)
-		}
-		if len(jsonCause) == 0 || bytes.Equal(jsonCause, []byte("{}")) {
-			var eStack E
-			jsonCause, eStack = marshalJSONError(cause)
-			if eStack != nil {
-				return nil, eStack
+
+	msg := err.Error()
+	if msg != "" {
+		data["error"] = msg
+	}
+
+	st := getExistingStackTrace(err)
+	if len(st) > 0 {
+		data["stack"] = StackFormatter(st)
+	}
+
+	for _, er := range errs {
+		// er should never be nil, but we still check.
+		if er != nil {
+			jsonEr, e := marshalJSONAnyError(er)
+			if e != nil {
+				return nil, e
+			}
+			if len(jsonEr) != 0 && !bytes.Equal(jsonEr, []byte("{}")) {
+				if data["errors"] == nil {
+					data["errors"] = []json.RawMessage{json.RawMessage(jsonEr)}
+				} else {
+					data["errors"] = append(data["errors"].([]json.RawMessage), json.RawMessage(jsonEr)) //nolint:forcetypeassert
+				}
 			}
 		}
-		if bytes.Equal(jsonCause, []byte("{}")) {
-			jsonCause = []byte{}
+	}
+
+	if cause != nil {
+		jsonCause, e := marshalJSONAnyError(cause)
+		if e != nil {
+			return nil, e
+		}
+		if len(jsonCause) != 0 && !bytes.Equal(jsonCause, []byte("{}")) {
+			data["cause"] = json.RawMessage(jsonCause)
 		}
 	}
-	jsonErr, e := marshalWithoutEscapeHTML(&struct {
-		Error string          `json:"error,omitempty"`
-		Stack StackFormatter  `json:"stack,omitempty"`
-		Cause json.RawMessage `json:"cause,omitempty"`
-	}{
-		Error: err.Error(),
-		Stack: s,
-		Cause: jsonCause,
-	})
+
+	jsonErr, e := marshalWithoutEscapeHTML(data)
 	if e != nil {
 		return nil, WithStack(e)
 	}
@@ -67,19 +79,33 @@ func marshalJSONError(err error) ([]byte, E) {
 
 // marshalJSONAnyError marshals our and foreign errors.
 func marshalJSONAnyError(err error) ([]byte, E) {
-	var eStack E
-	jsonWrap, e := marshalWithoutEscapeHTML(err)
+	if err == nil {
+		return []byte("null"), nil
+	}
+
+	// We short-circuit our errors to directly call marshalJSONError
+	// and do not call it indirectly through marshalWithoutEscapeHTML.
+	switch err.(type) { //nolint:errorlint
+	case *fundamental, *msgWithStack, *msgWithoutStack, *msgJoined, *withStack, *withoutStack, *cause:
+		return marshalJSONError(err)
+	}
+
+	// Does the error marshal to something useful on its own?
+	// We do not call MarshalJSON here but invoke Go JSON marshal because
+	// maybe error relays on the default JSON marshal (of structs, for example).
+	jsonErr, e := marshalWithoutEscapeHTML(err)
 	if e != nil {
 		return nil, WithStack(e)
 	}
-	if len(jsonWrap) == 0 || bytes.Equal(jsonWrap, []byte("{}")) {
-		jsonWrap, eStack = marshalJSONError(err)
-		if eStack != nil {
-			return nil, eStack
-		}
+	if len(jsonErr) == 0 || bytes.Equal(jsonErr, []byte("{}")) {
+		// No it does not, we call marshalJSONError.
+		return marshalJSONError(err)
 	}
-	if bytes.Equal(jsonWrap, []byte("{}")) {
-		jsonWrap = []byte{}
-	}
-	return jsonWrap, nil
+
+	// It does, we return it.
+	return jsonErr, nil
+}
+
+func (f Formatter) MarshalJSON() ([]byte, error) {
+	return marshalJSONAnyError(f.Error)
 }

@@ -364,6 +364,10 @@ func (e *fundamental) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
+func (e fundamental) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
 func (e *fundamental) StackTrace() []uintptr {
 	return e.stack
 }
@@ -389,6 +393,10 @@ func (e *msgWithStack) Error() string {
 
 func (e *msgWithStack) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+}
+
+func (e msgWithStack) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
 }
 
 func (e *msgWithStack) Unwrap() error {
@@ -423,6 +431,10 @@ func (e *msgWithoutStack) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
+func (e msgWithoutStack) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
 func (e *msgWithoutStack) Unwrap() error {
 	return e.err
 }
@@ -453,6 +465,10 @@ func (e *msgJoined) Error() string {
 
 func (e *msgJoined) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+}
+
+func (e msgJoined) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
 }
 
 func (e *msgJoined) Unwrap() []error {
@@ -514,6 +530,10 @@ func (e *withStack) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
 }
 
+func (e withStack) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
 func (e *withStack) Unwrap() error {
 	return e.err
 }
@@ -543,6 +563,10 @@ func (e *withoutStack) Error() string {
 
 func (e *withoutStack) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+}
+
+func (e withoutStack) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
 }
 
 func (e *withoutStack) Unwrap() error {
@@ -627,6 +651,10 @@ func (e *cause) Error() string {
 
 func (e *cause) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+}
+
+func (e cause) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
 }
 
 func (e *cause) Unwrap() error {

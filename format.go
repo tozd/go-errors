@@ -148,13 +148,13 @@ func formatError(s fmt.State, indent int, err error) {
 				}
 				writeLinesPrefixed(s, linePrefix, multipleErrorsHelp)
 			}
-			for _, e := range errs {
-				// e should never be nil, but we still check.
-				if e != nil {
+			for _, er := range errs {
+				// er should never be nil, but we still check.
+				if er != nil {
 					if s.Flag(' ') {
 						_, _ = io.WriteString(s, "\n")
 					}
-					formatError(s, indent+1, e)
+					formatError(s, indent+1, er)
 				}
 			}
 		}
