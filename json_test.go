@@ -115,6 +115,18 @@ func TestJSON(t *testing.T) {
 	}, {
 		errors.Join(errors.New("foobar1"), errors.New("foobar2")),
 		`{"error":"foobar1\nfoobar2","errors":[{"error":"foobar1","stack":[]},{"error":"foobar2","stack":[]}],"stack":[]}`,
+	}, {
+		errors.WithDetails(errors.Base("error"), "foo", "bar"),
+		`{"error":"error","foo":"bar","stack":[]}`,
+	}, {
+		errors.WithDetails(errors.Base("error"), "stack", "foobar"),
+		`{"error":"error","stack":[]}`,
+	}, {
+		errors.WithDetails(errors.Join(errors.WithDetails(errors.New("foobar1"), "foo", 1), errors.WithDetails(errors.New("foobar2"), "foo", 2)), "foo", "bar"),
+		`{"error":"foobar1\nfoobar2","errors":[{"error":"foobar1","foo":1,"stack":[]},{"error":"foobar2","foo":2,"stack":[]}],"foo":"bar","stack":[]}`,
+	}, {
+		errors.WithDetails(errors.Wrap(errors.WithDetails(errors.New("foobar"), "foo", 1), "error"), "foo", 2),
+		`{"error":"error","foo":2,"stack":[],"cause":{"error":"foobar","foo":1,"stack":[]}}`,
 	}}
 
 	for k, tt := range tests {
