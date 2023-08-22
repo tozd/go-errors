@@ -10,7 +10,7 @@ A Go package providing errors with a stack trace.
 Features:
 
 - Based of [`github.com/pkg/errors`](https://github.com/pkg/errors) with similar API, addressing many its
-  [open issues](https://github.com/pkg/errors/issues). In many cases it can be used as a drop-in replacement.
+  [open issues](https://github.com/pkg/errors/issues). In most cases it can be used as a drop-in replacement.
   At the same time compatible with [`github.com/pkg/errors`](https://github.com/pkg/errors) errors.
 - Uses standard error wrapping (available since Go 1.13) and wrapping of multiple errors (available since Go 1.20).
 - Provides [`errors.Errorf`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Errorf) which supports `%w` format verb
@@ -30,12 +30,12 @@ Features:
   and [`errors.As`](https://pkg.go.dev/gitlab.com/tozd/go/errors#As).
 - Differentiates between wrapping and recording a cause: only [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap)
   records a cause, while other functions are error transformers, wrapping the original.
-- Novice friendly formatting of a stack trace when error is formatted using `%+v`:
-  tells what is the order of the stack trace and what is the relation between
-  wrapped errors.
 - Makes sure a stack trace is not recorded multiple times unnecessarily.
-- Provide optional details map on all errors returned by this package.
-- Errors implement `MarshalJSON` and can be marshaled into JSON.
+- Provide optional details map on all errors returned by this package: [`errors.WithDetails`](https://pkg.go.dev/gitlab.com/tozd/go/errors#WithDetails)
+  and [`errors.Details`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Details).
+- [Errors](https://pkg.go.dev/gitlab.com/tozd/go/errors#Formatter) and
+  [stack traces](https://pkg.go.dev/gitlab.com/tozd/go/errors#StackFormatter) support configurable formatting and can be marshaled into JSON.
+  Both formatting and JSON marshaling is supported also for errors not made using this package.
 
 ## Installation
 
@@ -80,13 +80,12 @@ many of the open issues community has identified since then and to modernize it 
   but only `errors.Wrap` records a cause error and returns an error which implements the `causer` interface.
 - All error-wrapping functions wrap the error into only one new error.
 - `Errorf` supports `%w`.
-- Errors formatted using `%+v` include lines `stack trace (most recent call first):` and
-  `the above error was caused by the following error:` to make it clearer how is the stack
-  trace formatted and how are multiple errors related to each other.
 - Only `errors.Wrap` always records the stack trace while other functions do
   not record if it is already present.
 - `errors.Cause` repeatedly unwraps the error until it finds one which implements the `causer` interface,
   and then return its cause.
+- This package supports annotating errors with additional key-value details.
+- This package provides more configurable formatting and JSON marshaling of stack traces and errors.
 
 ## It looks like `Wrap` should be named `Cause`. Why it is not?
 
@@ -99,8 +98,8 @@ so that original error is always available. `Wrap` wraps the error to records th
 - [cockroachdb/errors](https://github.com/cockroachdb/errors) – Go errors
   with every possible feature you might ever need in your large project.
   This package aims to stay lean and be more or less just a drop-in replacement
-  for core Go errors, but with stack traces (and few utility functions for common
-  cases).
+  for core Go errors and archived `github.com/pkg/errors`, but with stack traces
+  (and few utility functions for common cases).
 
 ## GitHub mirror
 
