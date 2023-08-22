@@ -34,7 +34,8 @@ Features:
 - Provide optional details map on all errors returned by this package: [`errors.WithDetails`](https://pkg.go.dev/gitlab.com/tozd/go/errors#WithDetails)
   and [`errors.Details`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Details).
 - [Errors](https://pkg.go.dev/gitlab.com/tozd/go/errors#Formatter) and
-  [stack traces](https://pkg.go.dev/gitlab.com/tozd/go/errors#StackFormatter) support configurable formatting and can be marshaled into JSON.
+  [stack traces](https://pkg.go.dev/gitlab.com/tozd/go/errors#StackFormatter) support configurable formatting
+  and can be marshaled into JSON.
   Both formatting and JSON marshaling is supported also for errors not made using this package.
 
 ## Installation
