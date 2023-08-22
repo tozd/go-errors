@@ -236,6 +236,11 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 //
 //	fmt.Sprintf("%+v", errors.Formatter{err})
 //	json.Marshal(errors.Formatter{err})
+type Formatter struct {
+	Error error
+}
+
+// Format formats the error as text according to the fmt.Formatter interface.
 //
 // The error does not have to necessary come from this package and it will be formatted
 // in the same way if it implements interfaces used by this package (e.g., stackTracer
@@ -278,11 +283,6 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 //
 // When any flag or non-zero precision mode is used, it is assured that the text
 // ends with a newline, if it does not already do so.
-type Formatter struct {
-	Error error
-}
-
-// Format formats the error as text according to the fmt.Formatter interface.
 func (e Formatter) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':

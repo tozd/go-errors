@@ -90,6 +90,9 @@ func (f frame) MarshalJSON() ([]byte, error) {
 //
 //	fmt.Sprintf("%+v", errors.StackFormatter{stack})
 //	json.Marshal(errors.StackFormatter{stack})
+type StackFormatter []uintptr
+
+// Format formats the stack of frames as text according to the fmt.Formatter interface.
 //
 // The stack trace can come from errors in this package, from
 // runtime.Callers, or from somewhere else.
@@ -113,9 +116,6 @@ func (f frame) MarshalJSON() ([]byte, error) {
 //
 // StackFormat also accepts the width argument which controls the width of the indent
 // step in spaces. The default (no width argument) indents with a tab step.
-type StackFormatter []uintptr
-
-// Format formats the stack of frames as text according to the fmt.Formatter interface.
 func (s StackFormatter) Format(st fmt.State, verb rune) {
 	if len(s) == 0 {
 		return
