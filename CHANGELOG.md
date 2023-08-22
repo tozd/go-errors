@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   width to control indentation and precision to control if formatting recurses and/or
   uses error's `fmt.Formatter` implementation.
 - Support for Go 1.21.
+- `StackTrace` type alias for better compatibility with `github.com/pkg/errors`.
 
 ## Changed
 

@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+// StackTrace is a type alias for better compatibility with github.com/pkg/errors.
+// It does not define a new type.
+type StackTrace = []uintptr
+
 // frame represents a program counter inside a stack frame.
 type frame runtime.Frame
 
