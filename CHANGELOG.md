@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 
 - `WithDetails` now accepts optional pairs of keys and values as initial details.
-- `Errorf` supports multiple `%w`.
+- `Errorf` supports multiple `%w` when used with Go 1.20 or newer.
 - `StackFormatter` which allows you to format stacks and marshal them to JSON.
 - `Formatter` which allows you to format errors (including ones not from this package)
   and marshal them to JSON.
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   only if the error does not implement interfaces used by this package (e.g.,
   `stackTracer` or `detailer`). This is to assure consistent error formatting
   when possible. You can change this default through format precision.
-- `Details` now unwraps the error to find one providing
+- `Details` now unwraps the error to find the first one providing
   details.
 
 ## Removed
