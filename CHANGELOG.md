@@ -30,12 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ' ' to add extra newlines to separate parts of the text better). You can
   replace all `%+v` in your code with `% +-.3v` to obtain previous verbose formatting
   and `% #+-.3v` if you want to include new support for formatting details.
+  [#5](https://gitlab.com/tozd/go/errors/-/issues/5)
+  [#8](https://gitlab.com/tozd/go/errors/-/issues/8)
 - Error formatting now by default uses `fmt.Formatter` implementation of an error
   only if the error does not implement interfaces used by this package (e.g.,
   `stackTracer` or `detailer`). This is to assure consistent error formatting
   when possible. You can change this default through format precision.
 - `Details` now unwraps the error to find the first one providing
   details.
+- JSON marshalling adds fields from error's details into JSON.
+  [#7](https://gitlab.com/tozd/go/errors/-/issues/7)
 
 ## Removed
 
