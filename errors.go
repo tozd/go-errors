@@ -361,7 +361,7 @@ func (e *fundamental) Error() string {
 }
 
 func (e *fundamental) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
 func (e fundamental) MarshalJSON() ([]byte, error) {
@@ -392,7 +392,7 @@ func (e *msgWithStack) Error() string {
 }
 
 func (e *msgWithStack) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
 func (e msgWithStack) MarshalJSON() ([]byte, error) {
@@ -428,7 +428,7 @@ func (e *msgWithoutStack) Error() string {
 }
 
 func (e *msgWithoutStack) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
 func (e msgWithoutStack) MarshalJSON() ([]byte, error) {
@@ -464,7 +464,7 @@ func (e *msgJoined) Error() string {
 }
 
 func (e *msgJoined) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
 func (e msgJoined) MarshalJSON() ([]byte, error) {
@@ -527,7 +527,7 @@ func (e *withStack) Error() string {
 }
 
 func (e *withStack) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
 func (e withStack) MarshalJSON() ([]byte, error) {
@@ -562,7 +562,7 @@ func (e *withoutStack) Error() string {
 }
 
 func (e *withoutStack) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
 func (e withoutStack) MarshalJSON() ([]byte, error) {
@@ -650,7 +650,7 @@ func (e *cause) Error() string {
 }
 
 func (e *cause) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, fmt.FormatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
 func (e cause) MarshalJSON() ([]byte, error) {

@@ -108,14 +108,14 @@ func formatError(s fmt.State, indent int, err error) {
 	}
 
 	if precision >= 2 && isForeignFormatter(err) || err == nil {
-		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
+		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(formatString(s, 'v'), err))
 		// Here we return because we assume formatting does recurse itself or at least
 		// the user requested us to not recuse if the error implements fmt.Formatter.
 		return
 	}
 
 	if useFormatter(err) {
-		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(fmt.FormatString(s, 'v'), err))
+		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(formatString(s, 'v'), err))
 		// Here we still recurse ourselves because we assume formatting just formats the error and
 		// does not recurse if it does not implement those interfaces which we checked in useFormatter.
 		if precision == 1 || precision == 3 {
