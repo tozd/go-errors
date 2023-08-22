@@ -25,19 +25,19 @@ func TestJoinErrorf(t *testing.T) {
 		"^multiple: error1 error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoinErrorf\n" +
-			"\t.+/format_go20_test.go:22\n" +
+			"\t.+/format_go20_test.go:23\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoinErrorf\n" +
-			"\t\t.+/format_go20_test.go:22\n" +
+			"\t\t.+/format_go20_test.go:23\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror2\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoinErrorf\n" +
-			"\t\t.+/format_go20_test.go:22\n" +
+			"\t\t.+/format_go20_test.go:23\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}}
 
