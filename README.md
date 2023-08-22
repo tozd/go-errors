@@ -75,6 +75,9 @@ many of the open issues community has identified since then and to modernize it 
 
 ## What are main differences from `github.com/pkg/errors`?
 
+In most cases this package can be used as a drop-in replacement for `github.com/pkg/errors`,
+but there are some small (behavioral) differences (i.e., improvements):
+
 - The `stackTracer` interface's `StackTrace()` method returns `[]uintptr` and not custom type `StackTrace`.
 - All error-wrapping functions return errors which implement the standard `unwrapper` interface,
   but only `errors.Wrap` records a cause error and returns an error which implements the `causer` interface.
