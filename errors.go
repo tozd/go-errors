@@ -328,19 +328,14 @@ func Errorf(format string, args ...interface{}) E {
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
 		st := getExistingStackTrace(unwrap)
-		if len(st) > 0 {
-			return &msgError{
-				err:     unwrap,
-				msg:     err.Error(),
-				stack:   st,
-				details: nil,
-			}
+		if len(st) == 0 {
+			st = callers()
 		}
 
 		return &msgError{
 			err:     unwrap,
 			msg:     err.Error(),
-			stack:   callers(),
+			stack:   st,
 			details: nil,
 		}
 	}
@@ -472,17 +467,13 @@ func WithStack(err error) E {
 	}
 
 	st := getExistingStackTrace(err)
-	if len(st) > 0 {
-		return &noMsgError{
-			err:     err,
-			stack:   st,
-			details: nil,
-		}
+	if len(st) == 0 {
+		st = callers()
 	}
 
 	return &noMsgError{
 		err:     err,
-		stack:   callers(),
+		stack:   st,
 		details: nil,
 	}
 }
@@ -626,19 +617,14 @@ func WithMessage(err error, prefix string) E {
 	}
 
 	st := getExistingStackTrace(err)
-	if len(st) > 0 {
-		return &msgError{
-			err:     err,
-			msg:     prefixMessage(err.Error(), prefix),
-			stack:   st,
-			details: nil,
-		}
+	if len(st) == 0 {
+		st = callers()
 	}
 
 	return &msgError{
 		err:     err,
 		msg:     prefixMessage(err.Error(), prefix),
-		stack:   callers(),
+		stack:   st,
 		details: nil,
 	}
 }
@@ -657,19 +643,14 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 	}
 
 	st := getExistingStackTrace(err)
-	if len(st) > 0 {
-		return &msgError{
-			err:     err,
-			msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
-			stack:   st,
-			details: nil,
-		}
+	if len(st) == 0 {
+		st = callers()
 	}
 
 	return &msgError{
 		err:     err,
 		msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
-		stack:   callers(),
+		stack:   st,
 		details: nil,
 	}
 }
@@ -930,17 +911,13 @@ func WithDetails(err error, kv ...interface{}) E {
 	// We do not have to check for type E explicitly because E implements stackTracer
 	// so getExistingStackTrace returns its stack trace.
 	st := getExistingStackTrace(err)
-	if len(st) > 0 {
-		return &noMsgError{
-			err:     err,
-			stack:   st,
-			details: initMap,
-		}
+	if len(st) == 0 {
+		st = callers()
 	}
 
 	return &noMsgError{
 		err:     err,
-		stack:   callers(),
+		stack:   st,
 		details: initMap,
 	}
 }
@@ -973,17 +950,13 @@ func Join(errs ...error) E {
 		}
 
 		st := getExistingStackTrace(err)
-		if len(st) > 0 {
-			return &noMsgError{
-				err:     err,
-				stack:   st,
-				details: nil,
-			}
+		if len(st) == 0 {
+			st = callers()
 		}
 
 		return &noMsgError{
 			err:     err,
-			stack:   callers(),
+			stack:   st,
 			details: nil,
 		}
 	}
