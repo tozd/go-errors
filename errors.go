@@ -758,6 +758,9 @@ func Cause(err error) error {
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Details returns nil.
 // It does not unwrap errors returned by [Join].
+// Moreover, unwrapping stops if it encounters an error with the Cause
+// method which returns an error, or Unwrap() method which returns
+// multiple errors.
 //
 // You can modify returned map to modify err's details.
 func Details(err error) map[string]interface{} {
@@ -768,6 +771,14 @@ func Details(err error) map[string]interface{} {
 			if dd != nil {
 				return dd
 			}
+		}
+		c, ok := err.(causer) //nolint:errorlint
+		if ok && c.Cause() != nil {
+			return nil
+		}
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		if ok && len(e.Unwrap()) > 0 {
+			return nil
 		}
 		err = Unwrap(err)
 	}
