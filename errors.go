@@ -190,6 +190,7 @@ package errors
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"unsafe"
 
@@ -224,18 +225,25 @@ type detailer interface {
 	Details() map[string]interface{}
 }
 
+func hasExistingStackTrace(err error) bool {
+	return len(getExistingStackTrace(err)) > 0
+}
+
 func getExistingStackTrace(err error) []uintptr {
-	switch e := err.(type) { //nolint:errorlint
-	case stackTracer:
-		return e.StackTrace()
-	case pkgStackTracer:
-		st := e.StackTrace()
-		return *(*[]uintptr)(unsafe.Pointer(&st))
-	case goErrorsStackTracer:
-		return e.Callers()
-	default:
-		return nil
+	var stackTracerE stackTracer
+	if asUntilCauseOrJoined(err, &stackTracerE) {
+		return stackTracerE.StackTrace()
 	}
+	var pkgStackTracerE pkgStackTracer
+	if asUntilCauseOrJoined(err, &pkgStackTracerE) {
+		st := pkgStackTracerE.StackTrace()
+		return *(*[]uintptr)(unsafe.Pointer(&st))
+	}
+	var goErrorsStackTracerE goErrorsStackTracer
+	if asUntilCauseOrJoined(err, &goErrorsStackTracerE) {
+		return goErrorsStackTracerE.Callers()
+	}
+	return nil
 }
 
 // prefixMessage eagerly builds a new message with the provided prefix.
@@ -306,14 +314,13 @@ func New(message string) E {
 func Errorf(format string, args ...interface{}) E {
 	err := fmt.Errorf(format, args...) //nolint:goerr113
 	var errs []error
-	uj, ok := err.(unwrapperJoined) //nolint:errorlint
-	if ok {
-		errs = uj.Unwrap()
-	} else {
-		u, ok := err.(unwrapper) //nolint:errorlint
-		if ok {
-			errs = []error{u.Unwrap()}
-		}
+	// Errorf itself maybe wrapped an error or errors so we can use a type switch here
+	// and do not need to (and should not) use As to determine if that happened.
+	switch u := err.(type) { //nolint:errorlint
+	case unwrapperJoined:
+		errs = u.Unwrap()
+	case unwrapper:
+		errs = []error{u.Unwrap()}
 	}
 	if len(errs) > 1 {
 		return &msgJoined{
@@ -324,8 +331,7 @@ func Errorf(format string, args ...interface{}) E {
 		}
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
-		switch unwrap.(type) { //nolint:errorlint
-		case stackTracer, pkgStackTracer, goErrorsStackTracer:
+		if hasExistingStackTrace(unwrap) {
 			return &msgWithStack{
 				err:     unwrap,
 				msg:     err.Error(),
@@ -498,10 +504,12 @@ func WithStack(err error) E {
 		return nil
 	}
 
-	switch e := err.(type) { //nolint:errorlint
-	case E:
+	e, ok := err.(E) //nolint:errorlint
+	if ok {
 		return e
-	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+	}
+
+	if hasExistingStackTrace(err) {
 		return &withStack{
 			err:     err,
 			details: nil,
@@ -687,8 +695,7 @@ func WithMessage(err error, prefix string) E {
 		return nil
 	}
 
-	switch err.(type) { //nolint:errorlint
-	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+	if hasExistingStackTrace(err) {
 		return &msgWithStack{
 			err:     err,
 			msg:     prefixMessage(err.Error(), prefix),
@@ -717,8 +724,7 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		return nil
 	}
 
-	switch err.(type) { //nolint:errorlint
-	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+	if hasExistingStackTrace(err) {
 		return &msgWithStack{
 			err:     err,
 			msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
@@ -739,6 +745,8 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Cause returns nil.
 // It does not unwrap errors returned by [Join].
+// Moreover, unwrapping stops if it encounters an error with
+// Unwrap() method which returns multiple errors.
 func Cause(err error) error {
 	for err != nil {
 		c, ok := err.(causer) //nolint:errorlint
@@ -747,6 +755,10 @@ func Cause(err error) error {
 			if cause != nil {
 				return cause //nolint:wrapcheck
 			}
+		}
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		if ok && len(e.Unwrap()) > 0 {
+			return nil
 		}
 		err = Unwrap(err)
 	}
@@ -765,12 +777,9 @@ func Cause(err error) error {
 // You can modify returned map to modify err's details.
 func Details(err error) map[string]interface{} {
 	for err != nil {
-		d, ok := err.(detailer) //nolint:errorlint
-		if ok {
-			dd := d.Details()
-			if dd != nil {
-				return dd
-			}
+		dd := detailsOf(err)
+		if dd != nil {
+			return dd
 		}
 		c, ok := err.(causer) //nolint:errorlint
 		if ok && c.Cause() != nil {
@@ -785,6 +794,8 @@ func Details(err error) map[string]interface{} {
 	return nil
 }
 
+// Returns details of the err if it implements detailer interface.
+// It does not unwrap and recurse.
 func detailsOf(err error) map[string]interface{} {
 	if err == nil {
 		return nil
@@ -826,6 +837,7 @@ func AllDetails(err error) map[string]interface{} {
 
 // allDetailsUntilCauseOrJoined builds a map with details unwrapping errors
 // until it hits a cause or joined errors, also returning it or them.
+// This also means that it does not traverse errors returned by Join.
 func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,stylecheck,nonamedreturns
 	res = make(map[string]interface{})
 	cause = nil
@@ -857,6 +869,7 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 
 // causeOrJoined unwraps err repeatedly until it hits a cause or joined errors,
 // returning it or them.
+// This also means that it does not traverse errors returned by Join.
 func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,stylecheck,nonamedreturns
 	cause = nil
 	errs = nil
@@ -878,6 +891,54 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 	}
 
 	return
+}
+
+var errorType = reflect.TypeOf((*error)(nil)).Elem() //nolint:gochecknoglobals
+
+// Like errors.As, but it traverses the tree only until it hits a cause or joined errors.
+// This also means that it does not traverse errors returned by Join.
+func asUntilCauseOrJoined(err error, target interface{}) bool {
+	if err == nil {
+		return false
+	}
+	if target == nil {
+		panic("errors: target cannot be nil")
+	}
+	val := reflect.ValueOf(target)
+	typ := val.Type()
+	if typ.Kind() != reflect.Ptr || val.IsNil() {
+		panic("errors: target must be a non-nil pointer")
+	}
+	targetType := typ.Elem()
+	if targetType.Kind() != reflect.Interface && !targetType.Implements(errorType) {
+		panic("errors: *target must be interface or implement error")
+	}
+	for {
+		if reflect.TypeOf(err).AssignableTo(targetType) {
+			val.Elem().Set(reflect.ValueOf(err))
+			return true
+		}
+		if x, ok := err.(interface{ As(interface{}) bool }); ok && x.As(target) { //nolint:errorlint
+			return true
+		}
+		c, ok := err.(causer) //nolint:errorlint
+		if ok && c.Cause() != nil {
+			return false
+		}
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		if ok && len(e.Unwrap()) > 0 {
+			return false
+		}
+		switch x := err.(type) { //nolint:errorlint
+		case interface{ Unwrap() error }:
+			err = x.Unwrap()
+			if err == nil {
+				return false
+			}
+		default:
+			return false
+		}
+	}
 }
 
 func initializeDetails(err error) {
@@ -930,14 +991,11 @@ func WithDetails(err error, kv ...interface{}) E {
 	// nil maps first.
 	initializeDetails(err)
 
-	switch err.(type) { //nolint:errorlint
-	case E:
-		// This is where it is different from WithStack.
-		return &withStack{
-			err:     err,
-			details: initMap,
-		}
-	case stackTracer, pkgStackTracer, goErrorsStackTracer:
+	// Even if err is of type E, we still wrap it into another withStack error to
+	// have another layer of details. This is where it is different from WithStack.
+	// We do not have to check for type E explicitly because E implements stackTracer
+	// so hasExistingStackTrace returns true.
+	if hasExistingStackTrace(err) {
 		return &withStack{
 			err:     err,
 			details: initMap,
@@ -972,10 +1030,13 @@ func Join(errs ...error) E {
 		return nil
 	} else if len(nonNilErrs) == 1 {
 		err := nonNilErrs[0]
-		switch e := err.(type) { //nolint:errorlint
-		case E:
+
+		e, ok := err.(E) //nolint:errorlint
+		if ok {
 			return e
-		case stackTracer, pkgStackTracer, goErrorsStackTracer:
+		}
+
+		if hasExistingStackTrace(err) {
 			return &withStack{
 				err:     err,
 				details: nil,

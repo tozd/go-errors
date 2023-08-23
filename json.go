@@ -3,6 +3,7 @@ package errors
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 )
 
 func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
@@ -77,6 +78,33 @@ func marshalJSONError(err error) ([]byte, E) {
 	return jsonErr, nil
 }
 
+func hasJSONTag(typ reflect.Type) bool {
+	if typ.Kind() == reflect.Struct {
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			if field.Tag.Get("json") != "" {
+				return true
+			}
+			if field.Anonymous && hasJSONTag(field.Type) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// Does the error implement MarshalJSON or uses any JSON struct tags?
+func supportsJSON(err error) bool {
+	_, ok := err.(json.Marshaler) //nolint:errorlint
+	if ok {
+		return true
+	}
+
+	typ := reflect.TypeOf(err).Elem()
+	return hasJSONTag(typ)
+}
+
 // marshalJSONAnyError marshals our and foreign errors.
 func marshalJSONAnyError(err error) ([]byte, E) {
 	if err == nil {
@@ -90,9 +118,12 @@ func marshalJSONAnyError(err error) ([]byte, E) {
 		return marshalJSONError(err)
 	}
 
-	// Does the error marshal to something useful on its own?
-	// We do not call MarshalJSON here but invoke Go JSON marshal because
-	// maybe error relays on the default JSON marshal (of structs, for example).
+	// If it looks like error would not marshal to JSON well, we just call marshalJSONError.
+	if !supportsJSON(err) {
+		return marshalJSONError(err)
+	}
+
+	// Does the error marshal to something useful?
 	jsonErr, e := marshalWithoutEscapeHTML(err)
 	if e != nil {
 		return nil, WithStack(e)

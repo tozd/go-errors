@@ -1,6 +1,7 @@
 package errors_test
 
 import (
+	"encoding/json"
 	stderrors "errors"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 
 	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.com/tozd/go/errors"
 )
@@ -436,6 +438,7 @@ func TestDetails(t *testing.T) {
 	errors.Details(err)["foo"] = "bar"
 	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.Details(err))
 	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(err))
+
 	err2 := errors.WithDetails(err)
 	errors.Details(err2)["foo"] = "baz"
 	errors.Details(err2)["foo2"] = "bar2"
@@ -443,6 +446,55 @@ func TestDetails(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(err))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.Details(err2))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(err2))
+
 	err3 := errors.WithDetails(err, "foo", "baz", "foo2", "bar2")
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(err3))
+
+	err4 := errors.Wrap(err3, "cause")
+	errors.Details(err4)["foo"] = "baz2"
+	errors.Details(err4)["foo2"] = "bar3"
+	assert.Equal(t, map[string]interface{}{"foo2": "bar3", "foo": "baz2"}, errors.AllDetails(err4))
+}
+
+type testStructJSON struct{}
+
+func (s testStructJSON) MarshalJSON() ([]byte, error) {
+	err := errors.New("error")
+	errors.Details(err)["foo"] = "bar"
+	return nil, err
+}
+
+func TestMarshalerError(t *testing.T) {
+	t.Parallel()
+
+	_, err := json.Marshal(testStructJSON{})
+	assert.Error(t, err)
+	var marshalerError *json.MarshalerError
+	require.ErrorAs(t, err, &marshalerError)
+
+	var stackTrace stackTracer
+	require.ErrorAs(t, err, &stackTrace)
+
+	assert.Equal(t, "testStructJSON.MarshalJSON\n", fmt.Sprintf("%n", errors.StackFormatter(stackTrace.StackTrace()[0:1])))
+	assert.Regexp(t, "^json: error calling MarshalJSON for type errors_test.testStructJSON: error\n"+
+		"foo=bar\n"+
+		"gitlab.com/tozd/go/errors_test.testStructJSON.MarshalJSON\n"+
+		"\t.+/errors_test.go:\\d+\n"+
+		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{err}))
+
+	data, err2 := json.Marshal(errors.Formatter{err})
+	assert.NoError(t, err2)
+	jsonEqual(t, `{"error":"json: error calling MarshalJSON for type errors_test.testStructJSON: error","foo":"bar","stack":[]}`, string(data))
+
+	errWithStack := errors.WithStack(err)
+	assert.Equal(t, "testStructJSON.MarshalJSON\n", fmt.Sprintf("%n", errors.StackFormatter(errWithStack.StackTrace()[0:1])))
+	assert.Regexp(t, "^json: error calling MarshalJSON for type errors_test.testStructJSON: error\n"+
+		"foo=bar\n"+
+		"gitlab.com/tozd/go/errors_test.testStructJSON.MarshalJSON\n"+
+		"\t.+/errors_test.go:\\d+\n"+
+		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errWithStack))
+
+	data, err2 = json.Marshal(errWithStack)
+	assert.NoError(t, err2)
+	jsonEqual(t, `{"error":"json: error calling MarshalJSON for type errors_test.testStructJSON: error","foo":"bar","stack":[]}`, string(data))
 }

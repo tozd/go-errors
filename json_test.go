@@ -40,7 +40,7 @@ func equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}
 }
 
 // jsonEqual ignores and does not compare frames.
-func jsonEqual(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool {
+func jsonEqual(t *testing.T, expected string, actual string, msgAndArgs ...interface{}) bool { //nolint:unparam
 	t.Helper()
 	var expectedJSONAsInterface, actualJSONAsInterface interface{}
 
@@ -99,7 +99,7 @@ func TestJSON(t *testing.T) {
 		`{"error":"error","stack":[],"cause":{"error":"bar"}}`,
 	}, {
 		errors.Wrap(errors.BaseWrap(errors.New("foo"), "bar"), "error"),
-		`{"error":"error","stack":[],"cause":{"error":"bar"}}`,
+		`{"error":"error","stack":[],"cause":{"error":"bar","stack":[]}}`,
 	}, {
 		errors.Wrap(pkgerrors.New("foobar"), "error"),
 		`{"error":"error","stack":[],"cause":{"error":"foobar","stack":[]}}`,
