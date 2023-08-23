@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when possible. You can change this default through format precision.
 - `Details` now unwraps the error to find the first one providing
   details.
+- `AllDetails` collect details only until an error with a cause or which
+  wraps multiple errors.
 - JSON marshalling adds fields from error's details into JSON.
   [#7](https://gitlab.com/tozd/go/errors/-/issues/7)
 

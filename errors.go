@@ -738,6 +738,7 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 // type contains a Cause method returning error.
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Cause returns nil.
+// It does not unwrap errors returned by [Join].
 func Cause(err error) error {
 	for err != nil {
 		c, ok := err.(causer) //nolint:errorlint
@@ -756,6 +757,7 @@ func Cause(err error) error {
 // if err's type contains a Details method returning initialized map.
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Details returns nil.
+// It does not unwrap errors returned by [Join].
 //
 // You can modify returned map to modify err's details.
 func Details(err error) map[string]interface{} {
@@ -786,6 +788,10 @@ func detailsOf(err error) map[string]interface{} {
 // AllDetails returns a map build from calling the Details method on err
 // and populating the map with key/value pairs which are not yet
 // present. Afterwards, the err is unwrapped and the process is repeated.
+// It does not unwrap errors returned by [Join].
+// Moreover, unwrapping stops if it encounters an error with the Cause
+// method which returns an error, or Unwrap() method which returns
+// multiple errors.
 func AllDetails(err error) map[string]interface{} {
 	res := make(map[string]interface{})
 	for err != nil {
@@ -793,6 +799,14 @@ func AllDetails(err error) map[string]interface{} {
 			if _, ok := res[key]; !ok {
 				res[key] = value
 			}
+		}
+		c, ok := err.(causer) //nolint:errorlint
+		if ok && c.Cause() != nil {
+			return res
+		}
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		if ok && len(e.Unwrap()) > 0 {
+			return res
 		}
 		err = Unwrap(err)
 	}
