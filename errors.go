@@ -225,10 +225,6 @@ type detailer interface {
 	Details() map[string]interface{}
 }
 
-func hasExistingStackTrace(err error) bool {
-	return len(getExistingStackTrace(err)) > 0
-}
-
 func getExistingStackTrace(err error) []uintptr {
 	var stackTracerE stackTracer
 	if asUntilCauseOrJoined(err, &stackTracerE) {
@@ -298,7 +294,7 @@ type E interface {
 // New returns an error with the supplied message.
 // New also records the stack trace at the point it was called.
 func New(message string) E {
-	return &fundamental{
+	return &fundamentalError{
 		msg:     message,
 		stack:   callers(),
 		details: nil,
@@ -323,7 +319,7 @@ func Errorf(format string, args ...interface{}) E {
 		errs = []error{u.Unwrap()}
 	}
 	if len(errs) > 1 {
-		return &msgJoined{
+		return &msgJoinedError{
 			errs:    errs,
 			msg:     err.Error(),
 			stack:   callers(),
@@ -331,15 +327,17 @@ func Errorf(format string, args ...interface{}) E {
 		}
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
-		if hasExistingStackTrace(unwrap) {
-			return &msgWithStack{
+		st := getExistingStackTrace(unwrap)
+		if len(st) > 0 {
+			return &msgError{
 				err:     unwrap,
 				msg:     err.Error(),
+				stack:   st,
 				details: nil,
 			}
 		}
 
-		return &msgWithoutStack{
+		return &msgError{
 			err:     unwrap,
 			msg:     err.Error(),
 			stack:   callers(),
@@ -347,145 +345,109 @@ func Errorf(format string, args ...interface{}) E {
 		}
 	}
 
-	return &fundamental{
+	return &fundamentalError{
 		msg:     err.Error(),
 		stack:   callers(),
 		details: nil,
 	}
 }
 
-// fundamental is an error that has a message and a stack,
+// fundamentalError is an error that has a message and a stack,
 // but does not wrap another error.
-type fundamental struct {
+type fundamentalError struct {
 	msg     string
 	stack   []uintptr
 	details map[string]interface{}
 }
 
-func (e *fundamental) Error() string {
+func (e *fundamentalError) Error() string {
 	return e.msg
 }
 
-func (e *fundamental) Format(s fmt.State, verb rune) {
+func (e *fundamentalError) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
-func (e fundamental) MarshalJSON() ([]byte, error) {
+func (e fundamentalError) MarshalJSON() ([]byte, error) {
 	return marshalJSONError(&e)
 }
 
-func (e *fundamental) StackTrace() []uintptr {
+func (e *fundamentalError) StackTrace() []uintptr {
 	return e.stack
 }
 
-func (e *fundamental) Details() map[string]interface{} {
+func (e *fundamentalError) Details() map[string]interface{} {
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
 	return e.details
 }
 
-// msgWithStack wraps another error with a stack
-// and has its own msg.
-type msgWithStack struct { //nolint:errname
-	err     error
-	msg     string
-	details map[string]interface{}
-}
-
-func (e *msgWithStack) Error() string {
-	return e.msg
-}
-
-func (e *msgWithStack) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
-}
-
-func (e msgWithStack) MarshalJSON() ([]byte, error) {
-	return marshalJSONError(&e)
-}
-
-func (e *msgWithStack) Unwrap() error {
-	return e.err
-}
-
-func (e *msgWithStack) StackTrace() []uintptr {
-	return getExistingStackTrace(e.err)
-}
-
-func (e *msgWithStack) Details() map[string]interface{} {
-	if e.details == nil {
-		e.details = make(map[string]interface{})
-	}
-	return e.details
-}
-
-// msgWithoutStack wraps another error without a stack
-// and has its own msg.
-type msgWithoutStack struct { //nolint:errname
+// msgError wraps another error and has its own stack and msg.
+type msgError struct {
 	err     error
 	msg     string
 	stack   []uintptr
 	details map[string]interface{}
 }
 
-func (e *msgWithoutStack) Error() string {
+func (e *msgError) Error() string {
 	return e.msg
 }
 
-func (e *msgWithoutStack) Format(s fmt.State, verb rune) {
+func (e *msgError) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
-func (e msgWithoutStack) MarshalJSON() ([]byte, error) {
+func (e msgError) MarshalJSON() ([]byte, error) {
 	return marshalJSONError(&e)
 }
 
-func (e *msgWithoutStack) Unwrap() error {
+func (e *msgError) Unwrap() error {
 	return e.err
 }
 
-func (e *msgWithoutStack) StackTrace() []uintptr {
+func (e *msgError) StackTrace() []uintptr {
 	return e.stack
 }
 
-func (e *msgWithoutStack) Details() map[string]interface{} {
+func (e *msgError) Details() map[string]interface{} {
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
 	return e.details
 }
 
-// msgJoined wraps multiple errors
+// msgJoinedError wraps multiple errors
 // and has its own stack and msg.
-type msgJoined struct { //nolint:errname
+type msgJoinedError struct {
 	errs    []error
 	msg     string
 	stack   []uintptr
 	details map[string]interface{}
 }
 
-func (e *msgJoined) Error() string {
+func (e *msgJoinedError) Error() string {
 	return e.msg
 }
 
-func (e *msgJoined) Format(s fmt.State, verb rune) {
+func (e *msgJoinedError) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
-func (e msgJoined) MarshalJSON() ([]byte, error) {
+func (e msgJoinedError) MarshalJSON() ([]byte, error) {
 	return marshalJSONError(&e)
 }
 
-func (e *msgJoined) Unwrap() []error {
+func (e *msgJoinedError) Unwrap() []error {
 	return e.errs
 }
 
-func (e *msgJoined) StackTrace() []uintptr {
+func (e *msgJoinedError) StackTrace() []uintptr {
 	return e.stack
 }
 
-func (e *msgJoined) Details() map[string]interface{} {
+func (e *msgJoinedError) Details() map[string]interface{} {
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -509,83 +471,51 @@ func WithStack(err error) E {
 		return e
 	}
 
-	if hasExistingStackTrace(err) {
-		return &withStack{
+	st := getExistingStackTrace(err)
+	if len(st) > 0 {
+		return &noMsgError{
 			err:     err,
+			stack:   st,
 			details: nil,
 		}
 	}
 
-	return &withoutStack{
+	return &noMsgError{
 		err:     err,
 		stack:   callers(),
 		details: nil,
 	}
 }
 
-// withStack wraps another error with a stack
-// and does not have its own msg.
-type withStack struct { //nolint:errname
-	err     error
-	details map[string]interface{}
-}
-
-func (e *withStack) Error() string {
-	return e.err.Error()
-}
-
-func (e *withStack) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
-}
-
-func (e withStack) MarshalJSON() ([]byte, error) {
-	return marshalJSONError(&e)
-}
-
-func (e *withStack) Unwrap() error {
-	return e.err
-}
-
-func (e *withStack) StackTrace() []uintptr {
-	return getExistingStackTrace(e.err)
-}
-
-func (e *withStack) Details() map[string]interface{} {
-	if e.details == nil {
-		e.details = make(map[string]interface{})
-	}
-	return e.details
-}
-
-// withoutStack wraps another error without a stack
-// and does not have its own msg.
-type withoutStack struct { //nolint:errname
+// noMsgError wraps another error and has its
+// own stack and but does not have its own msg.
+type noMsgError struct {
 	err     error
 	stack   []uintptr
 	details map[string]interface{}
 }
 
-func (e *withoutStack) Error() string {
+func (e *noMsgError) Error() string {
 	return e.err.Error()
 }
 
-func (e *withoutStack) Format(s fmt.State, verb rune) {
+func (e *noMsgError) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
-func (e withoutStack) MarshalJSON() ([]byte, error) {
+func (e noMsgError) MarshalJSON() ([]byte, error) {
 	return marshalJSONError(&e)
 }
 
-func (e *withoutStack) Unwrap() error {
+func (e *noMsgError) Unwrap() error {
 	return e.err
 }
 
-func (e *withoutStack) StackTrace() []uintptr {
+func (e *noMsgError) StackTrace() []uintptr {
 	return e.stack
 }
 
-func (e *withoutStack) Details() map[string]interface{} {
+func (e *noMsgError) Details() map[string]interface{} {
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -602,13 +532,13 @@ func (e *withoutStack) Details() map[string]interface{} {
 // preserving the cause of the new error.
 func Wrap(err error, message string) E {
 	if err == nil {
-		return &fundamental{
+		return &fundamentalError{
 			msg:     message,
 			stack:   callers(),
 			details: nil,
 		}
 	}
-	return &cause{
+	return &causeError{
 		err:     err,
 		msg:     message,
 		stack:   callers(),
@@ -630,13 +560,13 @@ func Wrap(err error, message string) E {
 // preserving the cause of the new error.
 func Wrapf(err error, format string, args ...interface{}) E {
 	if err == nil {
-		return &fundamental{
+		return &fundamentalError{
 			msg:     fmt.Sprintf(format, args...),
 			stack:   callers(),
 			details: nil,
 		}
 	}
-	return &cause{
+	return &causeError{
 		err:     err,
 		msg:     fmt.Sprintf(format, args...),
 		stack:   callers(),
@@ -644,40 +574,40 @@ func Wrapf(err error, format string, args ...interface{}) E {
 	}
 }
 
-// cause records another error as a cause
+// causeError records another error as a causeError
 // and has its own stack and msg.
-type cause struct {
+type causeError struct {
 	err     error
 	msg     string
 	stack   []uintptr
 	details map[string]interface{}
 }
 
-func (e *cause) Error() string {
+func (e *causeError) Error() string {
 	return e.msg
 }
 
-func (e *cause) Format(s fmt.State, verb rune) {
+func (e *causeError) Format(s fmt.State, verb rune) {
 	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
 }
 
-func (e cause) MarshalJSON() ([]byte, error) {
+func (e causeError) MarshalJSON() ([]byte, error) {
 	return marshalJSONError(&e)
 }
 
-func (e *cause) Unwrap() error {
+func (e *causeError) Unwrap() error {
 	return e.err
 }
 
-func (e *cause) Cause() error {
+func (e *causeError) Cause() error {
 	return e.err
 }
 
-func (e *cause) StackTrace() []uintptr {
+func (e *causeError) StackTrace() []uintptr {
 	return e.stack
 }
 
-func (e *cause) Details() map[string]interface{} {
+func (e *causeError) Details() map[string]interface{} {
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -695,15 +625,17 @@ func WithMessage(err error, prefix string) E {
 		return nil
 	}
 
-	if hasExistingStackTrace(err) {
-		return &msgWithStack{
+	st := getExistingStackTrace(err)
+	if len(st) > 0 {
+		return &msgError{
 			err:     err,
 			msg:     prefixMessage(err.Error(), prefix),
+			stack:   st,
 			details: nil,
 		}
 	}
 
-	return &msgWithoutStack{
+	return &msgError{
 		err:     err,
 		msg:     prefixMessage(err.Error(), prefix),
 		stack:   callers(),
@@ -724,15 +656,17 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		return nil
 	}
 
-	if hasExistingStackTrace(err) {
-		return &msgWithStack{
+	st := getExistingStackTrace(err)
+	if len(st) > 0 {
+		return &msgError{
 			err:     err,
 			msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
+			stack:   st,
 			details: nil,
 		}
 	}
 
-	return &msgWithoutStack{
+	return &msgError{
 		err:     err,
 		msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
 		stack:   callers(),
@@ -994,15 +928,17 @@ func WithDetails(err error, kv ...interface{}) E {
 	// Even if err is of type E, we still wrap it into another withStack error to
 	// have another layer of details. This is where it is different from WithStack.
 	// We do not have to check for type E explicitly because E implements stackTracer
-	// so hasExistingStackTrace returns true.
-	if hasExistingStackTrace(err) {
-		return &withStack{
+	// so getExistingStackTrace returns its stack trace.
+	st := getExistingStackTrace(err)
+	if len(st) > 0 {
+		return &noMsgError{
 			err:     err,
+			stack:   st,
 			details: initMap,
 		}
 	}
 
-	return &withoutStack{
+	return &noMsgError{
 		err:     err,
 		stack:   callers(),
 		details: initMap,
@@ -1036,21 +972,23 @@ func Join(errs ...error) E {
 			return e
 		}
 
-		if hasExistingStackTrace(err) {
-			return &withStack{
+		st := getExistingStackTrace(err)
+		if len(st) > 0 {
+			return &noMsgError{
 				err:     err,
+				stack:   st,
 				details: nil,
 			}
 		}
 
-		return &withoutStack{
+		return &noMsgError{
 			err:     err,
 			stack:   callers(),
 			details: nil,
 		}
 	}
 
-	return &msgJoined{
+	return &msgJoinedError{
 		errs:    nonNilErrs,
 		msg:     joinMessages(nonNilErrs),
 		stack:   callers(),

@@ -29,7 +29,7 @@ func TestSupportsJSON(t *testing.T) {
 	t.Parallel()
 
 	assert.True(t, supportsJSON(New("test")))
-	assert.True(t, supportsJSON(&fundamental{})) //nolint:exhaustruct
+	assert.True(t, supportsJSON(&fundamentalError{})) //nolint:exhaustruct
 	assert.False(t, supportsJSON(Base("test")))
 	var se stringError = "test"
 	assert.False(t, supportsJSON(&se))

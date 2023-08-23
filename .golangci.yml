@@ -168,3 +168,6 @@ issues:
     - path: example_stack_test\.go
       linters:
         - testableexamples
+    - path: private_test\.go
+      linters:
+        - testpackage

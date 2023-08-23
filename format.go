@@ -79,7 +79,7 @@ func isForeignFormatter(err error) bool {
 	// Our errors implement fmt.Formatter but we want to return false for them because
 	// they just call into our Formatter which would lead to infinite recursion.
 	switch err.(type) { //nolint:errorlint
-	case *fundamental, *msgWithStack, *msgWithoutStack, *msgJoined, *withStack, *withoutStack, *cause:
+	case *fundamentalError, *msgError, *msgJoinedError, *noMsgError, *causeError:
 		return false
 	}
 

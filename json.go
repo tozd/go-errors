@@ -114,7 +114,7 @@ func marshalJSONAnyError(err error) ([]byte, E) {
 	// We short-circuit our errors to directly call marshalJSONError
 	// and do not call it indirectly through marshalWithoutEscapeHTML.
 	switch err.(type) { //nolint:errorlint
-	case *fundamental, *msgWithStack, *msgWithoutStack, *msgJoined, *withStack, *withoutStack, *cause:
+	case *fundamentalError, *msgError, *msgJoinedError, *noMsgError, *causeError:
 		return marshalJSONError(err)
 	}
 
