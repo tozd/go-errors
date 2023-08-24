@@ -58,7 +58,8 @@ func As(err error, target interface{}) bool {
 // Unwrap only calls a method of the form "Unwrap() error".
 // In particular Unwrap does not unwrap errors returned by [Join].
 //
-// This function is a proxy for standard errors.Unwrap.
+// This function is a proxy for standard errors.Unwrap and is not
+// an inverse of errors.Wrap. For that use errors.Cause.
 func Unwrap(err error) error {
 	return stderrors.Unwrap(err)
 }
