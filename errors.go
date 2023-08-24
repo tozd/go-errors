@@ -226,18 +226,25 @@ type detailer interface {
 }
 
 func getExistingStackTrace(err error) []uintptr {
-	var stackTracerE stackTracer
-	if asUntilCauseOrJoined(err, &stackTracerE) {
-		return stackTracerE.StackTrace()
-	}
-	var pkgStackTracerE pkgStackTracer
-	if asUntilCauseOrJoined(err, &pkgStackTracerE) {
-		st := pkgStackTracerE.StackTrace()
-		return *(*[]uintptr)(unsafe.Pointer(&st))
-	}
-	var goErrorsStackTracerE goErrorsStackTracer
-	if asUntilCauseOrJoined(err, &goErrorsStackTracerE) {
-		return goErrorsStackTracerE.Callers()
+	for err != nil {
+		switch e := err.(type) { //nolint:errorlint
+		case stackTracer:
+			return e.StackTrace()
+		case pkgStackTracer:
+			st := e.StackTrace()
+			return *(*[]uintptr)(unsafe.Pointer(&st))
+		case goErrorsStackTracer:
+			return e.Callers()
+		}
+		c, ok := err.(causer) //nolint:errorlint
+		if ok && c.Cause() != nil {
+			return nil
+		}
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		if ok && len(e.Unwrap()) > 0 {
+			return nil
+		}
+		err = Unwrap(err)
 	}
 	return nil
 }
