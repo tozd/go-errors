@@ -141,23 +141,23 @@ issues:
   exclude-rules:
     - path: stack_test\.go
       linters:
-        - testpackage
         - gochecknoglobals
+        - testpackage
     - path: json_test\.go
       linters:
         - lll
     - path: (errors|format)_.*test\.go
       linters:
+        - errcheck
+        - errname
+        - gochecknoglobals
+        - gochecknoinits
+        - gocritic
+        - godot
+        - goerr113
+        - lll
         - revive
         - staticcheck
-        - gocritic
-        - lll
-        - godot
-        - gochecknoinits
-        - errname
-        - goerr113
-        - gochecknoglobals
-        - errcheck
     - path: example_test\.go
       linters:
         - godot
