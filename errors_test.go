@@ -498,3 +498,42 @@ func TestMarshalerError(t *testing.T) {
 	assert.NoError(t, err2)
 	jsonEqual(t, `{"error":"json: error calling MarshalJSON for type errors_test.testStructJSON: error","foo":"bar","stack":[]}`, string(data))
 }
+
+func getTestNewError() errors.E {
+	err := errors.New("error")
+	errors.Details(err)["foo"] = "bar"
+	return err
+}
+
+func TestFmtErrorf(t *testing.T) {
+	t.Parallel()
+
+	err := fmt.Errorf("test: %w", getTestNewError())
+	assert.Error(t, err)
+
+	var stackTrace stackTracer
+	require.ErrorAs(t, err, &stackTrace)
+
+	assert.Equal(t, "getTestNewError\n", fmt.Sprintf("%n", errors.StackFormatter(stackTrace.StackTrace()[0:1])))
+	assert.Regexp(t, "^test: error\n"+
+		"foo=bar\n"+
+		"gitlab.com/tozd/go/errors_test.getTestNewError\n"+
+		"\t.+/errors_test.go:\\d+\n"+
+		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{err}))
+
+	data, err2 := json.Marshal(errors.Formatter{err})
+	assert.NoError(t, err2)
+	jsonEqual(t, `{"error":"test: error","foo":"bar","stack":[]}`, string(data))
+
+	errWithStack := errors.WithStack(err)
+	assert.Equal(t, "getTestNewError\n", fmt.Sprintf("%n", errors.StackFormatter(errWithStack.StackTrace()[0:1])))
+	assert.Regexp(t, "^test: error\n"+
+		"foo=bar\n"+
+		"gitlab.com/tozd/go/errors_test.getTestNewError\n"+
+		"\t.+/errors_test.go:\\d+\n"+
+		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errWithStack))
+
+	data, err2 = json.Marshal(errWithStack)
+	assert.NoError(t, err2)
+	jsonEqual(t, `{"error":"test: error","foo":"bar","stack":[]}`, string(data))
+}
