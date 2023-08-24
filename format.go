@@ -222,9 +222,9 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 	var result string
 	width, ok := s.Width()
 	if ok {
-		result = fmt.Sprintf("%+*v", width, StackFormatter(st))
+		result = fmt.Sprintf("%+*v", width, StackFormatter{st})
 	} else {
-		result = fmt.Sprintf("%+v", StackFormatter(st))
+		result = fmt.Sprintf("%+v", StackFormatter{st})
 	}
 	writeLinesPrefixed(s, linePrefix, result)
 }

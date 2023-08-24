@@ -89,7 +89,9 @@ func (f frame) MarshalJSON() ([]byte, error) {
 // StackFormatter formats a provided stack trace as text using
 // the fmt.Formatter interface and marshals the provided stack
 // trace as JSON.
-type StackFormatter []uintptr
+type StackFormatter struct { //nolint:musttag
+	Stack []uintptr
+}
 
 // Format formats the stack of frames as text according to the fmt.Formatter interface.
 //
@@ -116,10 +118,10 @@ type StackFormatter []uintptr
 // StackFormat also accepts the width argument which controls the width of the indent
 // step in spaces. The default (no width argument) indents with a tab step.
 func (s StackFormatter) Format(st fmt.State, verb rune) {
-	if len(s) == 0 {
+	if len(s.Stack) == 0 {
 		return
 	}
-	frames := runtime.CallersFrames(s)
+	frames := runtime.CallersFrames(s.Stack)
 	for {
 		f, more := frames.Next()
 		frame(f).Format(st, verb)
@@ -135,12 +137,12 @@ func (s StackFormatter) Format(st fmt.State, verb rune) {
 // JSON consists of an array of frame objects, each with
 // (function) name, file (name), and line fields.
 func (s StackFormatter) MarshalJSON() ([]byte, error) {
-	if len(s) == 0 {
+	if len(s.Stack) == 0 {
 		return []byte("[]"), nil
 	}
 
 	output := []byte{'['}
-	frames := runtime.CallersFrames(s)
+	frames := runtime.CallersFrames(s.Stack)
 	first := true
 	for {
 		f, more := frames.Next()
@@ -161,12 +163,11 @@ func (s StackFormatter) MarshalJSON() ([]byte, error) {
 	return output, nil
 }
 
-func callers() StackFormatter {
+func callers() []uintptr {
 	const depth = 32
 	var pcs [depth]uintptr
 	n := runtime.Callers(3, pcs[:]) //nolint:gomnd
-	var st StackFormatter = pcs[0:n]
-	return st
+	return pcs[0:n]
 }
 
 // funcname removes the path prefix component of a function's name.

@@ -41,7 +41,7 @@ func marshalJSONError(err error) ([]byte, E) {
 
 	st := getExistingStackTrace(err)
 	if len(st) > 0 {
-		data["stack"] = StackFormatter(st)
+		data["stack"] = StackFormatter{st}
 	}
 
 	for _, er := range errs {

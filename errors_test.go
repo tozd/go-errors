@@ -475,7 +475,7 @@ func TestMarshalerError(t *testing.T) {
 	var stackTrace stackTracer
 	require.ErrorAs(t, err, &stackTrace)
 
-	assert.Equal(t, "testStructJSON.MarshalJSON\n", fmt.Sprintf("%n", errors.StackFormatter(stackTrace.StackTrace()[0:1])))
+	assert.Equal(t, "testStructJSON.MarshalJSON\n", fmt.Sprintf("%n", errors.StackFormatter{stackTrace.StackTrace()[0:1]}))
 	assert.Regexp(t, "^json: error calling MarshalJSON for type errors_test.testStructJSON: error\n"+
 		"foo=bar\n"+
 		"gitlab.com/tozd/go/errors_test.testStructJSON.MarshalJSON\n"+
@@ -487,7 +487,7 @@ func TestMarshalerError(t *testing.T) {
 	jsonEqual(t, `{"error":"json: error calling MarshalJSON for type errors_test.testStructJSON: error","foo":"bar","stack":[]}`, string(data))
 
 	errWithStack := errors.WithStack(err)
-	assert.Equal(t, "testStructJSON.MarshalJSON\n", fmt.Sprintf("%n", errors.StackFormatter(errWithStack.StackTrace()[0:1])))
+	assert.Equal(t, "testStructJSON.MarshalJSON\n", fmt.Sprintf("%n", errors.StackFormatter{errWithStack.StackTrace()[0:1]}))
 	assert.Regexp(t, "^json: error calling MarshalJSON for type errors_test.testStructJSON: error\n"+
 		"foo=bar\n"+
 		"gitlab.com/tozd/go/errors_test.testStructJSON.MarshalJSON\n"+
@@ -514,7 +514,7 @@ func TestFmtErrorf(t *testing.T) {
 	var stackTrace stackTracer
 	require.ErrorAs(t, err, &stackTrace)
 
-	assert.Equal(t, "getTestNewError\n", fmt.Sprintf("%n", errors.StackFormatter(stackTrace.StackTrace()[0:1])))
+	assert.Equal(t, "getTestNewError\n", fmt.Sprintf("%n", errors.StackFormatter{stackTrace.StackTrace()[0:1]}))
 	assert.Regexp(t, "^test: error\n"+
 		"foo=bar\n"+
 		"gitlab.com/tozd/go/errors_test.getTestNewError\n"+
@@ -526,7 +526,7 @@ func TestFmtErrorf(t *testing.T) {
 	jsonEqual(t, `{"error":"test: error","foo":"bar","stack":[]}`, string(data))
 
 	errWithStack := errors.WithStack(err)
-	assert.Equal(t, "getTestNewError\n", fmt.Sprintf("%n", errors.StackFormatter(errWithStack.StackTrace()[0:1])))
+	assert.Equal(t, "getTestNewError\n", fmt.Sprintf("%n", errors.StackFormatter{errWithStack.StackTrace()[0:1]}))
 	assert.Regexp(t, "^test: error\n"+
 		"foo=bar\n"+
 		"gitlab.com/tozd/go/errors_test.getTestNewError\n"+

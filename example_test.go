@@ -358,7 +358,7 @@ func ExampleStackFormatter_MarshalJSON() {
 	const depth = 1
 	var cs [depth]uintptr
 	runtime.Callers(1, cs[:])
-	data, err := json.Marshal(errors.StackFormatter(cs[:]))
+	data, err := json.Marshal(errors.StackFormatter{cs[:]})
 	if err != nil {
 		panic(err)
 	}
@@ -372,7 +372,7 @@ func ExampleStackFormatter_Format() {
 	const depth = 1
 	var cs [depth]uintptr
 	runtime.Callers(1, cs[:])
-	fmt.Printf("%+v", errors.StackFormatter(cs[:]))
+	fmt.Printf("%+v", errors.StackFormatter{cs[:]})
 
 	// Example output:
 	// gitlab.com/tozd/go/errors_test.ExampleStackFormatter_Format
@@ -383,7 +383,7 @@ func ExampleStackFormatter_Format_width() {
 	const depth = 1
 	var cs [depth]uintptr
 	runtime.Callers(1, cs[:])
-	fmt.Printf("%+2v", errors.StackFormatter(cs[:]))
+	fmt.Printf("%+2v", errors.StackFormatter{cs[:]})
 
 	// Example output:
 	// gitlab.com/tozd/go/errors_test.ExampleStackFormatter_Format
