@@ -537,3 +537,38 @@ func TestFmtErrorf(t *testing.T) {
 	assert.NoError(t, err2)
 	jsonEqual(t, `{"error":"test: error","foo":"bar","stack":[]}`, string(data))
 }
+
+func TestUnjoin(t *testing.T) {
+	t.Parallel()
+
+	err := errors.New("1")
+	errors.Details(err)["level1"] = 1
+
+	err2 := errors.Wrap(err, "2")
+	errors.Details(err2)["level2"] = 2
+
+	right := errors.New("right")
+
+	joined := errors.Join(err2, right)
+	errors.Details(joined)["level3"] = 3
+
+	err3 := errors.WithDetails(joined, "level4", 4)
+
+	err4 := errors.Wrap(err3, "5")
+	errors.Details(err4)["level5"] = 5
+
+	assert.Equal(t, map[string]interface{}{"level1": 1}, errors.AllDetails(err))
+	assert.Equal(t, map[string]interface{}{"level2": 2}, errors.AllDetails(err2))
+	assert.Equal(t, map[string]interface{}{"level3": 3}, errors.AllDetails(joined))
+	assert.Equal(t, map[string]interface{}{"level3": 3, "level4": 4}, errors.AllDetails(err3))
+	assert.Equal(t, map[string]interface{}{"level5": 5}, errors.AllDetails(err4))
+
+	assert.Equal(t, err3, errors.Cause(err4))
+	assert.Equal(t, nil, errors.Cause(err3))
+	assert.Equal(t, joined, errors.Unwrap(err3))
+	assert.Equal(t, nil, errors.Unwrap(joined))
+	assert.True(t, nil == errors.Unjoin(err4))
+	assert.Equal(t, []error{err2, right}, errors.Unjoin(err3))
+	assert.Equal(t, []error{err2, right}, errors.Unjoin(joined))
+	assert.True(t, nil == errors.Unjoin(err2))
+}

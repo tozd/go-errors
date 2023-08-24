@@ -686,6 +686,30 @@ func Cause(err error) error {
 	return err
 }
 
+// Unjoin returns the result of calling the Unwrap method on err, if err's
+// type contains an Unwrap method returning multiple errors.
+// Otherwise, the err is unwrapped and the process is repeated.
+// If unwrapping is not possible, Unjoin returns nil.
+// Moreover, unwrapping stops if it encounters an error with the Cause
+// method returning error.
+func Unjoin(err error) []error {
+	for err != nil {
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		if ok {
+			errs := e.Unwrap()
+			if len(errs) > 0 {
+				return errs
+			}
+		}
+		c, ok := err.(causer) //nolint:errorlint
+		if ok && c.Cause() != nil {
+			return nil
+		}
+		err = Unwrap(err)
+	}
+	return nil
+}
+
 // Details returns the result of calling the Details method on err,
 // if err's type contains a Details method returning initialized map.
 // Otherwise, the err is unwrapped and the process is repeated.

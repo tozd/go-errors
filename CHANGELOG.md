@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   uses error's `fmt.Formatter` implementation.
 - Support for Go 1.21.
 - `StackTrace` type alias for better compatibility with `github.com/pkg/errors`.
+- `Unjoin` function to find joined errors.
 
 ## Changed
 
