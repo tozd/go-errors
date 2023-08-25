@@ -1,8 +1,10 @@
 package errors_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"runtime"
 
 	"gitlab.com/tozd/go/errors"
@@ -418,4 +420,63 @@ func ExampleFormatter_Format() {
 	// the above error was caused by the following error:
 	//
 	// not found
+}
+
+func ExampleFormatter_MarshalJSON() {
+	base := errors.Base("not found")
+	errE := errors.Wrap(base, "image not found")
+	errors.Details(errE)["filename"] = "star.png"
+	data, err := json.Marshal(errE)
+	if err != nil {
+		panic(err)
+	}
+	var out bytes.Buffer
+	_ = json.Indent(&out, data, "", "\t")
+	_, _ = out.WriteTo(os.Stdout)
+
+	// Example output:
+	// {
+	// 	"cause": {
+	// 		"error": "not found"
+	// 	},
+	// 	"error": "image not found",
+	// 	"filename": "star.png",
+	// 	"stack": [
+	// 		{
+	// 			"name": "gitlab.com/tozd/go/errors_test.ExampleFormatter_MarshalJSON",
+	// 			"file": "/home/user/errors/example_test.go",
+	// 			"line": 427
+	// 		},
+	// 		{
+	// 			"name": "testing.runExample",
+	// 			"file": "/usr/local/go/src/testing/run_example.go",
+	// 			"line": 63
+	// 		},
+	// 		{
+	// 			"name": "testing.runExamples",
+	// 			"file": "/usr/local/go/src/testing/example.go",
+	// 			"line": 44
+	// 		},
+	// 		{
+	// 			"name": "testing.(*M).Run",
+	// 			"file": "/usr/local/go/src/testing/testing.go",
+	// 			"line": 1927
+	// 		},
+	// 		{
+	// 			"name": "main.main",
+	// 			"file": "_testmain.go",
+	// 			"line": 145
+	// 		},
+	// 		{
+	// 			"name": "runtime.main",
+	// 			"file": "/usr/local/go/src/runtime/proc.go",
+	// 			"line": 267
+	// 		},
+	// 		{
+	// 			"name": "runtime.goexit",
+	// 			"file": "/usr/local/go/src/runtime/asm_amd64.s",
+	// 			"line": 1650
+	// 		}
+	// 	]
+	// }
 }
