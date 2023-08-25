@@ -229,8 +229,7 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 	writeLinesPrefixed(s, linePrefix, result)
 }
 
-// Formatter formats an error as text using the fmt.Formatter interface
-// and marshals the error as JSON.
+// Formatter formats an error as text and marshals the error as JSON.
 type Formatter struct { //nolint:musttag
 	Error error
 }
@@ -239,7 +238,7 @@ type Formatter struct { //nolint:musttag
 //
 // The error does not have to necessary come from this package and it will be formatted
 // in the same way if it implements interfaces used by this package (e.g., stackTracer
-// or detailer interfaces. By default, only if those interfaces are not implemented,
+// or detailer interfaces). By default, only if those interfaces are not implemented,
 // but fmt.Formatter interface is, formatting will be delegated to the error itself.
 // You can change this default through format precision.
 //

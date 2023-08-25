@@ -94,8 +94,13 @@ func hasJSONTag(typ reflect.Type) bool {
 	return false
 }
 
-// Does the error implement MarshalJSON or uses any JSON struct tags?
-func supportsJSON(err error) bool {
+// Does the error not implement our interfaces but implement MarshalJSON or uses any JSON struct tags?
+func useMarshaler(err error) bool {
+	switch err.(type) { //nolint:errorlint
+	case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer:
+		return false
+	}
+
 	_, ok := err.(json.Marshaler) //nolint:errorlint
 	if ok {
 		return true
@@ -111,15 +116,9 @@ func marshalJSONAnyError(err error) ([]byte, E) {
 		return []byte("null"), nil
 	}
 
-	// We short-circuit our errors to directly call marshalJSONError
+	// This short-circuits our errors as well to directly call marshalJSONError
 	// and do not call it indirectly through marshalWithoutEscapeHTML.
-	switch err.(type) { //nolint:errorlint
-	case *fundamentalError, *msgError, *msgJoinedError, *noMsgError, *causeError:
-		return marshalJSONError(err)
-	}
-
-	// If it looks like error would not marshal to JSON well, we just call marshalJSONError.
-	if !supportsJSON(err) {
+	if !useMarshaler(err) {
 		return marshalJSONError(err)
 	}
 
@@ -137,6 +136,18 @@ func marshalJSONAnyError(err error) ([]byte, E) {
 	return jsonErr, nil
 }
 
+// MarshalJSON marshals the error as JSON according to the json.Marshaler interface.
+//
+// The error does not have to necessary come from this package and it will be marshaled
+// in the same way if it implements interfaces used by this package (e.g., stackTracer
+// or detailer interfaces). Only if those interfaces are not implemented,
+// but json.Marshaler interface is or the error is a struct with JSON struct tags,
+// marshaling will be delegated to the error itself.
+//
+// Errors which do come from this package can be directly marshaled in the same way as
+// this function does as they implement json.Marshaler interface.
+// If you are not sure about the source of the error, it is safe to call this function
+// on them as well.
 func (f Formatter) MarshalJSON() ([]byte, error) {
 	return marshalJSONAnyError(f.Error)
 }

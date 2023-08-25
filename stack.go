@@ -86,9 +86,8 @@ func (f frame) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// StackFormatter formats a provided stack trace as text using
-// the fmt.Formatter interface and marshals the provided stack
-// trace as JSON.
+// StackFormatter formats a stack trace as text
+// and marshals the stack trace as JSON.
 type StackFormatter struct { //nolint:musttag
 	Stack []uintptr
 }
@@ -132,7 +131,7 @@ func (s StackFormatter) Format(st fmt.State, verb rune) {
 	}
 }
 
-// MarshalJSON marshals the stack of frames as JSON.
+// MarshalJSON marshals the stack of frames as JSON according to the json.Marshaler interface.
 //
 // JSON consists of an array of frame objects, each with
 // (function) name, file (name), and line fields.

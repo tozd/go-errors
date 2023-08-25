@@ -25,15 +25,26 @@ type structParentError struct {
 	structError
 }
 
-func TestSupportsJSON(t *testing.T) {
+type structWithMarshaler struct{}
+
+func (s structWithMarshaler) MarshalJSON() ([]byte, error) {
+	return []byte(`{"error":"test"}`), nil
+}
+
+func (s *structWithMarshaler) Error() string {
+	return "test"
+}
+
+func TestUseMarshaler(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, supportsJSON(New("test")))
-	assert.True(t, supportsJSON(&fundamentalError{})) //nolint:exhaustruct
-	assert.False(t, supportsJSON(Base("test")))
+	assert.False(t, useMarshaler(New("test")))
+	assert.False(t, useMarshaler(&fundamentalError{})) //nolint:exhaustruct
+	assert.False(t, useMarshaler(Base("test")))
+	assert.True(t, useMarshaler(&structWithMarshaler{}))
 	var se stringError = "test"
-	assert.False(t, supportsJSON(&se))
-	assert.False(t, supportsJSON(&json.MarshalerError{})) //nolint:exhaustruct
-	assert.True(t, supportsJSON(&structError{}))          //nolint:exhaustruct
-	assert.True(t, supportsJSON(&structParentError{}))    //nolint:exhaustruct
+	assert.False(t, useMarshaler(&se))
+	assert.False(t, useMarshaler(&json.MarshalerError{})) //nolint:exhaustruct
+	assert.True(t, useMarshaler(&structError{}))          //nolint:exhaustruct
+	assert.True(t, useMarshaler(&structParentError{}))    //nolint:exhaustruct
 }
