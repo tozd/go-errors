@@ -25,13 +25,13 @@ type structParentError struct {
 	structError
 }
 
-type structWithMarshaler struct{}
+type structWithMarshalerError struct{}
 
-func (s structWithMarshaler) MarshalJSON() ([]byte, error) {
+func (s structWithMarshalerError) MarshalJSON() ([]byte, error) {
 	return []byte(`{"error":"test"}`), nil
 }
 
-func (s *structWithMarshaler) Error() string {
+func (s *structWithMarshalerError) Error() string {
 	return "test"
 }
 
@@ -41,7 +41,7 @@ func TestUseMarshaler(t *testing.T) {
 	assert.False(t, useMarshaler(New("test")))
 	assert.False(t, useMarshaler(&fundamentalError{})) //nolint:exhaustruct
 	assert.False(t, useMarshaler(Base("test")))
-	assert.True(t, useMarshaler(&structWithMarshaler{}))
+	assert.True(t, useMarshaler(&structWithMarshalerError{}))
 	var se stringError = "test"
 	assert.False(t, useMarshaler(&se))
 	assert.False(t, useMarshaler(&json.MarshalerError{})) //nolint:exhaustruct
