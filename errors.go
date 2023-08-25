@@ -1,4 +1,5 @@
-// Package errors provides errors with a recorded stack trace.
+// Package errors provides errors with a recorded stack trace and optional
+// structured details.
 //
 // The traditional error handling idiom in Go is roughly akin to
 //
