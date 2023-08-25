@@ -190,7 +190,6 @@ package errors
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"unsafe"
 
@@ -834,54 +833,6 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 	}
 
 	return
-}
-
-var errorType = reflect.TypeOf((*error)(nil)).Elem() //nolint:gochecknoglobals
-
-// Like errors.As, but it traverses the tree only until it hits a cause or joined errors.
-// This also means that it does not traverse errors returned by Join.
-func asUntilCauseOrJoined(err error, target interface{}) bool {
-	if err == nil {
-		return false
-	}
-	if target == nil {
-		panic("errors: target cannot be nil")
-	}
-	val := reflect.ValueOf(target)
-	typ := val.Type()
-	if typ.Kind() != reflect.Ptr || val.IsNil() {
-		panic("errors: target must be a non-nil pointer")
-	}
-	targetType := typ.Elem()
-	if targetType.Kind() != reflect.Interface && !targetType.Implements(errorType) {
-		panic("errors: *target must be interface or implement error")
-	}
-	for {
-		if reflect.TypeOf(err).AssignableTo(targetType) {
-			val.Elem().Set(reflect.ValueOf(err))
-			return true
-		}
-		if x, ok := err.(interface{ As(interface{}) bool }); ok && x.As(target) { //nolint:errorlint
-			return true
-		}
-		c, ok := err.(causer) //nolint:errorlint
-		if ok && c.Cause() != nil {
-			return false
-		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
-		if ok && len(e.Unwrap()) > 0 {
-			return false
-		}
-		switch x := err.(type) { //nolint:errorlint
-		case interface{ Unwrap() error }:
-			err = x.Unwrap()
-			if err == nil {
-				return false
-			}
-		default:
-			return false
-		}
-	}
 }
 
 func initializeDetails(err error) {

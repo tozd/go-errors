@@ -65,12 +65,34 @@ func writeLinesPrefixed(st fmt.State, linePrefix, s string) {
 	}
 }
 
+func useKnownInterface(err error) bool {
+	for err != nil {
+		switch err.(type) { //nolint:errorlint
+		case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer:
+			// We return true only on interfaces with data. Not on causer.
+			// We do not care if they really do have data at this point though.
+			return true
+		}
+		// We stop unwrapping if we hit cause or join.
+		c, ok := err.(causer) //nolint:errorlint
+		if ok && c.Cause() != nil {
+			return false
+		}
+		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		if ok && len(e.Unwrap()) > 0 {
+			return false
+		}
+		err = Unwrap(err)
+	}
+	return false
+}
+
 func useFormatter(err error) bool {
-	switch err.(type) { //nolint:errorlint
-	case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer:
+	if useKnownInterface(err) {
 		return false
 	}
 
+	// We check for this interface without unwrapping because it does not work with wrapping anyway.
 	_, ok := err.(fmt.Formatter) //nolint:errorlint
 	return ok
 }
@@ -83,6 +105,7 @@ func isForeignFormatter(err error) bool {
 		return false
 	}
 
+	// We check for this interface without unwrapping because it does not work with wrapping anyway.
 	_, ok := err.(fmt.Formatter) //nolint:errorlint
 	return ok
 }

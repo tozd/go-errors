@@ -96,11 +96,11 @@ func hasJSONTag(typ reflect.Type) bool {
 
 // Does the error not implement our interfaces but implement MarshalJSON or uses any JSON struct tags?
 func useMarshaler(err error) bool {
-	switch err.(type) { //nolint:errorlint
-	case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer:
+	if useKnownInterface(err) {
 		return false
 	}
 
+	// We check for this interface without unwrapping because it does not work with wrapping anyway.
 	_, ok := err.(json.Marshaler) //nolint:errorlint
 	if ok {
 		return true
