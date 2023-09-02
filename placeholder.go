@@ -1,0 +1,267 @@
+package errors
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+)
+
+type placeholderStackTracer interface {
+	StackTrace() placeholderStack
+}
+
+func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
+	if bytes.Equal(data, []byte("null")) {
+		return nil, nil
+	}
+	var payload map[string]json.RawMessage
+	err := json.Unmarshal(data, &payload)
+	if err != nil {
+		return nil, WithStack(err)
+	}
+
+	var errE E
+	var msg string
+	var s placeholderStack
+	var errs []error
+	var cause error
+
+	errorData, ok := payload["error"]
+	delete(payload, "error")
+	if ok {
+		err := json.Unmarshal(errorData, &msg)
+		if err != nil {
+			return nil, WithMessage(err, "error")
+		}
+	}
+
+	stackData, ok := payload["stack"]
+	delete(payload, "stack")
+	if ok {
+		err := json.Unmarshal(stackData, &s)
+		if err != nil {
+			return nil, WithMessage(err, "stack")
+		}
+		if len(s) == 0 {
+			s = nil
+		}
+	}
+
+	errorsData, ok := payload["errors"]
+	delete(payload, "errors")
+	if ok {
+		var errorsSliceData []json.RawMessage
+		err := json.Unmarshal(errorsData, &errorsSliceData)
+		if err != nil {
+			return nil, WithMessage(err, "errors")
+		}
+		for i, d := range errorsSliceData {
+			e, errE := UnmarshalJSON(d) //nolint:govet
+			if errE != nil {
+				return nil, WithMessagef(errE, "errors: %d", i)
+			}
+			errs = append(errs, e)
+		}
+		if len(errs) == 0 {
+			errs = nil
+		}
+	}
+
+	causeData, ok := payload["cause"]
+	delete(payload, "cause")
+	if ok {
+		cause, errE = UnmarshalJSON(causeData)
+		if errE != nil {
+			return nil, WithMessage(errE, "cause")
+		}
+	}
+
+	details := map[string]interface{}{}
+	for key, value := range payload {
+		var v interface{}
+		err := json.Unmarshal(value, &v)
+		if err != nil {
+			return nil, WithMessage(err, key)
+		}
+		details[key] = v
+	}
+
+	if cause != nil && len(errs) > 0 {
+		return &placeholderJoinedCauseError{
+			msg:     msg,
+			stack:   s,
+			details: details,
+			cause:   cause,
+			errs:    errs,
+		}, nil
+	} else if cause != nil {
+		return &placeholderCauseError{
+			msg:     msg,
+			stack:   s,
+			details: details,
+			cause:   cause,
+		}, nil
+	} else if len(errs) > 0 {
+		return &placeholderJoinedError{
+			msg:     msg,
+			stack:   s,
+			details: details,
+			errs:    errs,
+		}, nil
+	}
+	return &placeholderError{
+		msg:     msg,
+		stack:   s,
+		details: details,
+	}, nil
+}
+
+type placeholderFrame struct {
+	Name string `json:"name,omitempty"`
+	File string `json:"file,omitempty"`
+	Line int    `json:"line,omitempty"`
+}
+
+type placeholderStack []placeholderFrame
+
+func (s placeholderStack) Format(st fmt.State, verb rune) {
+	for _, f := range s {
+		frame{ //nolint:exhaustruct
+			Function: f.Name,
+			Line:     f.Line,
+			File:     f.File,
+		}.Format(st, verb)
+		_, _ = io.WriteString(st, "\n")
+	}
+}
+
+type placeholderError struct {
+	msg     string
+	stack   placeholderStack
+	details map[string]interface{}
+}
+
+func (e *placeholderError) Error() string {
+	return e.msg
+}
+
+func (e *placeholderError) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+}
+
+func (e placeholderError) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
+func (e *placeholderError) StackTrace() placeholderStack {
+	return e.stack
+}
+
+func (e *placeholderError) Details() map[string]interface{} {
+	return e.details
+}
+
+type placeholderCauseError struct {
+	msg     string
+	stack   placeholderStack
+	details map[string]interface{}
+	cause   error
+}
+
+func (e *placeholderCauseError) Error() string {
+	return e.msg
+}
+
+func (e *placeholderCauseError) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+}
+
+func (e placeholderCauseError) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
+func (e *placeholderCauseError) StackTrace() placeholderStack {
+	return e.stack
+}
+
+func (e *placeholderCauseError) Details() map[string]interface{} {
+	return e.details
+}
+
+func (e *placeholderCauseError) Unwrap() error {
+	return e.cause
+}
+
+func (e *placeholderCauseError) Cause() error {
+	return e.cause
+}
+
+type placeholderJoinedError struct {
+	msg     string
+	stack   placeholderStack
+	details map[string]interface{}
+	errs    []error
+}
+
+func (e *placeholderJoinedError) Error() string {
+	return e.msg
+}
+
+func (e *placeholderJoinedError) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+}
+
+func (e placeholderJoinedError) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
+func (e *placeholderJoinedError) StackTrace() placeholderStack {
+	return e.stack
+}
+
+func (e *placeholderJoinedError) Details() map[string]interface{} {
+	return e.details
+}
+
+func (e *placeholderJoinedError) Unwrap() []error {
+	return e.errs
+}
+
+// This should not ever be possible because Cause would also require Unwrap error,
+// but we here have Unwrap []error. Still, we define it for completeness.
+type placeholderJoinedCauseError struct {
+	msg     string
+	stack   placeholderStack
+	details map[string]interface{}
+	cause   error
+	errs    []error
+}
+
+func (e *placeholderJoinedCauseError) Error() string {
+	return e.msg
+}
+
+func (e *placeholderJoinedCauseError) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+}
+
+func (e placeholderJoinedCauseError) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
+func (e *placeholderJoinedCauseError) StackTrace() placeholderStack {
+	return e.stack
+}
+
+func (e *placeholderJoinedCauseError) Details() map[string]interface{} {
+	return e.details
+}
+
+func (e *placeholderJoinedCauseError) Unwrap() []error {
+	return e.errs
+}
+
+func (e *placeholderJoinedCauseError) Cause() error {
+	return e.cause
+}

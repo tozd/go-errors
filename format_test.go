@@ -4,6 +4,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
 	pkgerrors "github.com/pkg/errors"
@@ -32,7 +33,7 @@ func TestFormatNew(t *testing.T) {
 		"%+v",
 		"^error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatNew\n" +
-			"\t.+/format_test.go:31\n" +
+			"\t.+/format_test.go:32\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.New("error"),
@@ -40,7 +41,7 @@ func TestFormatNew(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatNew\n" +
-			"\t.+/format_test.go:38\n" +
+			"\t.+/format_test.go:39\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.New("error"),
@@ -48,7 +49,7 @@ func TestFormatNew(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatNew\n" +
-			"  .+/format_test.go:46\n" +
+			"  .+/format_test.go:47\n" +
 			"(.+\n  .+:\\d+\n)+$",
 	}, {
 		errors.New("error"),
@@ -56,7 +57,7 @@ func TestFormatNew(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatNew\n" +
-			"\t.+/format_test.go:54\n" +
+			"\t.+/format_test.go:55\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.New("error"),
@@ -78,7 +79,12 @@ func TestFormatNew(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
@@ -107,14 +113,14 @@ func TestFormatErrorf(t *testing.T) {
 		"%+v",
 		"^error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:106\n",
+			"\t.+/format_test.go:112\n",
 	}, {
 		errors.Errorf("%s", "error"),
 		"%-+v",
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:112\n",
+			"\t.+/format_test.go:118\n",
 	}, {
 		errors.Errorf("%w", parentErr),
 		"%s",
@@ -129,7 +135,7 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:89\n" +
+			"\t.+/format_test.go:95\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Errorf("%w", parentNoStackErr),
@@ -145,7 +151,7 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:143\n" +
+			"\t.+/format_test.go:149\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Errorf("%w", parentPkgErr),
@@ -161,7 +167,7 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:91\n" +
+			"\t.+/format_test.go:97\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Errorf("%w", parentPkgErr),
@@ -169,7 +175,7 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:91\n" +
+			"\t.+/format_test.go:97\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Errorf("%w", parentPkgErr),
@@ -177,14 +183,14 @@ func TestFormatErrorf(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"  .+/format_test.go:91\n" +
+			"  .+/format_test.go:97\n" +
 			"(.+\n  .+:\\d+\n)+$",
 	}, {
 		errors.Errorf("%w", parentPkgErr),
 		"%+v",
 		"^error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatErrorf\n" +
-			"\t.+/format_test.go:91\n" +
+			"\t.+/format_test.go:97\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
@@ -194,7 +200,12 @@ func TestFormatErrorf(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
@@ -220,7 +231,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:218\n" +
+			"\t.+/format_test.go:229\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -242,7 +253,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:239\n" +
+			"\t.+/format_test.go:250\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -264,7 +275,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:260\n" +
+			"\t.+/format_test.go:271\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -274,7 +285,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:271\n" +
+			"\t.+/format_test.go:282\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -284,7 +295,7 @@ func TestFormatWithStack(t *testing.T) {
 		"error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:281\n" +
+			"\t.+/format_test.go:292\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -306,7 +317,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"\t.+/format_test.go:303\n" +
+			"\t.+/format_test.go:314\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithStack(
@@ -316,7 +327,7 @@ func TestFormatWithStack(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
-			"  .+/format_test.go:313\n" +
+			"  .+/format_test.go:324\n" +
 			"(.+\n  .+:\\d+\n)+$",
 	}}
 
@@ -326,7 +337,12 @@ func TestFormatWithStack(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
@@ -361,13 +377,13 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:356\n" +
+			"\t.+/format_test.go:372\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:357\n" +
+			"\t.+/format_test.go:373\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(io.EOF, "error"),
@@ -383,7 +399,7 @@ func TestFormatWrap(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:381\n" +
+			"\t.+/format_test.go:397\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"EOF\n$",
@@ -396,13 +412,13 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:391\n" +
+			"\t.+/format_test.go:407\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:392\n" +
+			"\t.+/format_test.go:408\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"EOF\n$",
@@ -436,13 +452,13 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:431\n" +
+			"\t.+/format_test.go:447\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:432\n" +
+			"\t.+/format_test.go:448\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -453,12 +469,12 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:448\n" +
+			"\t.+/format_test.go:464\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:449\n" +
+			"\t.+/format_test.go:465\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -469,12 +485,12 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"  .+/format_test.go:464\n" +
+			"  .+/format_test.go:480\n" +
 			"(.+\n  .+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:465\n" +
+			"\t.+/format_test.go:481\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -485,13 +501,13 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:480\n" +
+			"\t.+/format_test.go:496\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"the above error was caused by the following error:\n" +
 			"error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:481\n" +
+			"\t.+/format_test.go:497\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -501,11 +517,11 @@ func TestFormatWrap(t *testing.T) {
 		"%+.1v",
 		"^error2\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:497\n" +
+			"\t.+/format_test.go:513\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:498\n" +
+			"\t.+/format_test.go:514\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -515,12 +531,12 @@ func TestFormatWrap(t *testing.T) {
 		"% +.1v",
 		"^error2\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:511\n" +
+			"\t.+/format_test.go:527\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\n" +
 			"error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:512\n" +
+			"\t.+/format_test.go:528\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -531,7 +547,7 @@ func TestFormatWrap(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrap\n" +
-			"\t.+/format_test.go:526\n" +
+			"\t.+/format_test.go:542\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -567,7 +583,14 @@ func TestFormatWrap(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			if !strings.Contains(tt.format, ".3v") {
+				err2 := copyThroughJSON(t, tt.error)
+				got2 := fmt.Sprintf(tt.format, err2)
+				assert.Equal(t, got, got2)
+			}
 		})
 	}
 }
@@ -593,7 +616,7 @@ func TestFormatWrapf(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:591\n" +
+			"\t.+/format_test.go:614\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"EOF\n$",
@@ -620,13 +643,13 @@ func TestFormatWrapf(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:615\n" +
+			"\t.+/format_test.go:638\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrapf\n" +
-			"\t.+/format_test.go:616\n" +
+			"\t.+/format_test.go:639\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
@@ -636,7 +659,12 @@ func TestFormatWrapf(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
@@ -668,7 +696,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:665\n" +
+			"\t.+/format_test.go:693\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(io.EOF, "addition1"),
@@ -684,7 +712,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^addition1: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:682\n" +
+			"\t.+/format_test.go:710\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -702,7 +730,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^addition2: addition1: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:698\n" +
+			"\t.+/format_test.go:726\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Wrap(
@@ -713,13 +741,13 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:708\n" +
+			"\t.+/format_test.go:736\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"error1: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:709\n" +
+			"\t.+/format_test.go:737\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -730,7 +758,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:726\n" +
+			"\t.+/format_test.go:754\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -741,7 +769,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error: EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:737\n" +
+			"\t.+/format_test.go:765\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -755,13 +783,13 @@ func TestFormatWithMessage(t *testing.T) {
 		"^outside-error: inside-error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:748\n" +
+			"\t.+/format_test.go:776\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:749\n" +
+			"\t.+/format_test.go:777\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -783,7 +811,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^error2: error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:780\n" +
+			"\t.+/format_test.go:808\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -797,7 +825,7 @@ func TestFormatWithMessage(t *testing.T) {
 		"^outside-error: inside-error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:790\n" +
+			"\t.+/format_test.go:818\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -810,11 +838,11 @@ func TestFormatWithMessage(t *testing.T) {
 		"%+.1v",
 		"^outside-error: inside-error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:804\n" +
+			"\t.+/format_test.go:832\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"EOF\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithMessage\n" +
-			"\t.+/format_test.go:805\n" +
+			"\t.+/format_test.go:833\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(
@@ -847,7 +875,12 @@ func TestFormatWithMessage(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
@@ -870,9 +903,9 @@ func TestFormatWrappedNew(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.wrappedNew\n" +
-			"\t.+/format_test.go:857\n" +
+			"\t.+/format_test.go:890\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWrappedNew\n" +
-			"\t.+/format_test.go:868\n",
+			"\t.+/format_test.go:901\n",
 	}}
 
 	for k, tt := range tests {
@@ -881,7 +914,12 @@ func TestFormatWrappedNew(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
@@ -907,7 +945,7 @@ func TestFormatWithDetails(t *testing.T) {
 		"^EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:905\n" +
+			"\t.+/format_test.go:943\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -929,7 +967,7 @@ func TestFormatWithDetails(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:926\n" +
+			"\t.+/format_test.go:964\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -951,7 +989,7 @@ func TestFormatWithDetails(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:947\n" +
+			"\t.+/format_test.go:985\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -961,7 +999,7 @@ func TestFormatWithDetails(t *testing.T) {
 		"^EOF\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:958\n" +
+			"\t.+/format_test.go:996\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -971,7 +1009,7 @@ func TestFormatWithDetails(t *testing.T) {
 		"error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:968\n" +
+			"\t.+/format_test.go:1006\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -993,7 +1031,7 @@ func TestFormatWithDetails(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:990\n" +
+			"\t.+/format_test.go:1028\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -1002,7 +1040,7 @@ func TestFormatWithDetails(t *testing.T) {
 		"%+#v",
 		"^error\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:1000\n" +
+			"\t.+/format_test.go:1038\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -1017,7 +1055,7 @@ func TestFormatWithDetails(t *testing.T) {
 			"foo=1\n" +
 			"quote=\"one\\\\ntwo\"\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:1009\n" +
+			"\t.+/format_test.go:1047\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -1057,7 +1095,7 @@ func TestFormatWithDetails(t *testing.T) {
 			"quote=\"one\\\\ntwo\"\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:1048\n" +
+			"\t.+/format_test.go:1086\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(
@@ -1073,7 +1111,7 @@ func TestFormatWithDetails(t *testing.T) {
 			"quote=\"one\\\\ntwo\"\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
-			"\t.+/format_test.go:1064\n" +
+			"\t.+/format_test.go:1102\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}}
 
@@ -1083,7 +1121,12 @@ func TestFormatWithDetails(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, tt.error))
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
@@ -1117,7 +1160,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1115\n" +
+			"\t.+/format_test.go:1158\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1127,7 +1170,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1125\n" +
+			"\t.+/format_test.go:1168\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1137,7 +1180,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1135\n" +
+			"\t.+/format_test.go:1178\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1147,7 +1190,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1145\n" +
+			"\t.+/format_test.go:1188\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1229,7 +1272,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1227\n" +
+			"\t.+/format_test.go:1270\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1239,7 +1282,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1237\n" +
+			"\t.+/format_test.go:1280\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\n$",
@@ -1249,7 +1292,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1247\n" +
+			"\t.+/format_test.go:1290\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\nmore data\n$",
@@ -1259,7 +1302,7 @@ func TestFormatter(t *testing.T) {
 		"^read error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatter\n" +
-			"\t.+/format_test.go:1257\n" +
+			"\t.+/format_test.go:1300\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error was caused by the following error:\n\n" +
 			"foobar\n$",
@@ -1327,7 +1370,14 @@ func TestFormatter(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, errors.Formatter{tt.error}))
+			got := fmt.Sprintf(tt.format, errors.Formatter{tt.error})
+			assert.Regexp(t, tt.want, got)
+
+			if !strings.Contains(got, "more data") {
+				err2 := copyThroughJSON(t, errors.Formatter{tt.error})
+				got2 := fmt.Sprintf(tt.format, errors.Formatter{err2})
+				assert.Equal(t, got, got2)
+			}
 		})
 	}
 }
@@ -1357,7 +1407,7 @@ func TestJoin(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1355\n" +
+			"\t.+/format_test.go:1405\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error"), nil),
@@ -1365,7 +1415,7 @@ func TestJoin(t *testing.T) {
 		"^error\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1363\n" +
+			"\t.+/format_test.go:1413\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error1"), errors.New("error2")),
@@ -1373,7 +1423,7 @@ func TestJoin(t *testing.T) {
 		"^error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1371\n" +
+			"\t.+/format_test.go:1421\n" +
 			"(.+\n\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error1"), errors.New("error2")),
@@ -1381,19 +1431,19 @@ func TestJoin(t *testing.T) {
 		"^error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1379\n" +
+			"\t.+/format_test.go:1429\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1379\n" +
+			"\t\t.+/format_test.go:1429\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror2\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1379\n" +
+			"\t\t.+/format_test.go:1429\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error1"), errors.New("error2")),
@@ -1401,19 +1451,19 @@ func TestJoin(t *testing.T) {
 		"^error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"  .+/format_test.go:1399\n" +
+			"  .+/format_test.go:1449\n" +
 			"(.+\n  .+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"  error1\n" +
 			"  stack trace \\(most recent call first\\):\n" +
 			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"    .+/format_test.go:1399\n" +
+			"    .+/format_test.go:1449\n" +
 			"(.+\n    .+:\\d+\n)+" +
 			"\n" +
 			"  error2\n" +
 			"  stack trace \\(most recent call first\\):\n" +
 			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"    .+/format_test.go:1399\n" +
+			"    .+/format_test.go:1449\n" +
 			"(.+\n    .+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error1"), errors.New("error2")),
@@ -1421,50 +1471,50 @@ func TestJoin(t *testing.T) {
 		"^error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1419\n" +
+			"\t.+/format_test.go:1469\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"the above error joins multiple errors:\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1419\n" +
+			"\t\t.+/format_test.go:1469\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\terror2\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1419\n" +
+			"\t\t.+/format_test.go:1469\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error1"), errors.New("error2")),
 		"% #+.1v",
 		"^error1\nerror2\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1438\n" +
+			"\t.+/format_test.go:1488\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror1\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1438\n" +
+			"\t\t.+/format_test.go:1488\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror2\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1438\n" +
+			"\t\t.+/format_test.go:1488\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error1"), errors.New("error2")),
 		"%#+.1v",
 		"^error1\nerror2\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1455\n" +
+			"\t.+/format_test.go:1505\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\terror1\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1455\n" +
+			"\t\t.+/format_test.go:1505\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\terror2\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1455\n" +
+			"\t\t.+/format_test.go:1505\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(errors.New("error1"), errors.New("error2")),
@@ -1501,19 +1551,19 @@ func TestJoin(t *testing.T) {
 		"^error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1499\n" +
+			"\t.+/format_test.go:1549\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1499\n" +
+			"\t\t.+/format_test.go:1549\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror2\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1499\n" +
+			"\t\t.+/format_test.go:1549\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(pkgerrors.New("error1"), pkgerrors.New("error2")),
@@ -1521,17 +1571,17 @@ func TestJoin(t *testing.T) {
 		"^error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1519\n" +
+			"\t.+/format_test.go:1569\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"\terror1\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1519\n" +
+			"\t\t.+/format_test.go:1569\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror2\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1519\n" +
+			"\t\t.+/format_test.go:1569\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}, {
 		errors.Join(pkgerrors.New("error1"), pkgerrors.New("error2")),
@@ -1539,17 +1589,17 @@ func TestJoin(t *testing.T) {
 		"^error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"  .+/format_test.go:1537\n" +
+			"  .+/format_test.go:1587\n" +
 			"(.+\n  .+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"  error1\n" +
 			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"  \t.+/format_test.go:1537\n" +
+			"  \t.+/format_test.go:1587\n" +
 			"(.+\n  \t.+:\\d+\n)+" +
 			"\n" +
 			"  error2\n" +
 			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"  \t.+/format_test.go:1537\n" +
+			"  \t.+/format_test.go:1587\n" +
 			"(.+\n  \t.+:\\d+\n)+$",
 	}, {
 		errors.WithMessage(errors.Join(errors.New("error1"), errors.New("error2")), "message"),
@@ -1557,19 +1607,19 @@ func TestJoin(t *testing.T) {
 		"^message: error1\nerror2\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1555\n" +
+			"\t.+/format_test.go:1605\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1555\n" +
+			"\t\t.+/format_test.go:1605\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror2\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1555\n" +
+			"\t\t.+/format_test.go:1605\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}, {
 		errors.WithDetails(errors.Join(errors.New("error1"), errors.New("error2")), "foo", "bar"),
@@ -1578,19 +1628,19 @@ func TestJoin(t *testing.T) {
 			"foo=bar\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t.+/format_test.go:1575\n" +
+			"\t.+/format_test.go:1625\n" +
 			"(.+\n\t.+:\\d+\n)+" +
 			"\nthe above error joins multiple errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1575\n" +
+			"\t\t.+/format_test.go:1625\n" +
 			"(.+\n\t\t.+:\\d+\n)+" +
 			"\n" +
 			"\terror2\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
-			"\t\t.+/format_test.go:1575\n" +
+			"\t\t.+/format_test.go:1625\n" +
 			"(.+\n\t\t.+:\\d+\n)+$",
 	}}
 
@@ -1600,7 +1650,14 @@ func TestJoin(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, errors.Formatter{tt.error}))
+			got := fmt.Sprintf(tt.format, errors.Formatter{tt.error})
+			assert.Regexp(t, tt.want, got)
+
+			if !strings.Contains(tt.format, ".3v") {
+				err2 := copyThroughJSON(t, errors.Formatter{tt.error})
+				got2 := fmt.Sprintf(tt.format, errors.Formatter{err2})
+				assert.Equal(t, got, got2)
+			}
 		})
 	}
 }

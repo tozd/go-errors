@@ -75,11 +75,7 @@ func (f frame) MarshalJSON() ([]byte, error) {
 		return []byte("{}"), nil
 	}
 
-	return marshalWithoutEscapeHTML(&struct {
-		Name string `json:"name,omitempty"`
-		File string `json:"file,omitempty"`
-		Line int    `json:"line,omitempty"`
-	}{
+	return marshalWithoutEscapeHTML(&placeholderFrame{
 		Name: f.name(),
 		File: f.file(),
 		Line: f.line(),

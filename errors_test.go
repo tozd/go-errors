@@ -99,6 +99,20 @@ func (e *errorWithCauseAndWrap) Unwrap() error {
 	return e.wrap
 }
 
+func copyThroughJSON(t *testing.T, e interface{}) error {
+	t.Helper()
+
+	jsonError, err := json.Marshal(e)
+	require.NoError(t, err)
+	e2, errE := errors.UnmarshalJSON(jsonError)
+	require.NoError(t, errE)
+	jsonError2, err := json.Marshal(e2)
+	require.NoError(t, err)
+	assert.Equal(t, jsonError, jsonError2)
+
+	return e2 //nolint:wrapcheck
+}
+
 type testStruct struct {
 	err    error
 	want   string
@@ -334,25 +348,29 @@ func TestErrors(t *testing.T) {
 func TestWithStackNil(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, errors.WithStack(nil), nil)
+	assert.Nil(t, errors.WithStack(nil))
+	assert.Nil(t, copyThroughJSON(t, errors.WithStack(nil)))
 }
 
 func TestWithDetailsNil(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, errors.WithDetails(nil), nil)
+	assert.Nil(t, errors.WithDetails(nil))
+	assert.Nil(t, copyThroughJSON(t, errors.WithDetails(nil)))
 }
 
 func TestWithMessageNil(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, errors.WithMessage(nil, "no error"), nil)
+	assert.Nil(t, errors.WithMessage(nil, "no error"))
+	assert.Nil(t, copyThroughJSON(t, errors.WithMessage(nil, "no error")))
 }
 
 func TestWithMessagefNil(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, errors.WithMessagef(nil, "no error"), nil)
+	assert.Nil(t, errors.WithMessagef(nil, "no error"))
+	assert.Nil(t, copyThroughJSON(t, errors.WithMessagef(nil, "no error")))
 }
 
 func TestJoinNil(t *testing.T) {
@@ -360,6 +378,8 @@ func TestJoinNil(t *testing.T) {
 
 	assert.Nil(t, errors.Join(nil))
 	assert.Nil(t, errors.Join(nil, nil))
+	assert.Nil(t, copyThroughJSON(t, errors.Join(nil)))
+	assert.Nil(t, copyThroughJSON(t, errors.Join(nil, nil)))
 }
 
 // stderrors.New, etc values are not expected to be compared by value.
@@ -438,6 +458,7 @@ func TestDetails(t *testing.T) {
 	errors.Details(err)["foo"] = "bar"
 	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.Details(err))
 	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(err))
+	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(copyThroughJSON(t, err)))
 
 	err2 := errors.WithDetails(err)
 	errors.Details(err2)["foo"] = "baz"
@@ -446,14 +467,17 @@ func TestDetails(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"zoo": "base", "foo": "bar"}, errors.AllDetails(err))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.Details(err2))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(err2))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(copyThroughJSON(t, err2)))
 
 	err3 := errors.WithDetails(err, "foo", "baz", "foo2", "bar2")
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(err3))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz", "zoo": "base"}, errors.AllDetails(copyThroughJSON(t, err3)))
 
 	err4 := errors.Wrap(err3, "cause")
 	errors.Details(err4)["foo"] = "baz2"
 	errors.Details(err4)["foo2"] = "bar3"
 	assert.Equal(t, map[string]interface{}{"foo2": "bar3", "foo": "baz2"}, errors.AllDetails(err4))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar3", "foo": "baz2"}, errors.AllDetails(copyThroughJSON(t, err4)))
 }
 
 type testStructJSON struct{}

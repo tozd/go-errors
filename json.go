@@ -42,6 +42,14 @@ func marshalJSONError(err error) ([]byte, E) {
 	st := getExistingStackTrace(err)
 	if len(st) > 0 {
 		data["stack"] = StackFormatter{st}
+	} else {
+		placeholderErr, ok := err.(placeholderStackTracer) //nolint:errorlint
+		if ok {
+			placeholderSt := placeholderErr.StackTrace()
+			if len(placeholderSt) > 0 {
+				data["stack"] = placeholderSt
+			}
+		}
 	}
 
 	for _, er := range errs {

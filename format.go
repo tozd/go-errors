@@ -68,7 +68,7 @@ func writeLinesPrefixed(st fmt.State, linePrefix, s string) {
 func useKnownInterface(err error) bool {
 	for err != nil {
 		switch err.(type) { //nolint:errorlint
-		case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer:
+		case stackTracer, pkgStackTracer, goErrorsStackTracer, detailer, placeholderStackTracer:
 			// We return true only on interfaces with data. Not on causer.
 			// We do not care if they really do have data at this point though.
 			return true
@@ -101,7 +101,8 @@ func isForeignFormatter(err error) bool {
 	// Our errors implement fmt.Formatter but we want to return false for them because
 	// they just call into our Formatter which would lead to infinite recursion.
 	switch err.(type) { //nolint:errorlint
-	case *fundamentalError, *msgError, *msgJoinedError, *noMsgError, *causeError:
+	case *fundamentalError, *msgError, *msgJoinedError, *noMsgError, *causeError,
+		*placeholderError, *placeholderCauseError, *placeholderJoinedError, *placeholderJoinedCauseError:
 		return false
 	}
 
@@ -234,9 +235,20 @@ func formatDetails(s fmt.State, linePrefix string, details map[string]interface{
 }
 
 func formatStack(s fmt.State, linePrefix string, err error) {
+	var stToFormat interface{}
 	st := getExistingStackTrace(err)
-	if len(st) == 0 {
-		return
+	if len(st) > 0 {
+		stToFormat = StackFormatter{st}
+	} else {
+		placeholderErr, ok := err.(placeholderStackTracer) //nolint:errorlint
+		if !ok {
+			return
+		}
+		placeholderSt := placeholderErr.StackTrace()
+		if len(placeholderSt) == 0 {
+			return
+		}
+		stToFormat = placeholderSt
 	}
 
 	if s.Flag('-') {
@@ -245,9 +257,9 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 	var result string
 	width, ok := s.Width()
 	if ok {
-		result = fmt.Sprintf("%+*v", width, StackFormatter{st})
+		result = fmt.Sprintf("%+*v", width, stToFormat)
 	} else {
-		result = fmt.Sprintf("%+v", StackFormatter{st})
+		result = fmt.Sprintf("%+v", stToFormat)
 	}
 	writeLinesPrefixed(s, linePrefix, result)
 }

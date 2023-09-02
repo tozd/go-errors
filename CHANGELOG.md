@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for Go 1.21.
 - `StackTrace` type alias for better compatibility with `github.com/pkg/errors`.
 - `Unjoin` function to find joined errors.
+- `UnmarshalJSON` to unmarshal JSON errors into placeholder errors which can then
+  be formatted as other errors from this package.
 
 ## Changed
 

@@ -138,6 +138,12 @@ func TestJSON(t *testing.T) {
 			jsonError, err := json.Marshal(tt.error)
 			require.NoError(t, err)
 			jsonEqual(t, tt.want, string(jsonError))
+
+			err2, errE := errors.UnmarshalJSON(jsonError)
+			require.NoError(t, errE)
+			jsonError2, err := json.Marshal(err2)
+			require.NoError(t, err)
+			assert.Equal(t, string(jsonError), string(jsonError2))
 		})
 	}
 }
