@@ -480,3 +480,41 @@ func ExampleFormatter_MarshalJSON() {
 	// 	]
 	// }
 }
+
+func ExampleUnmarshalJSON() {
+	base := errors.Base("not found")
+	errE := errors.Wrap(base, "image not found")
+	errors.Details(errE)["filename"] = "star.png"
+	data, err := json.Marshal(errE)
+	if err != nil {
+		panic(err)
+	}
+	errFromJSON, errE := errors.UnmarshalJSON(data)
+	if errE != nil {
+		panic(errE)
+	}
+	fmt.Printf("% #+-.1v", errFromJSON)
+
+	// Example output:
+	// image not found
+	// filename=star.png
+	// stack trace (most recent call first):
+	// gitlab.com/tozd/go/errors_test.ExampleUnmarshalJSON
+	// 	/home/user/errors/example_test.go:486
+	// testing.runExample
+	// 	/usr/local/go/src/testing/run_example.go:63
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
+	// testing.(*M).Run
+	// 	/usr/local/go/src/testing/testing.go:1927
+	// main.main
+	// 	_testmain.go:145
+	// runtime.main
+	// 	/usr/local/go/src/runtime/proc.go:267
+	// runtime.goexit
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
+	//
+	// the above error was caused by the following error:
+	//
+	// not found
+}
