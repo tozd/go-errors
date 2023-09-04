@@ -666,7 +666,7 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 // type contains a Cause method returning error.
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Cause returns nil.
-// Moreover, unwrapping stops if it encounters an error with
+// Unwrapping stops if it encounters an error with
 // Unwrap() method returning multiple errors.
 func Cause(err error) error {
 	for err != nil {
@@ -690,7 +690,7 @@ func Cause(err error) error {
 // type contains an Unwrap method returning multiple errors.
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Unjoin returns nil.
-// Moreover, unwrapping stops if it encounters an error with the Cause
+// Unwrapping stops if it encounters an error with the Cause
 // method returning error.
 func Unjoin(err error) []error {
 	for err != nil {
@@ -714,7 +714,7 @@ func Unjoin(err error) []error {
 // if err's type contains a Details method returning initialized map.
 // Otherwise, the err is unwrapped and the process is repeated.
 // If unwrapping is not possible, Details returns nil.
-// Moreover, unwrapping stops if it encounters an error with the Cause
+// Unwrapping stops if it encounters an error with the Cause
 // method returning error, or Unwrap() method returning
 // multiple errors.
 //
@@ -754,7 +754,7 @@ func detailsOf(err error) map[string]interface{} {
 // AllDetails returns a map build from calling the Details method on err
 // and populating the map with key/value pairs which are not yet
 // present. Afterwards, the err is unwrapped and the process is repeated.
-// Moreover, unwrapping stops if it encounters an error with the Cause
+// Unwrapping stops if it encounters an error with the Cause
 // method returning error, or Unwrap() method returning
 // multiple errors.
 func AllDetails(err error) map[string]interface{} {

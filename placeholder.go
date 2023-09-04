@@ -11,6 +11,25 @@ type placeholderStackTracer interface {
 	StackTrace() placeholderStack
 }
 
+// UnmarshalJSON unnmarshals JSON errors into placeholder errors
+// which can then be formatted in the same way as other errors
+// from this package.
+//
+// Placeholder errors contain same data as original errors (those
+// marshaled into JSON), but have multiple limitations:
+//
+//  1. They do not implement stackTracer interface because addresses
+//     of stack frames are not available in JSON nor they are portable.
+//  2. Placeholder errors are not of the same type as original errors.
+//     Thus errors.Is and errors.As do not work.
+//  3. The implementation of fmt.Formatter interface of the original error
+//     is not used when formatting placeholder errors.
+//
+// Placeholder errors also have different trees of wrapping errors than
+// original errors because during JSON marshal potentially multiple levels
+// of wrapping are combined into one JSON object. Nested objects happen
+// only for errors implementing causer or unwrapper interface returning
+// multiple errors.
 func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 	if bytes.Equal(data, []byte("null")) {
 		return nil, nil
