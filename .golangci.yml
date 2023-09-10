@@ -161,6 +161,7 @@ issues:
         - staticcheck
     - path: example_test\.go
       linters:
+        - goconst
         - godot
         - testableexamples
     - path: stdlib\.go
