@@ -113,6 +113,16 @@ func copyThroughJSON(t *testing.T, e interface{}) error {
 	return e2 //nolint:wrapcheck
 }
 
+func stackOffset(t *testing.T) int {
+	t.Helper()
+
+	var pcs [1]uintptr
+	n := runtime.Callers(2, pcs[:])
+	frames := runtime.CallersFrames(pcs[:n])
+	f, _ := frames.Next()
+	return f.Line
+}
+
 type testStruct struct {
 	err    error
 	want   string

@@ -272,7 +272,7 @@ func TestStackMarshalJSON(t *testing.T) {
 
 // A version of runtime.Caller that returns a frame, not a uintptr.
 func caller() frame {
-	var pcs [3]uintptr
+	var pcs [1]uintptr
 	n := runtime.Callers(2, pcs[:])
 	frames := runtime.CallersFrames(pcs[:n])
 	f, _ := frames.Next()
