@@ -323,10 +323,6 @@ func init() {
 		// we format the stack trace in this case
 		{errors.WithMessage(parentPkgError, "read error"), "read error: parent", "% +-.3v", parentErrStackSize, 1},
 
-		// Wrap behaves like New and Errorf if provided error is nil.
-		{errors.Wrap(nil, "foo"), "foo", "% +-.1v", currentStackSize, 1},
-		{errors.Wrap(nil, "read error without format specifiers"), "read error without format specifiers", "% +-.1v", currentStackSize, 1},
-
 		// errors.Join.
 		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", "% +-.1v", currentStackSize, 2 + 3 + 1 + 1 + 1},
 		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", "% +-.1v", 3 * currentStackSize, 2 + 3 + 2 + 3},
@@ -360,6 +356,20 @@ func TestWithStackNil(t *testing.T) {
 
 	assert.Nil(t, errors.WithStack(nil))
 	assert.Nil(t, copyThroughJSON(t, errors.WithStack(nil)))
+}
+
+func TestWrapNil(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, errors.Wrap(nil, "x"))
+	assert.Nil(t, copyThroughJSON(t, errors.Wrap(nil, "x")))
+}
+
+func TestWrapfNil(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, errors.Wrapf(nil, "x"))
+	assert.Nil(t, copyThroughJSON(t, errors.Wrapf(nil, "x")))
 }
 
 func TestWithDetailsNil(t *testing.T) {

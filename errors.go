@@ -524,18 +524,15 @@ func (e *noMsgError) Details() map[string]interface{} {
 // at the point Wrap is called, and the supplied message.
 // Wrapping is done even if err already has a stack trace.
 // It records the original error as a cause.
-// If err is nil, Wrap behaves like New.
+// If err is nil, Wrap returns nil.
 //
 // Use this when you want to make a new error,
 // preserving the cause of the new error.
 func Wrap(err error, message string) E {
 	if err == nil {
-		return &fundamentalError{
-			msg:     message,
-			stack:   callers(),
-			details: nil,
-		}
+		return nil
 	}
+
 	return &causeError{
 		err:     err,
 		msg:     message,
@@ -551,19 +548,15 @@ func Wrap(err error, message string) E {
 // It records the original error as a cause.
 // It does not support %w format verb (use %s instead if you
 // need to incorporate cause's error message).
-// If err is nil, Wrapf behaves like Errorf, but without
-// support for %w format verb.
+// If err is nil, Wrapf returns nil.
 //
 // Use this when you want to make a new error,
 // preserving the cause of the new error.
 func Wrapf(err error, format string, args ...interface{}) E {
 	if err == nil {
-		return &fundamentalError{
-			msg:     fmt.Sprintf(format, args...),
-			stack:   callers(),
-			details: nil,
-		}
+		return nil
 	}
+
 	return &causeError{
 		err:     err,
 		msg:     fmt.Sprintf(format, args...),
