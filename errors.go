@@ -460,9 +460,12 @@ func (e *msgJoinedError) Details() map[string]interface{} {
 // if err does not already have a stack trace.
 // If err is nil, WithStack returns nil.
 //
-// Use this instead of Wrap when you just want to convert an existing error
+// Use WithStack instead of Wrap when you just want to convert an existing error
 // into one with a stack trace. Use it as close to where the error originated
 // as you can get.
+// You can also use WithStack when you have an err which implements stackTracer
+// interface but does not implement detailer interface as well, but you cannot
+// provide initial details like you can with WithDetails.
 func WithStack(err error) E {
 	if err == nil {
 		return nil
@@ -526,7 +529,7 @@ func (e *noMsgError) Details() map[string]interface{} {
 // It records the original error as a cause.
 // If err is nil, Wrap returns nil.
 //
-// Use this when you want to make a new error,
+// Use Wrap when you want to make a new error,
 // preserving the cause of the new error.
 func Wrap(err error, message string) E {
 	if err == nil {
@@ -550,7 +553,7 @@ func Wrap(err error, message string) E {
 // need to incorporate cause's error message).
 // If err is nil, Wrapf returns nil.
 //
-// Use this when you want to make a new error,
+// Use Wrapf when you want to make a new error,
 // preserving the cause of the new error.
 func Wrapf(err error, format string, args ...interface{}) E {
 	if err == nil {
@@ -842,14 +845,16 @@ func initializeDetails(err error) {
 // If err does not have a stack trace, then this call is equivalent
 // to calling WithStack, annotating err with a stack trace as well.
 //
-// Use this when you have an err which implements stackTracer interface
-// but does not implement detailer interface as well.
+// Use WithDetails when you have an err which implements stackTracer interface
+// but does not implement detailer interface as well. You can also use
+// WithStack for that but you cannot provide initial details using WithStack
+// like you can with WithDetails.
 //
 // It is also useful when err does implement detailer interface, but you want
 // to reuse same err multiple times (e.g., pass same err to multiple
 // goroutines), adding different details each time. Calling WithDetails
-// wraps err and adds an additional and independent layer of details on
-// top of any existing details.
+// always wraps err and adds an additional and independent layer of
+// details on top of any existing details.
 //
 // You can provide initial details by providing pairs of keys (strings)
 // and values (interface{}).

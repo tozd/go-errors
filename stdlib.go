@@ -68,8 +68,8 @@ func Unwrap(err error) error {
 // Each call to Base returns a distinct error value even if the message is identical.
 // It does not record a stack trace.
 //
-// Use this for a constant base error you convert to an actual error you return with
-// WithStack. This base error you can then use in Is and As calls.
+// Use Base for a constant base error you convert to an actual error you return with
+// WithStack or WithDetails. This base error you can then use in Is and As calls.
 //
 // This function is a proxy for standard errors.New.
 func Base(message string) error {
@@ -82,8 +82,8 @@ func Base(message string) error {
 // It does not record a stack trace. It supports %w format verb to wrap an existing error.
 // %w can be provided multiple times.
 //
-// Use this for a constant base error you convert to an actual error you return with
-// WithStack. This base error you can then use in Is and As calls. Use %w format verb
+// Use Basef for a constant base error you convert to an actual error you return with
+// WithStack or WithDetails. This base error you can then use in Is and As calls. Use %w format verb
 // when you want to create a tree of base errors.
 //
 // This function is a proxy for standard fmt.Errorf.
@@ -96,7 +96,7 @@ func Basef(format string, args ...interface{}) error {
 // Each call to BaseWrap returns a distinct error value even if the message is identical.
 // It does not record a stack trace.
 //
-// Use this when you want to create a tree of base errors and you want to fully
+// Use BaseWrap when you want to create a tree of base errors and you want to fully
 // control the error message.
 func BaseWrap(err error, message string) error {
 	return &base{
@@ -112,7 +112,7 @@ func BaseWrap(err error, message string) error {
 // (use %s instead if you need to incorporate error's error message, but then you can
 // also just use Basef).
 //
-// Use this when you want to create a tree of base errors and you want to fully
+// Use BaseWrapf when you want to create a tree of base errors and you want to fully
 // control the error message.
 func BaseWrapf(err error, format string, args ...interface{}) error {
 	return &base{
