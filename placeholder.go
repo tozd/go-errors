@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"reflect"
 )
 
 type placeholderStackTracer interface {
@@ -67,6 +68,15 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 		}
 	}
 
+	causeData, ok := payload["cause"]
+	delete(payload, "cause")
+	if ok {
+		cause, errE = UnmarshalJSON(causeData)
+		if errE != nil {
+			return nil, WithMessage(errE, "cause")
+		}
+	}
+
 	errorsData, ok := payload["errors"]
 	delete(payload, "errors")
 	if ok {
@@ -76,23 +86,18 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 			return nil, WithMessage(err, "errors")
 		}
 		for i, d := range errorsSliceData {
-			e, errE := UnmarshalJSON(d) //nolint:govet
+			e, errE := UnmarshalJSON(d)
 			if errE != nil {
 				return nil, WithMessagef(errE, "errors: %d", i)
 			}
-			errs = append(errs, e)
+			// We make sure cause is not repeated in errs here.
+			// We later on make sure cause is present in errs.
+			if e != nil && !reflect.DeepEqual(e, cause) {
+				errs = append(errs, e)
+			}
 		}
 		if len(errs) == 0 {
 			errs = nil
-		}
-	}
-
-	causeData, ok := payload["cause"]
-	delete(payload, "cause")
-	if ok {
-		cause, errE = UnmarshalJSON(causeData)
-		if errE != nil {
-			return nil, WithMessage(errE, "cause")
 		}
 	}
 
@@ -107,6 +112,8 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 	}
 
 	if cause != nil && len(errs) > 0 {
+		// We make sure cause is present in errs.
+		errs = append(errs, cause)
 		return &placeholderJoinedCauseError{
 			msg:     msg,
 			stack:   s,
@@ -247,8 +254,6 @@ func (e *placeholderJoinedError) Unwrap() []error {
 	return e.errs
 }
 
-// This should not ever be possible because Cause would also require Unwrap error,
-// but we here have Unwrap []error. Still, we define it for completeness.
 type placeholderJoinedCauseError struct {
 	msg     string
 	stack   placeholderStack

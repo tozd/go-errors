@@ -797,7 +797,7 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 			errs = e.Unwrap()
 		}
 		if cause != nil || len(errs) > 0 {
-			// It is possible that both cause and errs is set. A bit strange, but we allow it.
+			// It is possible that both cause and errs is set.
 			return
 		}
 		err = Unwrap(err)
@@ -823,7 +823,7 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 			errs = e.Unwrap()
 		}
 		if cause != nil || len(errs) > 0 {
-			// It is possible that both cause and errs is set. A bit strange, but we allow it.
+			// It is possible that both cause and errs is set.
 			return
 		}
 		err = Unwrap(err)

@@ -160,21 +160,26 @@ func formatError(s fmt.State, indent int, err error) {
 	}
 
 	if precision == 1 || precision == 3 { //nolint:nestif
-		// It is possible that both cause and errs is set. A bit strange, but we allow it.
-		// In that case we first recurse into errs and then into the cause, so that it is
-		// clear which "error above" joins the errors (not the cause). Because cause is
-		// not indented it is hopefully clearer that "error above" does not mean the last
-		// error among joined but the one higher up before indentation.
+		// It is possible that both cause and errs is set. In that case we first
+		// recurse into errs and then into the cause, so that it is clear which
+		// "error above" joins the errors (not the cause). Because cause is not
+		// indented it is hopefully clearer that its "error above" does not mean
+		// the last error among joined but the one higher up before indentation.
 		if len(errs) > 0 {
-			if s.Flag('-') {
-				if s.Flag(' ') {
-					_, _ = io.WriteString(s, "\n")
-				}
-				writeLinesPrefixed(s, linePrefix, multipleErrorsHelp)
-			}
+			first := true
 			for _, er := range errs {
 				// er should never be nil, but we still check.
-				if er != nil {
+				// We also make sure we do not repeat cause here.
+				if er != nil && er != cause { //nolint:errorlint,goerr113
+					if first {
+						first = false
+						if s.Flag('-') {
+							if s.Flag(' ') {
+								_, _ = io.WriteString(s, "\n")
+							}
+							writeLinesPrefixed(s, linePrefix, multipleErrorsHelp)
+						}
+					}
 					if s.Flag(' ') {
 						_, _ = io.WriteString(s, "\n")
 					}

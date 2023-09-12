@@ -54,7 +54,8 @@ func marshalJSONError(err error) ([]byte, E) {
 
 	for _, er := range errs {
 		// er should never be nil, but we still check.
-		if er != nil {
+		// We also make sure we do not repeat cause here.
+		if er != nil && er != cause { //nolint:errorlint,goerr113
 			jsonEr, e := marshalJSONAnyError(er)
 			if e != nil {
 				return nil, e
