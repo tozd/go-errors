@@ -157,6 +157,7 @@ issues:
         - godot
         - goerr113
         - lll
+        - maintidx
         - revive
         - staticcheck
     - path: example_test\.go
