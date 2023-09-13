@@ -326,6 +326,55 @@ func init() {
 		// errors.Join.
 		{errors.Join(errors.Base("foo1"), errors.Base("foo2")), "foo1\nfoo2", "% +-.1v", currentStackSize, 2 + 3 + 1 + 1 + 1},
 		{errors.Join(errors.New("foo1"), errors.New("foo2")), "foo1\nfoo2", "% +-.1v", 3 * currentStackSize, 2 + 3 + 2 + 3},
+
+		// errors.WrapWith and parent without stack, there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		{errors.WrapWith(parentNoStackErr, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 3 + 2},
+		{errors.WrapWith(parentNoStackErr, errors.Base("")), "", "% +-.1v", currentStackSize, 3 + 1},
+		{errors.WrapWith(parentNoStackErr, errors.Base("read error\n")), "read error\n", "% +-.1v", currentStackSize, 3 + 2},
+		{errors.WrapWith(io.EOF, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 3 + 2},
+		// There is no "the above error was caused by the following error" message.
+		{errors.WrapWith(noMsgNoStackErr, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 3 + 1},
+		{errors.WrapWith(noMsgNoStackErr, errors.Base("")), "", "% +-.1v", currentStackSize, 3 + 0},
+
+		// errors.WrapWith and parent with stack, there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		// + 1 for additional stack trace (most recent call first)" line
+		{errors.WrapWith(parentErr, errors.Base("read error")), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.WrapWith(parentErr, errors.Base("")), "", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 1 + 1},
+		{errors.WrapWith(parentErr, errors.Base("read error\n")), "read error\n", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.WrapWith(noMsgErr, errors.Base("read error")), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 1 + 1},
+		{errors.WrapWith(noMsgErr, errors.Base("")), "", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 0 + 1},
+
+		// errors.WrapWith and parent with custom %+v and no stack, there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		{errors.WrapWith(&errorWithFormat{"foobar\nmore data"}, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 3 + 3},
+		{errors.WrapWith(&errorWithFormat{"foobar\nmore data\n"}, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 3 + 3},
+
+		// errors.WrapWith and parent with custom %+v and no stack, there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		{errors.WrapWith(&errorWithFormat{"foobar\nmore data"}, errors.Base("read error")), "read error", "% +-.3v", currentStackSize, 3 + 3},
+		{errors.WrapWith(&errorWithFormat{"foobar\nmore data\n"}, errors.Base("read error")), "read error", "% +-.3v", currentStackSize, 3 + 3},
+
+		// errors.WrapWith and parent with custom %+v (which is ignored) and stack there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		// + 1 for additional stack trace (most recent call first)" line
+		{errors.WrapWith(parentWithFormat1Err, errors.Base("read error")), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.WrapWith(parentWithFormat2Err, errors.Base("read error")), "read error", "% +-.1v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+
+		// errors.WrapWith and parent with custom %+v (which is ignored) and stack there are three lines extra for
+		// "the above error was caused by the following error" + lines for error messages
+		// + 1 for additional stack trace (most recent call first)" line
+		{errors.WrapWith(parentWithFormat1Err, errors.Base("read error")), "read error", "% +-.3v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+		{errors.WrapWith(parentWithFormat2Err, errors.Base("read error")), "read error", "% +-.3v", currentStackSize + parentErrStackSize, 3 + 2 + 1},
+
+		// errors.WrapWith and github.com/pkg/errors parent,
+		// formatting of the cause is fully done by parentPkgError in this case,
+		// there are still three lines extra for "The above error was caused by the
+		// following error" + lines for error messages, but
+		// there is no second "stack trace (most recent call first)" line,
+		// a final newline is still added
+		{errors.WrapWith(parentPkgError, errors.Base("read error")), "read error", "% +-.3v", currentStackSize + parentErrStackSize, 3 + 2},
 	}...)
 }
 
@@ -400,6 +449,13 @@ func TestJoinNil(t *testing.T) {
 	assert.Nil(t, errors.Join(nil, nil))
 	assert.Nil(t, copyThroughJSON(t, errors.Join(nil)))
 	assert.Nil(t, copyThroughJSON(t, errors.Join(nil, nil)))
+}
+
+func TestWrapWithNil(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, errors.WrapWith(nil, errors.Base("x")))
+	assert.Nil(t, copyThroughJSON(t, errors.WrapWith(nil, errors.Base("x"))))
 }
 
 // stderrors.New, etc values are not expected to be compared by value.
@@ -498,6 +554,87 @@ func TestDetails(t *testing.T) {
 	errors.Details(err4)["foo2"] = "bar3"
 	assert.Equal(t, map[string]interface{}{"foo2": "bar3", "foo": "baz2"}, errors.AllDetails(err4))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar3", "foo": "baz2"}, errors.AllDetails(copyThroughJSON(t, err4)))
+}
+
+type testStructDetails struct {
+	msg     string
+	details map[string]interface{}
+	parent  error
+}
+
+func (e *testStructDetails) Error() string {
+	return e.msg
+}
+
+func (e *testStructDetails) Unwrap() error {
+	return e.parent
+}
+
+func (e *testStructDetails) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
+	}
+	return e.details
+}
+
+func TestWrapWith(t *testing.T) {
+	t.Parallel()
+
+	ioBaseErr := errors.Base("IO error")
+	eofBaseErr := errors.BaseWrap(ioBaseErr, "IO error: EOF")
+
+	testErr := errors.WrapWith(io.EOF, eofBaseErr)
+	errors.Details(testErr)["foo"] = "baz"
+	errors.Details(testErr)["foo2"] = "bar2"
+
+	assert.True(t, errors.Is(testErr, io.EOF))
+	assert.True(t, errors.Is(testErr, ioBaseErr))
+	assert.True(t, errors.Is(testErr, eofBaseErr))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.Details(testErr))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(testErr))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(copyThroughJSON(t, testErr)))
+	assert.Equal(t, []error{eofBaseErr, io.EOF}, errors.Unjoin(testErr))
+	assert.Nil(t, errors.Unwrap(testErr))
+	assert.Equal(t, io.EOF, errors.Cause(testErr))
+
+	jsonError, err := json.Marshal(testErr)
+	require.NoError(t, err)
+	jsonEqual(t, `{"cause":{"error":"EOF"},"error":"IO error: EOF","foo":"baz","foo2":"bar2","stack":[]}`, string(jsonError))
+
+	err2, errE := errors.UnmarshalJSON(jsonError)
+	require.NoError(t, errE)
+	jsonError2, err := json.Marshal(err2)
+	require.NoError(t, err)
+	assert.Equal(t, string(jsonError), string(jsonError2))
+
+	ioDetailsBaseErr := &testStructDetails{"IO error", nil, nil}
+	errors.Details(ioDetailsBaseErr)["type"] = "io"
+	eofDetailsBaseErr := &testStructDetails{"IO error: EOF", nil, ioDetailsBaseErr}
+	errors.Details(eofDetailsBaseErr)["type"] = "eof"
+
+	testErr = errors.WrapWith(io.EOF, eofDetailsBaseErr)
+	errors.Details(testErr)["foo"] = "baz"
+	errors.Details(testErr)["foo2"] = "bar2"
+
+	assert.True(t, errors.Is(testErr, io.EOF))
+	assert.True(t, errors.Is(testErr, ioDetailsBaseErr))
+	assert.True(t, errors.Is(testErr, eofDetailsBaseErr))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.Details(testErr))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(testErr))
+	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(copyThroughJSON(t, testErr)))
+	assert.Equal(t, []error{eofDetailsBaseErr, io.EOF}, errors.Unjoin(testErr))
+	assert.Nil(t, errors.Unwrap(testErr))
+	assert.Equal(t, io.EOF, errors.Cause(testErr))
+
+	jsonError, err = json.Marshal(testErr)
+	require.NoError(t, err)
+	jsonEqual(t, `{"cause":{"error":"EOF"},"error":"IO error: EOF","errors":[{"error":"IO error: EOF","type":"eof"}],"foo":"baz","foo2":"bar2","stack":[]}`, string(jsonError))
+
+	err2, errE = errors.UnmarshalJSON(jsonError)
+	require.NoError(t, errE)
+	jsonError2, err = json.Marshal(err2)
+	require.NoError(t, err)
+	assert.Equal(t, string(jsonError), string(jsonError2))
 }
 
 type testStructJSON struct{}

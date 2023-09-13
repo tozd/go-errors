@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Unjoin` function to find joined errors.
 - `UnmarshalJSON` to unmarshal JSON errors into placeholder errors which can then
   be formatted in the same way as other errors from this package.
+- `WithWrap` function to set an error as a cause of the base error.
 
 ## Changed
 

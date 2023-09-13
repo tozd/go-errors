@@ -1454,7 +1454,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+43) + "\n" +
 			"(.+\n\t.+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
@@ -1474,7 +1474,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"  .+/format_test.go:" + strconv.Itoa(offset+63) + "\n" +
 			"(.+\n  .+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"  error1\n" +
 			"  stack trace \\(most recent call first\\):\n" +
 			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
@@ -1494,7 +1494,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+83) + "\n" +
 			"(.+\n\t.+:\\d+\n)+" +
-			"the above error joins multiple errors:\n" +
+			"the above error joins errors:\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
@@ -1555,7 +1555,7 @@ func TestJoin(t *testing.T) {
 		errors.Join(errors.New("error1"), errors.New("error2")),
 		"% #-.1v",
 		"^error1\nerror2\n" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"\terror1\n" +
 			"\n" +
 			"\terror2\n$",
@@ -1563,7 +1563,7 @@ func TestJoin(t *testing.T) {
 		errors.Join(errors.New("error1"), errors.New("error2")),
 		"%#-.1v",
 		"^error1\nerror2\n" +
-			"the above error joins multiple errors:\n" +
+			"the above error joins errors:\n" +
 			"\terror1\n" +
 			"\terror2\n$",
 	}, {
@@ -1574,7 +1574,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+163) + "\n" +
 			"(.+\n\t.+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
@@ -1594,7 +1594,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+183) + "\n" +
 			"(.+\n\t.+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"\terror1\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"\t\t.+/format_test.go:" + strconv.Itoa(offset+183) + "\n" +
@@ -1612,7 +1612,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"  .+/format_test.go:" + strconv.Itoa(offset+201) + "\n" +
 			"(.+\n  .+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"  error1\n" +
 			"  gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"  \t.+/format_test.go:" + strconv.Itoa(offset+201) + "\n" +
@@ -1630,7 +1630,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+219) + "\n" +
 			"(.+\n\t.+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
@@ -1651,7 +1651,7 @@ func TestJoin(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoin\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+239) + "\n" +
 			"(.+\n\t.+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoin\n" +
@@ -1677,6 +1677,256 @@ func TestJoin(t *testing.T) {
 			if !strings.Contains(tt.format, ".3v") {
 				err2 := copyThroughJSON(t, errors.Formatter{tt.error})
 				got2 := fmt.Sprintf(tt.format, errors.Formatter{err2})
+				assert.Equal(t, got, got2)
+			}
+		})
+	}
+}
+
+func TestFormatWrapWith(t *testing.T) {
+	t.Parallel()
+
+	offset := stackOffset(t)
+
+	tests := []struct {
+		error
+		format string
+		want   string
+	}{{
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%s",
+		"^error2$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%v",
+		"^error2$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"% +-.1v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+21) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+22) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(io.EOF, errors.Base("error")),
+		"%s",
+		"error",
+	}, {
+		errors.WrapWith(io.EOF, errors.Base("error")),
+		"%v",
+		"error",
+	}, {
+		errors.WrapWith(io.EOF, errors.Base("error")),
+		"% +-.1v",
+		"^error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+46) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"EOF\n$",
+	}, {
+		errors.WrapWith(
+			errors.WrapWith(io.EOF, errors.Base("error1")),
+			errors.Base("error2"),
+		),
+		"% +-.1v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+56) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error1\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+57) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"EOF\n$",
+	}, {
+		errors.WrapWith(
+			errors.New("error with space"),
+			errors.Base("context"),
+		),
+		"%q",
+		`"context"`,
+	}, {
+		errors.WrapWith(
+			pkgerrors.New("error"),
+			errors.Base("error2"),
+		),
+		"%s",
+		"^error2$",
+	}, {
+		errors.WrapWith(
+			pkgerrors.New("error"),
+			errors.Base("error2"),
+		),
+		"%v",
+		"^error2$",
+	}, {
+		errors.WrapWith(
+			pkgerrors.New("error"),
+			errors.Base("error2"),
+		),
+		"% +-.1v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+96) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+97) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(
+			pkgerrors.New("error"),
+			errors.Base("error2"),
+		),
+		"% +-.3v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+113) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+114) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(
+			pkgerrors.New("error"),
+			errors.Base("error2"),
+		),
+		"% +-2.3v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"  .+/format_test.go:" + strconv.Itoa(offset+129) + "\n" +
+			"(.+\n  .+:\\d+\n)+" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+130) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%+-.1v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+145) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"the above error was caused by the following error:\n" +
+			"error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+146) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%+.1v",
+		"^error2\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+162) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+163) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"% +.1v",
+		"^error2\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+176) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\n" +
+			"error\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+177) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"% +-#v",
+		"^error2\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatWrapWith\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+191) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"% -.1v",
+		"^error2\n" +
+			"\nthe above error was caused by the following error:\n\n" +
+			"error\n$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%-.1v",
+		"^error2\n" +
+			"the above error was caused by the following error:\n" +
+			"error\n$",
+	}, {
+		errors.WrapWith(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%.1v",
+		"^error2\n" +
+			"error\n$",
+	}}
+
+	for k, tt := range tests {
+		tt := tt
+
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			if !strings.Contains(tt.format, ".3v") {
+				err2 := copyThroughJSON(t, tt.error)
+				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
 		})

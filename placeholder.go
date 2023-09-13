@@ -90,10 +90,14 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 			if errE != nil {
 				return nil, WithMessagef(errE, "errors: %d", i)
 			}
-			// We make sure cause is not repeated in errs here.
-			// We later on make sure cause is present in errs.
-			if e != nil && !reflect.DeepEqual(e, cause) {
-				errs = append(errs, e)
+			if e != nil {
+				// If e is equal to cause, we want to have e be the same pointer to cause, so that
+				// handling of wrapError-like errors can be simplified in formatting and JSON marshal.
+				if cause != nil && reflect.DeepEqual(e, cause) {
+					errs = append(errs, cause)
+				} else {
+					errs = append(errs, e)
+				}
 			}
 		}
 		if len(errs) == 0 {
@@ -112,8 +116,6 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 	}
 
 	if cause != nil && len(errs) > 0 {
-		// We make sure cause is present in errs.
-		errs = append(errs, cause)
 		return &placeholderJoinedCauseError{
 			msg:     msg,
 			stack:   s,

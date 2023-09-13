@@ -127,6 +127,21 @@ func TestJSON(t *testing.T) {
 	}, {
 		errors.WithDetails(errors.Wrap(errors.WithDetails(errors.New("foobar"), "foo", 1), "error"), "foo", 2),
 		`{"error":"error","foo":2,"stack":[],"cause":{"error":"foobar","foo":1,"stack":[]}}`,
+	}, {
+		errors.WrapWith(errors.Base("foobar"), errors.Base("error")),
+		`{"error":"error","stack":[],"cause":{"error":"foobar"}}`,
+	}, {
+		errors.WrapWith(errors.Base("foobar"), errors.WrapWith(errors.Base("error1"), errors.Base("error2"))),
+		`{"cause":{"error":"foobar"},"error":"error2","errors":[{"cause":{"error":"error1"},"error":"error2","stack":[]}],"stack":[]}`,
+	}, {
+		errors.WrapWith(errors.Base("foobar"), errors.WithDetails(errors.Base("error1"), "x", "foo")),
+		`{"cause":{"error":"foobar"},"error":"error1","errors":[{"error":"error1","stack":[],"x":"foo"}],"stack":[]}`,
+	}, {
+		errors.WrapWith(errors.Base("foobar"), errors.WithDetails(errors.Base("error"))),
+		`{"error":"error","stack":[],"cause":{"error":"foobar"}}`,
+	}, {
+		errors.WrapWith(errors.Base("foobar"), errors.WithStack(errors.Base("error"))),
+		`{"error":"error","stack":[],"cause":{"error":"foobar"}}`,
 	}}
 
 	for k, tt := range tests {

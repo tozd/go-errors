@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 
@@ -288,7 +289,7 @@ func ExampleJoin() {
 	// runtime.goexit
 	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
 	//
-	// the above error joins multiple errors:
+	// the above error joins errors:
 	//
 	// 	error1
 	// 	stack trace (most recent call first):
@@ -517,4 +518,43 @@ func ExampleUnmarshalJSON() {
 	// the above error was caused by the following error:
 	//
 	// not found
+}
+
+func ExampleWrapWith() {
+	cause := io.EOF
+	baseErr := errors.Base("an error")
+
+	err := errors.WrapWith(cause, baseErr)
+	fmt.Println(err)
+	// Output: an error
+}
+
+func ExampleWrapWith_printf() {
+	cause := io.EOF
+	baseErr := errors.Base("an error")
+
+	err := errors.WrapWith(cause, baseErr)
+	fmt.Printf("% +-.1v", err)
+
+	// Example output:
+	// an error
+	// stack trace (most recent call first):
+	// gitlab.com/tozd/go/errors_test.ExampleWrapWith_printf
+	// 	/home/user/errors/example_test.go:536
+	// testing.runExample
+	// 	/usr/local/go/src/testing/run_example.go:63
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
+	// testing.(*M).Run
+	// 	/usr/local/go/src/testing/testing.go:1927
+	// main.main
+	// 	_testmain.go:155
+	// runtime.main
+	// 	/usr/local/go/src/runtime/proc.go:267
+	// runtime.goexit
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
+	//
+	// the above error was caused by the following error:
+	//
+	// EOF
 }

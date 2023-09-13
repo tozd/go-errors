@@ -27,7 +27,7 @@ func TestJoinErrorf(t *testing.T) {
 			"gitlab.com/tozd/go/errors_test.TestJoinErrorf\n" +
 			"\t.+/format_go20_test.go:23\n" +
 			"(.+\n\t.+:\\d+\n)+" +
-			"\nthe above error joins multiple errors:\n\n" +
+			"\nthe above error joins errors:\n\n" +
 			"\terror1\n" +
 			"\tstack trace \\(most recent call first\\):\n" +
 			"\tgitlab.com/tozd/go/errors_test.TestJoinErrorf\n" +

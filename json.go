@@ -22,6 +22,43 @@ func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
 	return b, nil
 }
 
+// isSubsumedError returns true if there is no information missing if we
+// output just err and simply skip/ignore base.
+func isSubsumedError(err, base error) bool {
+	// No error contains no information.
+	if base == nil {
+		return true
+	}
+
+	// Is error message the same?
+	if err.Error() != base.Error() {
+		return false
+	}
+
+	// Base does not have a stack trace or it is the same as err's.
+	st := getExistingStackTrace(base)
+	if len(st) > 0 {
+		if !slicesEqual(getExistingStackTrace(err), st) {
+			return false
+		}
+	} else {
+		placeholderBase, ok := base.(placeholderStackTracer) //nolint:errorlint
+		if ok {
+			placeholderSt := placeholderBase.StackTrace()
+			if len(placeholderSt) > 0 {
+				placeholderErr, ok := err.(placeholderStackTracer) //nolint:errorlint
+				if !ok || !reflect.DeepEqual(placeholderErr.StackTrace(), placeholderSt) {
+					return false
+				}
+			}
+		}
+	}
+
+	// There are no additional details, cause or joined errors.
+	d, c, j := allDetailsUntilCauseOrJoined(base)
+	return len(d) == 0 && c == nil && len(j) == 0
+}
+
 // marshalJSONError marshals errors using interfaces.
 func marshalJSONError(err error) ([]byte, E) {
 	details, cause, errs := allDetailsUntilCauseOrJoined(err)
@@ -54,8 +91,8 @@ func marshalJSONError(err error) ([]byte, E) {
 
 	for _, er := range errs {
 		// er should never be nil, but we still check.
-		// We also make sure we do not repeat cause here.
-		if er != nil && er != cause { //nolint:errorlint,goerr113
+		// We also make sure we do not repeat cause here or repeat an error without any additional information.
+		if er != nil && er != cause && !isSubsumedError(err, er) { //nolint:errorlint,goerr113
 			jsonEr, e := marshalJSONAnyError(er)
 			if e != nil {
 				return nil, e

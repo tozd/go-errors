@@ -19,7 +19,7 @@ const (
 
 const (
 	stackTraceHelp     = "stack trace (most recent call first):\n"
-	multipleErrorsHelp = "the above error joins multiple errors:\n"
+	multipleErrorsHelp = "the above error joins errors:\n"
 	causeHelp          = "the above error was caused by the following error:\n"
 )
 
@@ -101,7 +101,7 @@ func isForeignFormatter(err error) bool {
 	// Our errors implement fmt.Formatter but we want to return false for them because
 	// they just call into our Formatter which would lead to infinite recursion.
 	switch err.(type) { //nolint:errorlint
-	case *fundamentalError, *msgError, *msgJoinedError, *noMsgError, *causeError,
+	case *fundamentalError, *msgError, *msgJoinedError, *noMsgError, *causeError, *wrapError,
 		*placeholderError, *placeholderCauseError, *placeholderJoinedError, *placeholderJoinedCauseError:
 		return false
 	}
@@ -162,15 +162,15 @@ func formatError(s fmt.State, indent int, err error) {
 	if precision == 1 || precision == 3 { //nolint:nestif
 		// It is possible that both cause and errs is set. In that case we first
 		// recurse into errs and then into the cause, so that it is clear which
-		// "error above" joins the errors (not the cause). Because cause is not
-		// indented it is hopefully clearer that its "error above" does not mean
+		// "above error" joins the errors (not the cause). Because cause is not
+		// indented it is hopefully clearer that its "above error" does not mean
 		// the last error among joined but the one higher up before indentation.
 		if len(errs) > 0 {
 			first := true
 			for _, er := range errs {
 				// er should never be nil, but we still check.
-				// We also make sure we do not repeat cause here.
-				if er != nil && er != cause { //nolint:errorlint,goerr113
+				// We also make sure we do not repeat cause here or repeat an error without any additional information.
+				if er != nil && er != cause && !isSubsumedError(err, er) { //nolint:errorlint,goerr113
 					if first {
 						first = false
 						if s.Flag('-') {

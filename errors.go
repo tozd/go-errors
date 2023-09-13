@@ -538,7 +538,7 @@ func (e *noMsgError) Details() map[string]interface{} {
 // If err is nil, Wrap returns nil.
 //
 // Use Wrap when you want to make a new error,
-// preserving the cause of the new error.
+// while preserving the cause of the new error.
 func Wrap(err error, message string) E {
 	if err == nil {
 		return nil
@@ -805,7 +805,7 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 			errs = e.Unwrap()
 		}
 		if cause != nil || len(errs) > 0 {
-			// It is possible that both cause and errs is set.
+			// It is possible that both cause and errs is set. One example is wrapError.
 			return
 		}
 		err = Unwrap(err)
@@ -831,7 +831,7 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 			errs = e.Unwrap()
 		}
 		if cause != nil || len(errs) > 0 {
-			// It is possible that both cause and errs is set.
+			// It is possible that both cause and errs is set. One example is wrapError.
 			return
 		}
 		err = Unwrap(err)
@@ -958,6 +958,86 @@ func Join(errs ...error) E {
 		errs:    nonNilErrs,
 		msg:     joinMessages(nonNilErrs),
 		stack:   callers(),
+		details: nil,
+	}
+}
+
+// wrapError joins two errors (err and with), making err the cause of with.
+type wrapError struct {
+	err     error
+	with    error
+	stack   []uintptr
+	details map[string]interface{}
+}
+
+func (e *wrapError) Error() string {
+	return e.with.Error()
+}
+
+func (e *wrapError) Format(s fmt.State, verb rune) {
+	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+}
+
+func (e wrapError) MarshalJSON() ([]byte, error) {
+	return marshalJSONError(&e)
+}
+
+func (e *wrapError) Unwrap() []error {
+	return []error{e.with, e.err}
+}
+
+func (e *wrapError) Cause() error {
+	return e.err
+}
+
+func (e *wrapError) StackTrace() []uintptr {
+	return e.stack
+}
+
+func (e *wrapError) Details() map[string]interface{} {
+	if e.details == nil {
+		e.details = make(map[string]interface{})
+	}
+	return e.details
+}
+
+// WrapWith makes the "err" error the cause of the "with" error.
+// This is similar to Wrap but instead of using just an error
+// message, you can provide a base error instead.
+// If "err" is nil, WrapWith returns nil.
+// If "with" is nil, WrapWith panics.
+//
+// If the "with" error does already have a stack trace,
+// a stack trace is recorded at the point WrapWith was called.
+//
+// The new error wraps two errors, the "with" error and the "err" error,
+// making it possible to use both Is and As on the new error to
+// traverse both "with" and "err" errors at the same time.
+//
+// Note that the new error introduces a new context for details so
+// any details from the "err" and "with" errors are not available
+// through AllDetails on the new error.
+//
+// Use WrapWith when you want to make a new error using a base error,
+// while preserving the cause of the new error.
+func WrapWith(err, with error) E {
+	if with == nil {
+		panic(New(`"with" argument cannot be nil`))
+	}
+
+	if err == nil {
+		return nil
+	}
+
+	st := getExistingStackTrace(with)
+	if len(st) == 0 {
+		st = callers()
+	}
+
+	return &wrapError{
+		err:     err,
+		with:    with,
+		stack:   st,
 		details: nil,
 	}
 }
