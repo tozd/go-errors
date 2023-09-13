@@ -474,6 +474,13 @@ func WithStack(err error) E {
 
 	e, ok := err.(E) //nolint:errorlint
 	if ok {
+		if len(e.StackTrace()) == 0 {
+			return &noMsgError{
+				err:     err,
+				stack:   callers(),
+				details: nil,
+			}
+		}
 		return e
 	}
 
@@ -925,6 +932,13 @@ func Join(errs ...error) E {
 
 		e, ok := err.(E) //nolint:errorlint
 		if ok {
+			if len(e.StackTrace()) == 0 {
+				return &noMsgError{
+					err:     err,
+					stack:   callers(),
+					details: nil,
+				}
+			}
 			return e
 		}
 
