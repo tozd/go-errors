@@ -5,10 +5,8 @@ package errors
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"unicode/utf8"
-	"unsafe"
 )
 
 const (
@@ -66,10 +64,4 @@ func formatString(state fmt.State, verb rune) string {
 	}
 	b = appendRune(b, verb)
 	return string(b)
-}
-
-func slicesEqual(a []uintptr, b []uintptr) bool {
-	ah := (*reflect.SliceHeader)(unsafe.Pointer(&a))
-	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	return ah.Len == bh.Len && ah.Data == bh.Data
 }
