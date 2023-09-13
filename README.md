@@ -101,13 +101,6 @@ Main additions are:
 - Support for base errors (e.g., `errors.Base` and `errors.WrapWith`)
   instead of just operating on error messages.
 
-## It looks like `Wrap` should be named `Cause` or `WithCause`. Why it is not?
-
-For legacy reasons because this package builds on shoulders of `github.com/pkg/errors`.
-Every modification to errors made through this package is done through wrapping
-so that original error is always available. `Wrap` wraps the error to records the cause.
-`Cause` exist as a helper to return the recorded cause.
-
 ## How should this package be used?
 
 Patterns for errors in Go have evolved through time, with Go 1.13 introducing error wrapping
@@ -210,6 +203,13 @@ stack trace and details.
 
 Remember, error messages, stack traces, and details are for developers not end users.
 Be mindful if and how you expose them to end users.
+
+## It looks like `Wrap` should be named `Cause` or `WithCause`. Why it is not?
+
+For legacy reasons because this package builds on shoulders of `github.com/pkg/errors`.
+Every modification to errors made through this package is done through wrapping
+so that original error is always available. `Wrap` wraps the error to records the cause.
+`Cause` exist as a helper to return the recorded cause.
 
 ## Related projects
 
