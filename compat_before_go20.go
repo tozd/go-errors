@@ -103,7 +103,7 @@ func stderrorsIs(err, target error) bool {
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
 // Copied from errors/wrap.go available from Go 1.20 on with support for joined errors.
-func stderrorsAs(err error, target any) bool {
+func stderrorsAs(err error, target interface{}) bool {
 	if err == nil {
 		return false
 	}
@@ -124,7 +124,7 @@ func stderrorsAs(err error, target any) bool {
 			val.Elem().Set(reflect.ValueOf(err))
 			return true
 		}
-		if x, ok := err.(interface{ As(any) bool }); ok && x.As(target) {
+		if x, ok := err.(interface{ As(interface{}) bool }); ok && x.As(target) {
 			return true
 		}
 		switch x := err.(type) {
