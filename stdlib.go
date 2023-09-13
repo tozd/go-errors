@@ -25,7 +25,7 @@ import (
 //
 // This function is a proxy for standard errors.Is.
 func Is(err, target error) bool {
-	return stderrors.Is(err, target)
+	return stderrorsIs(err, target)
 }
 
 // As finds the first error in err's tree that matches target, and if one is found, sets
@@ -48,7 +48,7 @@ func Is(err, target error) bool {
 //
 // This function is a proxy for standard errors.As.
 func As(err error, target interface{}) bool {
-	return stderrors.As(err, target)
+	return stderrorsAs(err, target)
 }
 
 // Unwrap returns the result of calling the Unwrap method on err, if err's
