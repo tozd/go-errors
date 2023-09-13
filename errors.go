@@ -463,6 +463,7 @@ func (e *msgJoinedError) Details() map[string]interface{} {
 // Use WithStack instead of Wrap when you just want to convert an existing error
 // into one with a stack trace. Use it as close to where the error originated
 // as you can get.
+//
 // You can also use WithStack when you have an err which implements stackTracer
 // interface but does not implement detailer interface as well, but you cannot
 // provide initial details like you can with WithDetails.
