@@ -847,8 +847,8 @@ func initializeDetails(err error) {
 	}
 }
 
-// WithDetails wraps err implementing the detailer interface to access
-// a map with optional additional details about the error.
+// WithDetails wraps err into an error which implements the detailer interface
+// to access a map with optional additional details about the error.
 //
 // If err does not have a stack trace, then this call is equivalent
 // to calling WithStack, annotating err with a stack trace as well.
@@ -892,7 +892,7 @@ func WithDetails(err error, kv ...interface{}) E {
 	// nil maps first.
 	initializeDetails(err)
 
-	// Even if err is of type E, we still wrap it into another withStack error to
+	// Even if err is of type E, we still wrap it into another noMsgError error to
 	// have another layer of details. This is where it is different from WithStack.
 	// We do not have to check for type E explicitly because E implements stackTracer
 	// so getExistingStackTrace returns its stack trace.
