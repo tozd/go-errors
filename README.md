@@ -5,7 +5,7 @@
 [![pipeline status](https://gitlab.com/tozd/go/errors/badges/main/pipeline.svg?ignore_skipped=true)](https://gitlab.com/tozd/go/errors/-/pipelines)
 [![coverage report](https://gitlab.com/tozd/go/errors/badges/main/coverage.svg)](https://gitlab.com/tozd/go/errors/-/graphs/main/charts)
 
-A Go package providing errors with a stack trace and structured details.
+A Go package providing errors with a stack trace and optional structured details.
 
 Features:
 
@@ -16,7 +16,7 @@ Features:
 - Provides [`errors.Errorf`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Errorf) which supports `%w` format verb
   to both wrap and record a stack trace at the same time (if not already recorded).
 - Provides [`errors.E`](https://pkg.go.dev/gitlab.com/tozd/go/errors#E) type to be used instead of standard `error`
-  to annotate which functions return errors with a stack trace.
+  to annotate which functions return errors with a stack trace and details.
 - Clearly defines what are differences and expected use cases for:
   - [`errors.Errorf`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Errorf): creating a new error and recording a stack
     trace, optionally wrapping an existing error
@@ -24,12 +24,14 @@ Features:
     adding a stack trace to an error without one
   - [`errors.WithMessage`](https://pkg.go.dev/gitlab.com/tozd/go/errors#WithMessage):
     adding a prefix to the error message
-  - [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap): creating a new error but recording its cause
+  - [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap) and
+    [`errors.WrapWith`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap): creating a new error but recording its cause
 - Provides [`errors.Base`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Base) function to create errors without
   a stack trace to be used as base errors for [`errors.Is`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Is)
   and [`errors.As`](https://pkg.go.dev/gitlab.com/tozd/go/errors#As).
-- Differentiates between wrapping and recording a cause: only [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap)
-  records a cause, while other functions are error transformers, wrapping the original.
+- Differentiates between wrapping and recording a cause: [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap)
+  and [`errors.WrapWith`](https://pkg.go.dev/gitlab.com/tozd/go/errors#WrapWith)
+  record a cause, while other functions are error transformers, wrapping the original.
 - Makes sure a stack trace is not recorded multiple times unnecessarily.
 - Provides optional details map on all errors returned by this package. Helper
   [`errors.WithDetails`](https://pkg.go.dev/gitlab.com/tozd/go/errors#WithDetails) allows both recording a stack trace
@@ -96,12 +98,118 @@ Main additions are:
 - `Errorf` supports `%w`.
 - This package supports annotating errors with additional key-value details.
 - This package provides more configurable formatting and JSON marshaling of stack traces and errors.
+- Support for base errors (e.g., `errors.Base` and `errors.WrapWith`)
+  instead of just operating on error messages.
 
-## It looks like `Wrap` should be named `Cause`. Why it is not?
+## It looks like `Wrap` should be named `Cause` or `WithCause`. Why it is not?
 
 For legacy reasons because this package builds on shoulders of `github.com/pkg/errors`.
 Every modification to errors made through this package is done through wrapping
 so that original error is always available. `Wrap` wraps the error to records the cause.
+`Cause` exist as a helper to return the recorded cause.
+
+## How should this package be used?
+
+Patterns for errors in Go have evolved through time, with Go 1.13 introducing error wrapping
+(and Go 1.20 wrapping of multiple errors) enabling standard annotation of errors with
+additional information. For example, standard `fmt.Errorf` allows annotating the error
+message of a base error with additional information, e.g.:
+
+```go
+import (
+  "errors"
+  "fmt"
+)
+
+var MyErr = errors.New("my error")
+
+// later on
+
+err := fmt.Errorf(`user "%s" made an error: %w`, username, MyErr)
+```
+
+This is great because one can later on extract the cause of the error using `errors.Is` without
+having to parse the error message itself:
+
+```go
+if errors.Is(err, MyErr) {
+  ...
+}
+```
+
+But if `MyErr` can happen at multiple places it is hard to debug without additional
+information where this error happened. One can add it to the error message, but this is tedious:
+
+```go
+err := fmt.Errorf(`user "%s" made an error during sign-in: %w`, username, MyErr)
+
+// somewhere else
+
+err := fmt.Errorf(`user "%s" made an error during sign-out: %w`, username, MyErr)
+```
+
+Furthermore, if you need to extract the username you again have to parse the error message.
+
+Instead, this package provides support for recording a stack trace optional
+structured details:
+
+```go
+import (
+  "gitlab.com/tozd/go/errors"
+)
+
+var MyErr = errors.Base("my error")
+var UserErr = errors.Basef("user made an error: %w", MyErr)
+
+// later on
+
+err := errors.WithDetails(UserErr, "username", username)
+```
+
+Here, `err` contains a descriptive error message (without potentially sensitive
+information), a stack trace, and easy to extract username.
+You can display all that to the developer using `fmt.Printf`:
+
+```go
+fmt.Printf("error: %#+v", err)
+```
+
+Extracting username is easy:
+
+```go
+errors.AllDetails(err)["username"]
+```
+
+And if you need to know exactly which error happened (e.g., to show a translated
+error message to the end user), you can use `errors.Is` or similar logic (to map
+between errors and their user-friendly translated error messages).
+
+The package provides `errors.Errorf`, `errors.Wrap` and other message-based
+error constructors, but they are provided primarily for compatibility
+(and to support patterns different from the suggested one below).
+
+### Suggestion
+
+- Use `errors.Base`, `errors.Basef`, `errors.BaseWrap` and `errors.BaseWrapf`
+  to create a tree of constant base errors.
+- Do not use `errors.Errorf` but use `errors.WithDetails` to record both a stack
+  trace and any additional structured details at point where the error occurs.
+- You can use `errors.WithStack` or `errors.WithDetails` to do the same with
+  errors coming from outside of your codebase, as soon as possible.
+- If you want to map one error to another while recording the cause,
+  use `errors.WrapWith`.
+- If errors coming from outside of your codebase do not provide adequate base errors,
+  use `errors.WrapWith` as well to provide them yourself.
+- If during handling of an error another error occurs (e.g., in `defer` during cleanup)
+  use `errors.Join` or `errors.Errorf` (but only to control how messages are joined)
+  to join them all.
+
+Your functions should return only errors for which you provide base errors as well.
+All additional (non-constant) information about the particular error goes into its
+stack trace and details.
+
+Remember, error messages, stack traces, and details are for developers not end users.
+Be mindful if and how you expose them to end users.
 
 ## Related projects
 
