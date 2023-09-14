@@ -101,6 +101,46 @@ Main additions are:
 - Support for base errors (e.g., `errors.Base` and `errors.WrapWith`)
   instead of just operating on error messages.
 
+## How to migrate from `github.com/pkg/errors`?
+
+1. Replace your `github.com/pkg/errors` imports with `gitlab.com/tozd/go/errors` imports.
+2. Run `go get gitlab.com/tozd/go/errors`.
+
+In most cases, this should be it. Consider:
+
+- Migrating to using `errors.Errorf` (which supports `%w`)
+  as it subsumes most of `github.com/pkg/errors`'s error constructors.
+- Using structured details with `errors.WithDetails`.
+- [Using base errors](#suggestion) instead of
+  message-based error constructors, especially if you want callers of your functions to
+  handle different errors differently.
+
+## How to migrate from standard `errors` and `fmt.Errorf`?
+
+1. Replace your `errors` imports with `gitlab.com/tozd/go/errors` imports.
+2. Replace your `fmt.Errorf` calls with `errors.Errorf` calls.
+3. If you have top-level `errors.New` or `fmt.Errorf`/`errors.Errorf` calls to create
+   variables with base errors, use `errors.Base` and `errors.Basef` instead.
+   Otherwise your
+   [stack traces will not be recorded correctly](#i-use-base-errors-but-stack-traces-do-not-look-right).
+
+This is it. Now all your errors automatically record stack traces. You can now
+print those stack traces when [formatting errors](https://pkg.go.dev/gitlab.com/tozd/go/errors#Formatter)
+using `fmt.Printf("%+v", err)` or marshal them to JSON.
+
+Consider:
+
+- Using structured details with `errors.WithDetails`.
+- [Using base errors](#suggestion) instead of
+  message-based error constructors, especially if you want callers of your functions to
+  handle different errors differently.
+
+This package provides everything `errors` package does (but with stack traces and optional details) in
+a compatible way, often simply proxying calls to the standard `errors` package, but there is a difference
+how `errors.Join` operates: if only one non-nil error is provided, `errors.Join`
+returns it as-is without wrapping it. Furthermore, `errors.Join` records a stack trace at the
+point it was called.
+
 ## How should this package be used?
 
 Patterns for errors in Go have evolved through time, with Go 1.13 introducing error wrapping
@@ -198,6 +238,7 @@ error constructors, but they are provided primarily for compatibility
   to join them all.
 
 Your functions should return only errors for which you provide base errors as well.
+Those base errors become part of your API.
 All additional (non-constant) information about the particular error goes into its
 stack trace and details.
 
