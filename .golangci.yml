@@ -168,6 +168,10 @@ issues:
     - path: stdlib\.go
       linters:
         - goerr113
+    - path: example_join_test\.go
+      linters:
+        - godot
+        - nonamedreturns
     - path: example_stack_test\.go
       linters:
         - testableexamples
