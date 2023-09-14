@@ -26,6 +26,9 @@ Features:
     adding a prefix to the error message
   - [`errors.Wrap`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap) and
     [`errors.WrapWith`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Wrap): creating a new error but recording its cause
+  - [`errors.Join`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Join): joining multiple
+    errors which happened during execution (e.g., additional errors which happened during
+    cleanup)
 - Provides [`errors.Base`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Base) function to create errors without
   a stack trace to be used as base errors for [`errors.Is`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Is)
   and [`errors.As`](https://pkg.go.dev/gitlab.com/tozd/go/errors#As).
