@@ -110,6 +110,8 @@ In most cases, this should be it. Consider:
 
 - Migrating to using `errors.Errorf` (which supports `%w`)
   as it subsumes most of `github.com/pkg/errors`'s error constructors.
+- Using `errors.E` return type instead of plain `error`. This makes Go type system
+  help you to not return an error without a stack trace.
 - Using structured details with `errors.WithDetails`.
 - [Using base errors](#suggestion) instead of
   message-based error constructors, especially if you want callers of your functions to
@@ -131,6 +133,8 @@ using `fmt.Printf("%+v", err)` or marshal them to JSON.
 Consider:
 
 - Using structured details with `errors.WithDetails`.
+- Using `errors.E` return type instead of plain `error`. This makes Go type system
+  help you to not return an error without a stack trace.
 - [Using base errors](#suggestion) instead of
   message-based error constructors, especially if you want callers of your functions to
   handle different errors differently.
@@ -236,6 +240,8 @@ error constructors, but they are provided primarily for compatibility
 - If during handling of an error another error occurs (e.g., in `defer` during cleanup)
   use `errors.Join` or `errors.Errorf` (but only to control how messages are joined)
   to join them all.
+- Use `errors.E` return type instead of plain `error`. This makes Go type system
+  help you to not return an error without a stack trace.
 
 Your functions should return only errors for which you provide base errors as well.
 Those base errors become part of your API.
