@@ -254,6 +254,31 @@ stack trace and details.
 Remember, error messages, stack traces, and details are for developers not end users.
 Be mindful if and how you expose them to end users.
 
+## I use base errors, but stack traces do not look right?
+
+Let's assume you use `errors.New` to create a base error:
+
+```go
+var myBaseErr = errors.New("error")
+```
+
+Later on, you want to annotate it with a stack trace and return it from the function
+where the error occurred:
+
+```go
+return errors.WithStack(myBaseErr)
+```
+
+Sadly, this does not work as expected. If you use `errors.New`
+(or `errors.Errorf`) to create a base error, a stack trace is recorded at the
+point it was called. `errors.WithStack` then does nothing because it detects that
+a stack trace already exists.
+So the stack trace you get is from the point you created the base error.
+
+You should create base errors using `errors.Base`, `errors.Basef`, `errors.BaseWrap` and
+`errors.BaseWrapf`. They create errors without stack traces. And `errors.WithStack`
+adds a stack trace at the point it was called.
+
 ## It looks like `Wrap` should be named `Cause` or `WithCause`. Why it is not?
 
 For legacy reasons because this package builds on shoulders of `github.com/pkg/errors`.
