@@ -178,15 +178,12 @@
 // You can join multiple errors into one error by calling errors.Join.
 // Join also records the stack trace at the point it was called.
 //
-// # Formatting errors
+// # Formatting and JSON marshaling errors
 //
 // All errors with a stack trace returned from this package implement fmt.Formatter
-// interface and can be formatted by the fmt package. The following verbs are supported:
-//
-//	%s    the error message
-//	%v    same as %s
-//	%+v   together with the error message include also the stack trace,
-//	      ends with a newline
+// interface and can be formatted by the fmt package. They also support marshaling
+// to JSON. Same formatting and JSON marshaling for errors coming outside of
+// this package can be done by wrapping them into errors.Formatter.
 package errors
 
 import (
