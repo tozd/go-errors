@@ -266,7 +266,10 @@ Later on, you want to annotate it with a stack trace and return it from the func
 where the error occurred:
 
 ```go
-return errors.WithStack(myBaseErr)
+func run() error.E {
+  // ... do something ...
+  return errors.WithStack(myBaseErr)
+}
 ```
 
 Sadly, this does not work as expected. If you use `errors.New`
