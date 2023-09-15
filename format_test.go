@@ -1394,7 +1394,7 @@ func TestFormatter(t *testing.T) {
 
 			if !strings.Contains(got, "more data") {
 				err2 := copyThroughJSON(t, errors.Formatter{tt.error})
-				got2 := fmt.Sprintf(tt.format, errors.Formatter{err2})
+				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
 		})
@@ -1676,7 +1676,7 @@ func TestJoin(t *testing.T) {
 
 			if !strings.Contains(tt.format, ".3v") {
 				err2 := copyThroughJSON(t, errors.Formatter{tt.error})
-				got2 := fmt.Sprintf(tt.format, errors.Formatter{err2})
+				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
 		})
@@ -1929,6 +1929,83 @@ func TestFormatWrapWith(t *testing.T) {
 				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
+		})
+	}
+}
+
+type testStructJoined struct {
+	msg     string
+	cause   error
+	parents []error
+}
+
+func (e *testStructJoined) Error() string {
+	return e.msg
+}
+
+func (e *testStructJoined) Cause() error {
+	return e.cause
+}
+
+func (e *testStructJoined) Unwrap() []error {
+	return e.parents
+}
+
+func TestFormatCustomError(t *testing.T) {
+	t.Parallel()
+
+	testErr := &testStructJoined{msg: "test2"} //nolint:exhaustruct
+
+	tests := []struct {
+		error
+		format string
+		want   string
+	}{{
+		&testStructJoined{}, //nolint:exhaustruct
+		"%s",
+		"^$",
+	}, {
+		&testStructJoined{msg: "test"}, //nolint:exhaustruct
+		"%s",
+		"^test$",
+	}, {
+		&testStructJoined{msg: "test"}, //nolint:exhaustruct
+		"%-.1v",
+		"^test\n$",
+	}, {
+		&testStructJoined{msg: "test1", cause: testErr}, //nolint:exhaustruct
+		"%-.1v",
+		"^test1\nthe above error was caused by the following error:\ntest2\n$",
+	}, {
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr}},
+		"%-.1v",
+		"^test1\nthe above error was caused by the following error:\ntest2\n$",
+	}, {
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}}}, //nolint:exhaustruct
+		"%-.1v",
+		"^test1\nthe above error joins errors:\n\ttest3\nthe above error was caused by the following error:\ntest2\n$",
+	}, {
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}}, //nolint:exhaustruct
+		"%-.1v",
+		"^test1\nthe above error joins errors:\n\ttest3\n\ttest4\nthe above error was caused by the following error:\ntest2\n$",
+	}, {
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{&testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}}, //nolint:exhaustruct
+		"%-.1v",
+		"^test1\nthe above error joins errors:\n\ttest3\n\ttest4\nthe above error was caused by the following error:\ntest2\n$",
+	}}
+
+	for k, tt := range tests {
+		tt := tt
+
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
+			got := fmt.Sprintf(tt.format, errors.Formatter{tt.error})
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, errors.Formatter{tt.error})
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
 		})
 	}
 }
