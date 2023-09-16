@@ -161,31 +161,31 @@ import (
   "fmt"
 )
 
-var MyErr = errors.New("my error")
+var ErrMy = errors.New("my error")
 
 // later on
 
-err := fmt.Errorf(`user "%s" made an error: %w`, username, MyErr)
+err := fmt.Errorf(`user "%s" made an error: %w`, username, ErrMy)
 ```
 
 This is great because one can later on extract the cause of the error using `errors.Is` without
 having to parse the error message itself:
 
 ```go
-if errors.Is(err, MyErr) {
+if errors.Is(err, ErrMy) {
   ...
 }
 ```
 
-But if `MyErr` can happen at multiple places it is hard to debug without additional
+But if `ErrMy` can happen at multiple places it is hard to debug without additional
 information where this error happened. One can add it to the error message, but this is tedious:
 
 ```go
-err := fmt.Errorf(`user "%s" made an error during sign-in: %w`, username, MyErr)
+err := fmt.Errorf(`user "%s" made an error during sign-in: %w`, username, ErrMy)
 
 // somewhere else
 
-err := fmt.Errorf(`user "%s" made an error during sign-out: %w`, username, MyErr)
+err := fmt.Errorf(`user "%s" made an error during sign-out: %w`, username, ErrMy)
 ```
 
 Furthermore, if you need to extract the username you again have to parse the error message.
@@ -198,12 +198,12 @@ import (
   "gitlab.com/tozd/go/errors"
 )
 
-var MyErr = errors.Base("my error")
-var UserErr = errors.Basef("user made an error: %w", MyErr)
+var ErrMy = errors.Base("my error")
+var ErrUser = errors.Basef("user made an error: %w", ErrMy)
 
 // later on
 
-err := errors.WithDetails(UserErr, "username", username)
+err := errors.WithDetails(ErrUser, "username", username)
 ```
 
 Here, `err` contains a descriptive error message (without potentially sensitive
@@ -259,7 +259,7 @@ Be mindful if and how you expose them to end users.
 Let's assume you use `errors.New` to create a base error:
 
 ```go
-var myBaseErr = errors.New("error")
+var ErrMyBase = errors.New("error")
 ```
 
 Later on, you want to annotate it with a stack trace and return it from the function
@@ -268,7 +268,7 @@ where the error occurred:
 ```go
 func run() error.E {
   // ... do something ...
-  return errors.WithStack(myBaseErr)
+  return errors.WithStack(ErrMyBase)
 }
 ```
 
