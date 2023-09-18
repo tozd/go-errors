@@ -237,9 +237,11 @@ error constructors, but they are provided primarily for compatibility
 - You can use `errors.WithStack` or `errors.WithDetails` to do the same with
   errors coming from outside of your codebase, as soon as possible.
 - If you want to map one error to another while recording the cause,
-  use `errors.WrapWith`.
+  use `errors.WrapWith`. If you want to reuse the error message, use
+  `errors.Errorf` to combine the base error with the error
+  (e.g., `errors.Errorf("%w: %w", ErrBase, err)`).
 - If errors coming from outside of your codebase do not provide adequate base errors,
-  use `errors.WrapWith` as well to provide them yourself.
+  use `errors.WrapWith` or `errors.Errorf` as well to provide them yourself.
 - If during handling of an error another error occurs (e.g., in `defer` during cleanup)
   use `errors.Join` or `errors.Errorf` (but only to control how messages are joined)
   to join them all.
