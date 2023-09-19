@@ -158,10 +158,10 @@ func (s StackFormatter) MarshalJSON() ([]byte, error) {
 	return output, nil
 }
 
-func callers() []uintptr {
+func callers(extraSkip int) []uintptr {
 	const depth = 32
 	var pcs [depth]uintptr
-	n := runtime.Callers(3, pcs[:]) //nolint:gomnd
+	n := runtime.Callers(3+extraSkip, pcs[:]) //nolint:gomnd
 	return pcs[0:n]
 }
 

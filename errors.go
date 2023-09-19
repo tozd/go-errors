@@ -246,15 +246,17 @@ func getExistingStackTrace(err error) []uintptr {
 	return nil
 }
 
-// prefixMessage eagerly builds a new message with the provided prefix.
+// prefixMessage eagerly builds a new message with the provided prefixes.
 // This is a trade-off which consumes more memory but allows one to cheaply
 // call Error multiple times.
-func prefixMessage(msg, prefix string) string {
+func prefixMessage(msg string, prefixes ...string) string {
 	message := strings.Builder{}
-	if len(prefix) > 0 {
-		message.WriteString(prefix)
-		if prefix[len(prefix)-1] != '\n' && len(msg) > 0 {
-			message.WriteString(": ")
+	for i, prefix := range prefixes {
+		if len(prefix) > 0 {
+			message.WriteString(prefix)
+			if prefix[len(prefix)-1] != '\n' && (i < len(prefixes)-1 || len(msg) > 0) {
+				message.WriteString(": ")
+			}
 		}
 	}
 	if len(msg) > 0 {
@@ -300,7 +302,7 @@ type E interface {
 func New(message string) E {
 	return &fundamentalError{
 		msg:     message,
-		stack:   callers(),
+		stack:   callers(0),
 		details: nil,
 	}
 }
@@ -326,14 +328,14 @@ func Errorf(format string, args ...interface{}) E {
 		return &msgJoinedError{
 			errs:    errs,
 			msg:     err.Error(),
-			stack:   callers(),
+			stack:   callers(0),
 			details: nil,
 		}
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
 		st := getExistingStackTrace(unwrap)
 		if len(st) == 0 {
-			st = callers()
+			st = callers(0)
 		}
 
 		return &msgError{
@@ -346,7 +348,7 @@ func Errorf(format string, args ...interface{}) E {
 
 	return &fundamentalError{
 		msg:     err.Error(),
-		stack:   callers(),
+		stack:   callers(0),
 		details: nil,
 	}
 }
@@ -453,6 +455,31 @@ func (e *msgJoinedError) Details() map[string]interface{} {
 	return e.details
 }
 
+func withStack(err error) E {
+	e, ok := err.(E) //nolint:errorlint
+	if ok {
+		if len(e.StackTrace()) == 0 {
+			return &noMsgError{
+				err:     err,
+				stack:   callers(1),
+				details: nil,
+			}
+		}
+		return e
+	}
+
+	st := getExistingStackTrace(err)
+	if len(st) == 0 {
+		st = callers(1)
+	}
+
+	return &noMsgError{
+		err:     err,
+		stack:   st,
+		details: nil,
+	}
+}
+
 // WithStack annotates err with a stack trace at the point WithStack was called,
 // if err does not already have a stack trace.
 // If err is nil, WithStack returns nil.
@@ -469,28 +496,7 @@ func WithStack(err error) E {
 		return nil
 	}
 
-	e, ok := err.(E) //nolint:errorlint
-	if ok {
-		if len(e.StackTrace()) == 0 {
-			return &noMsgError{
-				err:     err,
-				stack:   callers(),
-				details: nil,
-			}
-		}
-		return e
-	}
-
-	st := getExistingStackTrace(err)
-	if len(st) == 0 {
-		st = callers()
-	}
-
-	return &noMsgError{
-		err:     err,
-		stack:   st,
-		details: nil,
-	}
+	return withStack(err)
 }
 
 // noMsgError wraps another error and has its
@@ -536,6 +542,8 @@ func (e *noMsgError) Details() map[string]interface{} {
 //
 // Use Wrap when you want to make a new error,
 // while preserving the cause of the new error.
+// If you want to reuse the err error message use WithMessage
+// or Errorf instead.
 func Wrap(err error, message string) E {
 	if err == nil {
 		return nil
@@ -544,7 +552,7 @@ func Wrap(err error, message string) E {
 	return &causeError{
 		err:     err,
 		msg:     message,
-		stack:   callers(),
+		stack:   callers(0),
 		details: nil,
 	}
 }
@@ -560,6 +568,8 @@ func Wrap(err error, message string) E {
 //
 // Use Wrapf when you want to make a new error,
 // preserving the cause of the new error.
+// If you want to reuse the err error message use WithMessage
+// or Errorf instead.
 func Wrapf(err error, format string, args ...interface{}) E {
 	if err == nil {
 		return nil
@@ -568,7 +578,7 @@ func Wrapf(err error, format string, args ...interface{}) E {
 	return &causeError{
 		err:     err,
 		msg:     fmt.Sprintf(format, args...),
-		stack:   callers(),
+		stack:   callers(0),
 		details: nil,
 	}
 }
@@ -613,28 +623,32 @@ func (e *causeError) Details() map[string]interface{} {
 	return e.details
 }
 
-// WithMessage annotates err with a prefix message.
+func withMessage(err error, prefix ...string) E {
+	st := getExistingStackTrace(err)
+	if len(st) == 0 {
+		st = callers(1)
+	}
+
+	return &msgError{
+		err:     err,
+		msg:     prefixMessage(err.Error(), prefix...),
+		stack:   st,
+		details: nil,
+	}
+}
+
+// WithMessage annotates err with a prefix message or messages.
 // If err does not have a stack trace, stack strace is recorded as well.
 //
 // It does not support controlling the delimiter. Use Errorf if you need that.
 //
 // If err is nil, WithMessage returns nil.
-func WithMessage(err error, prefix string) E {
+func WithMessage(err error, prefix ...string) E {
 	if err == nil {
 		return nil
 	}
 
-	st := getExistingStackTrace(err)
-	if len(st) == 0 {
-		st = callers()
-	}
-
-	return &msgError{
-		err:     err,
-		msg:     prefixMessage(err.Error(), prefix),
-		stack:   st,
-		details: nil,
-	}
+	return withMessage(err, prefix...)
 }
 
 // WithMessagef annotates err with a prefix message
@@ -650,17 +664,7 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 		return nil
 	}
 
-	st := getExistingStackTrace(err)
-	if len(st) == 0 {
-		st = callers()
-	}
-
-	return &msgError{
-		err:     err,
-		msg:     prefixMessage(err.Error(), fmt.Sprintf(format, args...)),
-		stack:   st,
-		details: nil,
-	}
+	return withMessage(err, fmt.Sprintf(format, args...))
 }
 
 // Cause returns the result of calling the Cause method on err, if err's
@@ -895,7 +899,7 @@ func WithDetails(err error, kv ...interface{}) E {
 	// so getExistingStackTrace returns its stack trace.
 	st := getExistingStackTrace(err)
 	if len(st) == 0 {
-		st = callers()
+		st = callers(0)
 	}
 
 	return &noMsgError{
@@ -925,36 +929,13 @@ func Join(errs ...error) E {
 	if len(nonNilErrs) == 0 {
 		return nil
 	} else if len(nonNilErrs) == 1 {
-		err := nonNilErrs[0]
-
-		e, ok := err.(E) //nolint:errorlint
-		if ok {
-			if len(e.StackTrace()) == 0 {
-				return &noMsgError{
-					err:     err,
-					stack:   callers(),
-					details: nil,
-				}
-			}
-			return e
-		}
-
-		st := getExistingStackTrace(err)
-		if len(st) == 0 {
-			st = callers()
-		}
-
-		return &noMsgError{
-			err:     err,
-			stack:   st,
-			details: nil,
-		}
+		return withStack(nonNilErrs[0])
 	}
 
 	return &msgJoinedError{
 		errs:    nonNilErrs,
 		msg:     joinMessages(nonNilErrs),
-		stack:   callers(),
+		stack:   callers(0),
 		details: nil,
 	}
 }
@@ -1017,6 +998,7 @@ func (e *wrapError) Details() map[string]interface{} {
 //
 // Use WrapWith when you want to make a new error using a base error,
 // while preserving the cause of the new error.
+// If you want to reuse the "err" error message use Prefix or Errorf instead.
 func WrapWith(err, with error) E {
 	if with == nil {
 		panic(New(`"with" argument cannot be nil`))
@@ -1028,12 +1010,59 @@ func WrapWith(err, with error) E {
 
 	st := getExistingStackTrace(with)
 	if len(st) == 0 {
-		st = callers()
+		st = callers(0)
 	}
 
 	return &wrapError{
 		err:     err,
 		with:    with,
+		stack:   st,
+		details: nil,
+	}
+}
+
+// Prefix annotates err with a prefix message or messages of prefix errors,
+// wrapping prefix errors at the same time.
+// This is similar to WithMessage but instead of using just an error
+// message, you can provide a base error instead.
+// If err does not have a stack trace, stack strace is recorded as well.
+//
+// It does not support controlling the delimiter. Use Errorf if you need that.
+//
+// If err is nil, Prefix returns nil.
+//
+// Use Prefix when you want to make a new error using a base error or base errors
+// and want to construct the new message through common prefixing.
+// If you want to control how are messages combined, use Errorf.
+// If you want to fully replace the message, use WrapWith.
+func Prefix(err error, prefix ...error) E {
+	if err == nil {
+		return nil
+	}
+
+	nonNilErrs := make([]error, 0, len(prefix))
+	prefixes := make([]string, 0, len(prefix))
+	for _, p := range prefix {
+		if p != nil {
+			nonNilErrs = append(nonNilErrs, p)
+			prefixes = append(prefixes, p.Error())
+		}
+	}
+
+	if len(nonNilErrs) == 0 {
+		return withStack(err)
+	}
+
+	st := getExistingStackTrace(err)
+	if len(st) == 0 {
+		st = callers(0)
+	}
+
+	nonNilErrs = append(nonNilErrs, err)
+
+	return &msgJoinedError{
+		errs:    nonNilErrs,
+		msg:     prefixMessage(err.Error(), prefixes...),
 		stack:   st,
 		details: nil,
 	}

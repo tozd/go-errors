@@ -165,6 +165,12 @@ func TestJSON(t *testing.T) {
 	}, {
 		&testStructJoined{msg: "test1", cause: testErr, parents: []error{&testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}}, //nolint:exhaustruct
 		`{"cause":{"error":"test2"},"error":"test1","errors":[{"error":"test3"},{"error":"test4"}]}`,
+	}, {
+		errors.Prefix(errors.New("error"), errors.Base("error2")),
+		`{"error":"error2: error","errors":[{"error":"error2"},{"error":"error","stack":[]}],"stack":[]}`,
+	}, {
+		errors.Prefix(errors.Base("parent"), errors.Base("")),
+		`{"error":"parent","stack":[]}`,
 	}}
 
 	for k, tt := range tests {

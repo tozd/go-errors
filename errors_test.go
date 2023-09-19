@@ -244,8 +244,8 @@ func init() {
 		{errors.Wrap(parentNoStackErr, "read error\n"), "read error\n", "% +-.1v", currentStackSize, 3 + 2},
 		{errors.Wrap(io.EOF, "read error"), "read error", "% +-.1v", currentStackSize, 3 + 2},
 		// There is no "the above error was caused by the following error" message.
-		{errors.Wrap(noMsgNoStackErr, "read error"), "read error", "% +-.1v", currentStackSize, 3 + 1},
-		{errors.Wrap(noMsgNoStackErr, ""), "", "% +-.1v", currentStackSize, 3 + 0},
+		{errors.Wrap(noMsgNoStackErr, "read error"), "read error", "% +-.1v", currentStackSize, 1},
+		{errors.Wrap(noMsgNoStackErr, ""), "", "% +-.1v", currentStackSize, 0},
 
 		// errors.Wrap and parent with stack, there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
@@ -334,8 +334,8 @@ func init() {
 		{errors.WrapWith(parentNoStackErr, errors.Base("read error\n")), "read error\n", "% +-.1v", currentStackSize, 3 + 2},
 		{errors.WrapWith(io.EOF, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 3 + 2},
 		// There is no "the above error was caused by the following error" message.
-		{errors.WrapWith(noMsgNoStackErr, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 3 + 1},
-		{errors.WrapWith(noMsgNoStackErr, errors.Base("")), "", "% +-.1v", currentStackSize, 3 + 0},
+		{errors.WrapWith(noMsgNoStackErr, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 1},
+		{errors.WrapWith(noMsgNoStackErr, errors.Base("")), "", "% +-.1v", currentStackSize, 0},
 
 		// errors.WrapWith and parent with stack, there are three lines extra for
 		// "the above error was caused by the following error" + lines for error messages
@@ -375,6 +375,24 @@ func init() {
 		// there is no second "stack trace (most recent call first)" line,
 		// a final newline is still added
 		{errors.WrapWith(parentPkgError, errors.Base("read error")), "read error", "% +-.3v", currentStackSize + parentErrStackSize, 3 + 2},
+
+		// errors.Prefix and parent without stack
+		{errors.Prefix(parentNoStackErr, errors.Base("read error")), "read error: parent", "% +-.1v", currentStackSize, 1 + 2 + 2 + 2},
+		{errors.Prefix(parentNoStackErr, errors.Base("")), "parent", "% +-.1v", currentStackSize, 1},
+		{errors.Prefix(parentNoStackErr, errors.Base("read error\n")), "read error\nparent", "% +-.1v", currentStackSize, 2 + 2 + 2 + 2},
+		{errors.Prefix(noMsgNoStackErr, errors.Base("read error")), "read error", "% +-.1v", currentStackSize, 1},
+		{errors.Prefix(noMsgNoStackErr, errors.Base("")), "", "% +-.1v", currentStackSize, 0},
+		{errors.Prefix(io.EOF, errors.Base("read error")), "read error: EOF", "% +-.1v", currentStackSize, 1 + 2 + 2 + 2},
+
+		// errors.Prefix twice
+		{errors.Prefix(errors.Prefix(io.EOF, errors.Base("read error")), errors.Base("client error")), "client error: read error: EOF", "% +-.1v", currentStackSize + currentStackSize, 1 + 2 + 2 + 3 + 2 + 2 + 2},
+
+		// errors.Prefix and parent with stack
+		{errors.Prefix(parentErr, errors.Base("read error")), "read error: parent", "% +-.1v", parentErrStackSize + parentErrStackSize, 1 + 2 + 2 + 3},
+		{errors.Prefix(parentErr, errors.Base("")), "parent", "% +-.1v", parentErrStackSize, 1},
+		{errors.Prefix(parentErr, errors.Base("read error\n")), "read error\nparent", "% +-.1v", parentErrStackSize + parentErrStackSize, 2 + 2 + 2 + 3},
+		{errors.Prefix(noMsgErr, errors.Base("")), "", "% +-.1v", parentErrStackSize, 0},
+		{errors.Prefix(noMsgErr, errors.Base("read error")), "read error", "% +-.1v", parentErrStackSize + parentErrStackSize, 1 + 2 + 2},
 	}...)
 }
 

@@ -299,7 +299,7 @@ func TestFormatWithStack(t *testing.T) {
 			errors.Errorf("error%d", 1),
 		),
 		"%+-v",
-		"error1\n" +
+		"^error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithStack\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+78) + "\n" +
@@ -397,11 +397,11 @@ func TestFormatWrap(t *testing.T) {
 	}, {
 		errors.Wrap(io.EOF, "error"),
 		"%s",
-		"error",
+		"^error$",
 	}, {
 		errors.Wrap(io.EOF, "error"),
 		"%v",
-		"error",
+		"^error$",
 	}, {
 		errors.Wrap(io.EOF, "error"),
 		"% +-.1v",
@@ -437,7 +437,7 @@ func TestFormatWrap(t *testing.T) {
 			"context",
 		),
 		"%q",
-		`"context"`,
+		`^"context"$`,
 	}, {
 		errors.Wrap(
 			pkgerrors.New("error"),
@@ -1023,7 +1023,7 @@ func TestFormatWithDetails(t *testing.T) {
 			errors.Errorf("error%d", 1),
 		),
 		"%+-v",
-		"error1\n" +
+		"^error1\n" +
 			"stack trace \\(most recent call first\\):\n" +
 			"gitlab.com/tozd/go/errors_test.TestFormatWithDetails\n" +
 			"\t.+/format_test.go:" + strconv.Itoa(offset+78) + "\n" +
@@ -1726,11 +1726,11 @@ func TestFormatWrapWith(t *testing.T) {
 	}, {
 		errors.WrapWith(io.EOF, errors.Base("error")),
 		"%s",
-		"error",
+		"^error$",
 	}, {
 		errors.WrapWith(io.EOF, errors.Base("error")),
 		"%v",
-		"error",
+		"^error$",
 	}, {
 		errors.WrapWith(io.EOF, errors.Base("error")),
 		"% +-.1v",
@@ -1766,7 +1766,7 @@ func TestFormatWrapWith(t *testing.T) {
 			errors.Base("context"),
 		),
 		"%q",
-		`"context"`,
+		`^"context"$`,
 	}, {
 		errors.WrapWith(
 			pkgerrors.New("error"),
@@ -2004,6 +2004,95 @@ func TestFormatCustomError(t *testing.T) {
 			assert.Regexp(t, tt.want, got)
 
 			err2 := copyThroughJSON(t, errors.Formatter{tt.error})
+			got2 := fmt.Sprintf(tt.format, err2)
+			assert.Equal(t, got, got2)
+		})
+	}
+}
+
+func TestFormatPrefix(t *testing.T) {
+	t.Parallel()
+
+	offset := stackOffset(t)
+
+	tests := []struct {
+		error
+		format string
+		want   string
+	}{{
+		errors.Prefix(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%s",
+		"^error2: error$",
+	}, {
+		errors.Prefix(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"%v",
+		"^error2: error$",
+	}, {
+		errors.Prefix(
+			errors.New("error"),
+			errors.Base("error2"),
+		),
+		"% +-.1v",
+		"^error2: error\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatPrefix\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+22) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error joins errors:\n\n" +
+			"\terror2\n\n" +
+			"\terror\n" +
+			"\tstack trace \\(most recent call first\\):\n" +
+			"\tgitlab.com/tozd/go/errors_test.TestFormatPrefix\n" +
+			"\t\t.+/format_test.go:" + strconv.Itoa(offset+22) + "\n" +
+			"(.+\n\t\t.+:\\d+\n)+$",
+	}, {
+		errors.Prefix(
+			errors.Base("parent"),
+			errors.Base(""),
+		),
+		"% +-.1v",
+		"^parent\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatPrefix\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+39) + "\n" +
+			"(.+\n\t.+:\\d+\n)+$",
+	}, {
+		errors.Prefix(io.EOF, errors.Base("error")),
+		"%s",
+		"^error: EOF$",
+	}, {
+		errors.Prefix(io.EOF, errors.Base("error")),
+		"%v",
+		"^error: EOF$",
+	}, {
+		errors.Prefix(io.EOF, errors.Base("error")),
+		"% +-.1v",
+		"^error: EOF\n" +
+			"stack trace \\(most recent call first\\):\n" +
+			"gitlab.com/tozd/go/errors_test.TestFormatPrefix\n" +
+			"\t.+/format_test.go:" + strconv.Itoa(offset+58) + "\n" +
+			"(.+\n\t.+:\\d+\n)+" +
+			"\nthe above error joins errors:\n\n" +
+			"\terror\n\n" +
+			"\tEOF\n$",
+	}}
+
+	for k, tt := range tests {
+		tt := tt
+
+		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
+			t.Parallel()
+
+			got := fmt.Sprintf(tt.format, tt.error)
+			assert.Regexp(t, tt.want, got)
+
+			err2 := copyThroughJSON(t, tt.error)
 			got2 := fmt.Sprintf(tt.format, err2)
 			assert.Equal(t, got, got2)
 		})

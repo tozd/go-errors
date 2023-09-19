@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -48,7 +49,7 @@ func needsQuote(s string) bool {
 	return false
 }
 
-func writeLinesPrefixed(st fmt.State, linePrefix, s string) {
+func writeLinesPrefixed(w io.Writer, linePrefix, s string) {
 	lines := strings.Split(s, "\n")
 	// Trim empty lines at start.
 	for len(lines) > 0 && lines[0] == "" {
@@ -59,9 +60,9 @@ func writeLinesPrefixed(st fmt.State, linePrefix, s string) {
 		lines = lines[:len(lines)-1]
 	}
 	for _, line := range lines {
-		_, _ = io.WriteString(st, linePrefix)
-		_, _ = io.WriteString(st, line)
-		_, _ = io.WriteString(st, "\n")
+		_, _ = io.WriteString(w, linePrefix)
+		_, _ = io.WriteString(w, line)
+		_, _ = io.WriteString(w, "\n")
 	}
 }
 
@@ -111,7 +112,7 @@ func isForeignFormatter(err error) bool {
 	return ok
 }
 
-func formatError(s fmt.State, indent int, err error) {
+func formatError(s fmt.State, w io.Writer, indent int, err error) {
 	linePrefix := ""
 	if indent > 0 {
 		width, ok := s.Width()
@@ -132,82 +133,100 @@ func formatError(s fmt.State, indent int, err error) {
 	}
 
 	if precision >= 2 && isForeignFormatter(err) || err == nil {
-		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(formatString(s, 'v'), err))
+		writeLinesPrefixed(w, linePrefix, fmt.Sprintf(formatString(s, 'v'), err))
 		// Here we return because we assume formatting does recurse itself or at least
 		// the user requested us to not recuse if the error implements fmt.Formatter.
 		return
 	}
 
 	if useFormatter(err) {
-		writeLinesPrefixed(s, linePrefix, fmt.Sprintf(formatString(s, 'v'), err))
+		writeLinesPrefixed(w, linePrefix, fmt.Sprintf(formatString(s, 'v'), err))
 		// Here we still recurse ourselves because we assume formatting just formats the error and
 		// does not recurse if it does not implement those interfaces which we checked in useFormatter.
 		if precision == 1 || precision == 3 {
 			cause, errs = causeOrJoined(err)
 		}
 	} else {
-		formatMsg(s, linePrefix, err)
+		formatMsg(w, linePrefix, err)
 		var details map[string]interface{}
 		if s.Flag('#') || precision == 1 || precision == 3 {
 			details, cause, errs = allDetailsUntilCauseOrJoined(err)
 		}
 		if s.Flag('#') {
-			formatDetails(s, linePrefix, details)
+			formatDetails(w, linePrefix, details)
 		}
 		if s.Flag('+') {
-			formatStack(s, linePrefix, err)
+			formatStack(s, w, linePrefix, err)
 		}
 	}
 
 	if precision == 1 || precision == 3 { //nolint:nestif
+		buf := bytes.Buffer{}
+
 		// It is possible that both cause and errs is set. In that case we first
 		// recurse into errs and then into the cause, so that it is clear which
 		// "above error" joins the errors (not the cause). Because cause is not
 		// indented it is hopefully clearer that its "above error" does not mean
 		// the last error among joined but the one higher up before indentation.
+
 		if len(errs) > 0 {
 			first := true
 			for _, er := range errs {
 				// er should never be nil, but we still check.
 				// We also make sure we do not repeat cause here or repeat an error without any additional information.
 				if er != nil && er != cause && !isSubsumedError(err, er) { //nolint:errorlint,goerr113
+					// We format error to the buffer so that we can see if anything was written.
+					buf.Reset()
+					formatError(s, &buf, indent+1, er)
+					// If nothing was written, we skip this error.
+					if buf.Len() == 0 {
+						continue
+					}
+
 					if first {
 						first = false
 						if s.Flag('-') {
 							if s.Flag(' ') {
-								_, _ = io.WriteString(s, "\n")
+								_, _ = io.WriteString(w, "\n")
 							}
-							writeLinesPrefixed(s, linePrefix, multipleErrorsHelp)
+							writeLinesPrefixed(w, linePrefix, multipleErrorsHelp)
 						}
 					}
 					if s.Flag(' ') {
-						_, _ = io.WriteString(s, "\n")
+						_, _ = io.WriteString(w, "\n")
 					}
-					formatError(s, indent+1, er)
+					_, _ = io.Copy(w, &buf)
 				}
 			}
 		}
+
 		if cause != nil {
-			if s.Flag('-') {
-				if s.Flag(' ') {
-					_, _ = io.WriteString(s, "\n")
+			// We format error to the buffer so that we can see if anything was written.
+			buf.Reset()
+			formatError(s, &buf, indent, cause)
+			// Only if something was written we continue.
+			if buf.Len() > 0 {
+				if s.Flag('-') {
+					if s.Flag(' ') {
+						_, _ = io.WriteString(w, "\n")
+					}
+					writeLinesPrefixed(w, linePrefix, causeHelp)
 				}
-				writeLinesPrefixed(s, linePrefix, causeHelp)
+				if s.Flag(' ') {
+					_, _ = io.WriteString(w, "\n")
+				}
+				_, _ = io.Copy(w, &buf)
 			}
-			if s.Flag(' ') {
-				_, _ = io.WriteString(s, "\n")
-			}
-			formatError(s, indent, cause)
 		}
 	}
 }
 
-func formatMsg(s fmt.State, linePrefix string, err error) {
-	writeLinesPrefixed(s, linePrefix, err.Error())
+func formatMsg(w io.Writer, linePrefix string, err error) {
+	writeLinesPrefixed(w, linePrefix, err.Error())
 }
 
 // Similar to writeFields in zerolog/console.go.
-func formatDetails(s fmt.State, linePrefix string, details map[string]interface{}) {
+func formatDetails(w io.Writer, linePrefix string, details map[string]interface{}) {
 	fields := make([]string, len(details))
 	i := 0
 	for field := range details {
@@ -235,11 +254,11 @@ func formatDetails(s fmt.State, linePrefix string, details map[string]interface{
 				v = string(b)
 			}
 		}
-		writeLinesPrefixed(s, linePrefix, fmt.Sprintf("%s=%s\n", field, v))
+		writeLinesPrefixed(w, linePrefix, fmt.Sprintf("%s=%s\n", field, v))
 	}
 }
 
-func formatStack(s fmt.State, linePrefix string, err error) {
+func formatStack(s fmt.State, w io.Writer, linePrefix string, err error) {
 	var stToFormat interface{}
 	st := getExistingStackTrace(err)
 	if len(st) > 0 {
@@ -257,7 +276,7 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 	}
 
 	if s.Flag('-') {
-		writeLinesPrefixed(s, linePrefix, stackTraceHelp)
+		writeLinesPrefixed(w, linePrefix, stackTraceHelp)
 	}
 	var result string
 	width, ok := s.Width()
@@ -266,7 +285,7 @@ func formatStack(s fmt.State, linePrefix string, err error) {
 	} else {
 		result = fmt.Sprintf("%+v", stToFormat)
 	}
-	writeLinesPrefixed(s, linePrefix, result)
+	writeLinesPrefixed(w, linePrefix, result)
 }
 
 // Formatter formats an error as text and marshals the error as JSON.
@@ -331,7 +350,7 @@ func (f Formatter) Format(s fmt.State, verb rune) {
 			break
 		}
 		if s.Flag('#') || s.Flag('+') || s.Flag('-') || s.Flag(' ') || precision > 0 {
-			formatError(s, 0, f.Error)
+			formatError(s, s, 0, f.Error)
 			break
 		}
 		fallthrough

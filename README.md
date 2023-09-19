@@ -29,6 +29,8 @@ Features:
   - [`errors.Join`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Join): joining multiple
     errors which happened during execution (e.g., additional errors which happened during
     cleanup)
+  - [`errors.Prefix`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Prefix): combine multiple
+    errors by prefixing an error with base errors
 - Provides [`errors.Base`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Base) function to create errors without
   a stack trace to be used as base errors for [`errors.Is`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Is)
   and [`errors.As`](https://pkg.go.dev/gitlab.com/tozd/go/errors#As).
@@ -238,10 +240,9 @@ error constructors, but they are provided primarily for compatibility
   errors coming from outside of your codebase, as soon as possible.
 - If you want to map one error to another while recording the cause,
   use `errors.WrapWith`. If you want to reuse the error message, use
-  `errors.Errorf` to combine the base error with the error
-  (e.g., `errors.Errorf("%w: %w", ErrBase, err)`).
+  `errors.Prefix` or `errors.Errorf` (but only to control how messages are combined).
 - If errors coming from outside of your codebase do not provide adequate base errors,
-  use `errors.WrapWith` or `errors.Errorf` as well to provide them yourself.
+  use `errors.WrapWith`, `errors.Prefix`, or `errors.Errorf` to provide them yourself.
 - If during handling of an error another error occurs (e.g., in `defer` during cleanup)
   use `errors.Join` or `errors.Errorf` (but only to control how messages are joined)
   to join them all.

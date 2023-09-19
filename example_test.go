@@ -558,3 +558,44 @@ func ExampleWrapWith_printf() {
 	//
 	// EOF
 }
+
+func ExamplePrefix() {
+	err := io.EOF
+	baseErr := errors.Base("an error")
+
+	errE := errors.Prefix(err, baseErr)
+	fmt.Println(errE)
+	// Output: an error: EOF
+}
+
+func ExamplePrefix_printf() {
+	err := io.EOF
+	baseErr := errors.Base("an error")
+
+	errE := errors.Prefix(err, baseErr)
+	fmt.Printf("% +-.1v", errE)
+
+	// Example output:
+	// an error: EOF
+	// stack trace (most recent call first):
+	// gitlab.com/tozd/go/errors_test.ExamplePrefix_printf
+	// 	/home/user/errors/example_test.go:575
+	// testing.runExample
+	// 	/usr/local/go/src/testing/run_example.go:63
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
+	// testing.(*M).Run
+	// 	/usr/local/go/src/testing/testing.go:1927
+	// main.main
+	// 	_testmain.go:163
+	// runtime.main
+	// 	/usr/local/go/src/runtime/proc.go:267
+	// runtime.goexit
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1650
+	//
+	// the above error joins errors:
+	//
+	// 	an error
+	//
+	// 	EOF
+}

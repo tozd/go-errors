@@ -200,7 +200,7 @@ func TestStackFormatter(t *testing.T) {
 	stack := func() []uintptr {
 		return func() []uintptr {
 			noinline()
-			return callers()
+			return callers(0)
 		}()
 	}()
 
@@ -248,7 +248,7 @@ func TestStackMarshalJSON(t *testing.T) {
 	stack := func() []uintptr {
 		return func() []uintptr {
 			noinline()
-			return callers()
+			return callers(0)
 		}()
 	}()
 	j, err := json.Marshal(StackFormatter{stack})
