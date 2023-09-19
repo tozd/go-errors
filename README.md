@@ -238,11 +238,14 @@ error constructors, but they are provided primarily for compatibility
   trace and any additional structured details at point where the error occurs.
 - You can use `errors.WithStack` or `errors.WithDetails` to do the same with
   errors coming from outside of your codebase, as soon as possible.
+  If those errors do not have stack traces, consider using `errors.WithMessage`
+  to prefix their error messages with the source of the error (e.g, function name).
 - If you want to map one error to another while recording the cause,
   use `errors.WrapWith`. If you want to reuse the error message, use
   `errors.Prefix` or `errors.Errorf` (but only to control how messages are combined).
-- If errors coming from outside of your codebase do not provide adequate base errors,
-  use `errors.WrapWith`, `errors.Prefix`, or `errors.Errorf` to provide them yourself.
+- If errors coming from outside of your codebase do not provide adequate base errors
+  and base errors are needed, use `errors.WrapWith`, `errors.Prefix`, or `errors.Errorf`
+  (but only to control how messages are combined) to provide them yourself.
 - If during handling of an error another error occurs (e.g., in `defer` during cleanup)
   use `errors.Join` or `errors.Errorf` (but only to control how messages are joined)
   to join them all.
