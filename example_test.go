@@ -431,8 +431,8 @@ func ExampleFormatter_MarshalJSON() {
 	if err != nil {
 		panic(err)
 	}
-	var out bytes.Buffer
-	_ = json.Indent(&out, data, "", "\t")
+	out := new(bytes.Buffer)
+	_ = json.Indent(out, data, "", "\t")
 	_, _ = out.WriteTo(os.Stdout)
 
 	// Example output:

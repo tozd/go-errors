@@ -7,8 +7,8 @@ import (
 )
 
 func marshalWithoutEscapeHTML(v interface{}) ([]byte, error) {
-	var buf bytes.Buffer
-	encoder := json.NewEncoder(&buf)
+	buf := new(bytes.Buffer)
+	encoder := json.NewEncoder(buf)
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(v)
 	if err != nil {

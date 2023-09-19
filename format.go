@@ -161,7 +161,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 	}
 
 	if precision == 1 || precision == 3 { //nolint:nestif
-		buf := bytes.Buffer{}
+		buf := new(bytes.Buffer)
 
 		// It is possible that both cause and errs is set. In that case we first
 		// recurse into errs and then into the cause, so that it is clear which
@@ -177,7 +177,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 				if er != nil && er != cause && !isSubsumedError(err, er) { //nolint:errorlint,goerr113
 					// We format error to the buffer so that we can see if anything was written.
 					buf.Reset()
-					formatError(s, &buf, indent+1, er)
+					formatError(s, buf, indent+1, er)
 					// If nothing was written, we skip this error.
 					if buf.Len() == 0 {
 						continue
@@ -195,7 +195,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 					if s.Flag(' ') {
 						_, _ = io.WriteString(w, "\n")
 					}
-					_, _ = io.Copy(w, &buf)
+					_, _ = io.Copy(w, buf)
 				}
 			}
 		}
@@ -203,7 +203,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 		if cause != nil {
 			// We format error to the buffer so that we can see if anything was written.
 			buf.Reset()
-			formatError(s, &buf, indent, cause)
+			formatError(s, buf, indent, cause)
 			// Only if something was written we continue.
 			if buf.Len() > 0 {
 				if s.Flag('-') {
@@ -215,7 +215,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 				if s.Flag(' ') {
 					_, _ = io.WriteString(w, "\n")
 				}
-				_, _ = io.Copy(w, &buf)
+				_, _ = io.Copy(w, buf)
 			}
 		}
 	}
