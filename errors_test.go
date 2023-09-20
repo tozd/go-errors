@@ -7,6 +7,7 @@ import (
 	"io"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	pkgerrors "github.com/pkg/errors"
@@ -575,9 +576,10 @@ func TestDetails(t *testing.T) {
 }
 
 type testStructDetails struct {
-	msg     string
-	details map[string]interface{}
-	parent  error
+	msg       string
+	details   map[string]interface{}
+	detailsMu *sync.Mutex
+	parent    error
 }
 
 func (e *testStructDetails) Error() string {
@@ -589,6 +591,9 @@ func (e *testStructDetails) Unwrap() error {
 }
 
 func (e *testStructDetails) Details() map[string]interface{} {
+	e.detailsMu.Lock()
+	defer e.detailsMu.Unlock()
+
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -625,9 +630,9 @@ func TestWrapWith(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, string(jsonError), string(jsonError2))
 
-	ioDetailsBaseErr := &testStructDetails{"IO error", nil, nil}
+	ioDetailsBaseErr := &testStructDetails{"IO error", nil, new(sync.Mutex), nil}
 	errors.Details(ioDetailsBaseErr)["type"] = "io"
-	eofDetailsBaseErr := &testStructDetails{"IO error: EOF", nil, ioDetailsBaseErr}
+	eofDetailsBaseErr := &testStructDetails{"IO error: EOF", nil, new(sync.Mutex), ioDetailsBaseErr}
 	errors.Details(eofDetailsBaseErr)["type"] = "eof"
 
 	testErr = errors.WrapWith(io.EOF, eofDetailsBaseErr)

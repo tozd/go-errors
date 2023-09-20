@@ -189,6 +189,7 @@ package errors
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"unsafe"
 
 	pkgerrors "github.com/pkg/errors"
@@ -301,9 +302,10 @@ type E interface {
 // New also records the stack trace at the point it was called.
 func New(message string) E {
 	return &fundamentalError{
-		msg:     message,
-		stack:   callers(0),
-		details: nil,
+		msg:       message,
+		stack:     callers(0),
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
@@ -326,10 +328,11 @@ func Errorf(format string, args ...interface{}) E {
 	}
 	if len(errs) > 1 {
 		return &msgJoinedError{
-			errs:    errs,
-			msg:     err.Error(),
-			stack:   callers(0),
-			details: nil,
+			errs:      errs,
+			msg:       err.Error(),
+			stack:     callers(0),
+			details:   nil,
+			detailsMu: new(sync.Mutex),
 		}
 	} else if len(errs) == 1 {
 		unwrap := errs[0]
@@ -339,26 +342,29 @@ func Errorf(format string, args ...interface{}) E {
 		}
 
 		return &msgError{
-			err:     unwrap,
-			msg:     err.Error(),
-			stack:   st,
-			details: nil,
+			err:       unwrap,
+			msg:       err.Error(),
+			stack:     st,
+			details:   nil,
+			detailsMu: new(sync.Mutex),
 		}
 	}
 
 	return &fundamentalError{
-		msg:     err.Error(),
-		stack:   callers(0),
-		details: nil,
+		msg:       err.Error(),
+		stack:     callers(0),
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
 // fundamentalError is an error that has a message and a stack,
 // but does not wrap another error.
 type fundamentalError struct {
-	msg     string
-	stack   []uintptr
-	details map[string]interface{}
+	msg       string
+	stack     []uintptr
+	details   map[string]interface{}
+	detailsMu *sync.Mutex
 }
 
 func (e *fundamentalError) Error() string {
@@ -378,6 +384,9 @@ func (e *fundamentalError) StackTrace() []uintptr {
 }
 
 func (e *fundamentalError) Details() map[string]interface{} {
+	e.detailsMu.Lock()
+	defer e.detailsMu.Unlock()
+
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -386,10 +395,11 @@ func (e *fundamentalError) Details() map[string]interface{} {
 
 // msgError wraps another error and has its own stack and msg.
 type msgError struct {
-	err     error
-	msg     string
-	stack   []uintptr
-	details map[string]interface{}
+	err       error
+	msg       string
+	stack     []uintptr
+	details   map[string]interface{}
+	detailsMu *sync.Mutex
 }
 
 func (e *msgError) Error() string {
@@ -413,6 +423,9 @@ func (e *msgError) StackTrace() []uintptr {
 }
 
 func (e *msgError) Details() map[string]interface{} {
+	e.detailsMu.Lock()
+	defer e.detailsMu.Unlock()
+
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -422,10 +435,11 @@ func (e *msgError) Details() map[string]interface{} {
 // msgJoinedError wraps multiple errors
 // and has its own stack and msg.
 type msgJoinedError struct {
-	errs    []error
-	msg     string
-	stack   []uintptr
-	details map[string]interface{}
+	errs      []error
+	msg       string
+	stack     []uintptr
+	details   map[string]interface{}
+	detailsMu *sync.Mutex
 }
 
 func (e *msgJoinedError) Error() string {
@@ -449,6 +463,9 @@ func (e *msgJoinedError) StackTrace() []uintptr {
 }
 
 func (e *msgJoinedError) Details() map[string]interface{} {
+	e.detailsMu.Lock()
+	defer e.detailsMu.Unlock()
+
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -460,9 +477,10 @@ func withStack(err error) E {
 	if ok {
 		if len(e.StackTrace()) == 0 {
 			return &noMsgError{
-				err:     err,
-				stack:   callers(1),
-				details: nil,
+				err:       err,
+				stack:     callers(1),
+				details:   nil,
+				detailsMu: new(sync.Mutex),
 			}
 		}
 		return e
@@ -474,9 +492,10 @@ func withStack(err error) E {
 	}
 
 	return &noMsgError{
-		err:     err,
-		stack:   st,
-		details: nil,
+		err:       err,
+		stack:     st,
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
@@ -502,9 +521,10 @@ func WithStack(err error) E {
 // noMsgError wraps another error and has its
 // own stack and but does not have its own msg.
 type noMsgError struct {
-	err     error
-	stack   []uintptr
-	details map[string]interface{}
+	err       error
+	stack     []uintptr
+	details   map[string]interface{}
+	detailsMu *sync.Mutex
 }
 
 func (e *noMsgError) Error() string {
@@ -528,6 +548,9 @@ func (e *noMsgError) StackTrace() []uintptr {
 }
 
 func (e *noMsgError) Details() map[string]interface{} {
+	e.detailsMu.Lock()
+	defer e.detailsMu.Unlock()
+
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -550,10 +573,11 @@ func Wrap(err error, message string) E {
 	}
 
 	return &causeError{
-		err:     err,
-		msg:     message,
-		stack:   callers(0),
-		details: nil,
+		err:       err,
+		msg:       message,
+		stack:     callers(0),
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
@@ -576,20 +600,22 @@ func Wrapf(err error, format string, args ...interface{}) E {
 	}
 
 	return &causeError{
-		err:     err,
-		msg:     fmt.Sprintf(format, args...),
-		stack:   callers(0),
-		details: nil,
+		err:       err,
+		msg:       fmt.Sprintf(format, args...),
+		stack:     callers(0),
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
 // causeError records another error as a causeError
 // and has its own stack and msg.
 type causeError struct {
-	err     error
-	msg     string
-	stack   []uintptr
-	details map[string]interface{}
+	err       error
+	msg       string
+	stack     []uintptr
+	details   map[string]interface{}
+	detailsMu *sync.Mutex
 }
 
 func (e *causeError) Error() string {
@@ -617,6 +643,9 @@ func (e *causeError) StackTrace() []uintptr {
 }
 
 func (e *causeError) Details() map[string]interface{} {
+	e.detailsMu.Lock()
+	defer e.detailsMu.Unlock()
+
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -630,10 +659,11 @@ func withMessage(err error, prefix ...string) E {
 	}
 
 	return &msgError{
-		err:     err,
-		msg:     prefixMessage(err.Error(), prefix...),
-		stack:   st,
-		details: nil,
+		err:       err,
+		msg:       prefixMessage(err.Error(), prefix...),
+		stack:     st,
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
@@ -841,13 +871,6 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 	return
 }
 
-func initializeDetails(err error) {
-	for err != nil {
-		detailsOf(err)
-		err = Unwrap(err)
-	}
-}
-
 // WithDetails wraps err into an error which implements the detailer interface
 // to access a map with optional additional details about the error.
 //
@@ -886,13 +909,6 @@ func WithDetails(err error, kv ...interface{}) E {
 		initMap[key] = kv[i+1]
 	}
 
-	// Details were explicitly asked for, so we initialize them across
-	// the whole stack of errors. It is useful to do this here so that
-	// there are no race conditions if AllDetails on the same error is
-	// called from multiple goroutines, racing which call will initialize
-	// nil maps first.
-	initializeDetails(err)
-
 	// Even if err is of type E, we still wrap it into another noMsgError error to
 	// have another layer of details. This is where it is different from WithStack.
 	// We do not have to check for type E explicitly because E implements stackTracer
@@ -903,9 +919,10 @@ func WithDetails(err error, kv ...interface{}) E {
 	}
 
 	return &noMsgError{
-		err:     err,
-		stack:   st,
-		details: initMap,
+		err:       err,
+		stack:     st,
+		details:   initMap,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
@@ -933,19 +950,21 @@ func Join(errs ...error) E {
 	}
 
 	return &msgJoinedError{
-		errs:    nonNilErrs,
-		msg:     joinMessages(nonNilErrs),
-		stack:   callers(0),
-		details: nil,
+		errs:      nonNilErrs,
+		msg:       joinMessages(nonNilErrs),
+		stack:     callers(0),
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
 // wrapError joins two errors (err and with), making err the cause of with.
 type wrapError struct {
-	err     error
-	with    error
-	stack   []uintptr
-	details map[string]interface{}
+	err       error
+	with      error
+	stack     []uintptr
+	details   map[string]interface{}
+	detailsMu *sync.Mutex
 }
 
 func (e *wrapError) Error() string {
@@ -973,6 +992,9 @@ func (e *wrapError) StackTrace() []uintptr {
 }
 
 func (e *wrapError) Details() map[string]interface{} {
+	e.detailsMu.Lock()
+	defer e.detailsMu.Unlock()
+
 	if e.details == nil {
 		e.details = make(map[string]interface{})
 	}
@@ -1014,10 +1036,11 @@ func WrapWith(err, with error) E {
 	}
 
 	return &wrapError{
-		err:     err,
-		with:    with,
-		stack:   st,
-		details: nil,
+		err:       err,
+		with:      with,
+		stack:     st,
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
 
@@ -1061,9 +1084,10 @@ func Prefix(err error, prefix ...error) E {
 	nonNilErrs = append(nonNilErrs, err)
 
 	return &msgJoinedError{
-		errs:    nonNilErrs,
-		msg:     prefixMessage(err.Error(), prefixes...),
-		stack:   st,
-		details: nil,
+		errs:      nonNilErrs,
+		msg:       prefixMessage(err.Error(), prefixes...),
+		stack:     st,
+		details:   nil,
+		detailsMu: new(sync.Mutex),
 	}
 }
