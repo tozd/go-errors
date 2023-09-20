@@ -234,12 +234,14 @@ error constructors, but they are provided primarily for compatibility
 
 - Use `errors.Base`, `errors.Basef`, `errors.BaseWrap` and `errors.BaseWrapf`
   to create a tree of constant base errors.
-- Do not use `errors.Errorf` but use `errors.WithDetails` to record both a stack
-  trace and any additional structured details at point where the error occurs.
+- Do not use `errors.Errorf` but use `errors.WithDetails` with a base error
+  to record both a stack trace and any additional structured details at point
+  where the error occurs.
 - You can use `errors.WithStack` or `errors.WithDetails` to do the same with
   errors coming from outside of your codebase, as soon as possible.
-  If those errors do not have stack traces, consider using `errors.WithMessage`
-  to prefix their error messages with the source of the error (e.g, function name).
+  If it is useful to know at a glance where the error is coming from,
+  consider using `errors.WithMessage` to prefix their error messages
+  with the source of the error (e.g, external function name).
 - If you want to map one error to another while recording the cause,
   use `errors.WrapWith`. If you want to reuse the error message, use
   `errors.Prefix` or `errors.Errorf` (but only to control how messages are combined).
@@ -256,6 +258,13 @@ Your functions should return only errors for which you provide base errors as we
 Those base errors become part of your API.
 All additional (non-constant) information about the particular error goes into its
 stack trace and details.
+
+Do not overdo the approach with base errors, e.g., do not make them too granular.
+Design them as you design your API and consider their use cases.
+Remember, errors also have stack traces to help you understand where are they
+coming from.
+This holds also for prefixing error messages, prefix them only if it makes
+error messages clearer and not to make it into something resembling a call trace.
 
 Remember, error messages, stack traces, and details are for developers not end users.
 Be mindful if and how you expose them to end users.
