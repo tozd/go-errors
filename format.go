@@ -149,8 +149,10 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 	} else {
 		formatMsg(w, linePrefix, err)
 		var details map[string]interface{}
-		if s.Flag('#') || precision == 1 || precision == 3 {
+		if s.Flag('#') {
 			details, cause, errs = allDetailsUntilCauseOrJoined(err)
+		} else if precision == 1 || precision == 3 {
+			cause, errs = causeOrJoined(err)
 		}
 		if s.Flag('#') {
 			formatDetails(w, linePrefix, details)

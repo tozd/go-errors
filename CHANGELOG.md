@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Use mutex when initializing details to prevent race conditions.
+- Access details during formatting only when they are needed.
+
 ## [0.7.0] - 2023-09-19
 
 ### Added
