@@ -38,7 +38,7 @@ func isSubsumedError(err, base error) bool {
 	// Base does not have a stack trace or it is the same as err's.
 	st := getExistingStackTrace(base)
 	if len(st) > 0 {
-		if !slicesEqual(getExistingStackTrace(err), st) {
+		if !reflect.DeepEqual(getExistingStackTrace(err), st) {
 			return false
 		}
 	} else {
