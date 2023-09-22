@@ -510,6 +510,10 @@ func withStack(err error) E {
 // You can also use WithStack when you have an err which implements stackTracer
 // interface but does not implement detailer interface as well, but you cannot
 // provide initial details like you can with WithDetails.
+//
+// WithStack is similar to Errorf("%w", err), but returns err as-is if err
+// already satisfies interface E and has a stack trace,
+// and it returns nil if err is nil.
 func WithStack(err error) E {
 	if err == nil {
 		return nil
@@ -563,7 +567,7 @@ func (e *noMsgError) Details() map[string]interface{} {
 // It records the original error as a cause.
 // If err is nil, Wrap returns nil.
 //
-// Use Wrap when you want to make a new error,
+// Use Wrap when you want to make a new error with a different error message,
 // while preserving the cause of the new error.
 // If you want to reuse the err error message use WithMessage
 // or Errorf instead.
@@ -590,7 +594,7 @@ func Wrap(err error, message string) E {
 // need to incorporate cause's error message).
 // If err is nil, Wrapf returns nil.
 //
-// Use Wrapf when you want to make a new error,
+// Use Wrapf when you want to make a new error with a different error message,
 // preserving the cause of the new error.
 // If you want to reuse the err error message use WithMessage
 // or Errorf instead.
@@ -673,6 +677,9 @@ func withMessage(err error, prefix ...string) E {
 // It does not support controlling the delimiter. Use Errorf if you need that.
 //
 // If err is nil, WithMessage returns nil.
+//
+// WithMessage is similar to Errorf("%s: %w", prefix, err), but supports
+// dynamic number of prefixes, and it returns nil if err is nil.
 func WithMessage(err error, prefix ...string) E {
 	if err == nil {
 		return nil
@@ -689,6 +696,9 @@ func WithMessage(err error, prefix ...string) E {
 // Use Errorf if you need that.
 //
 // If err is nil, WithMessagef returns nil.
+//
+// WithMessagef is similar to Errorf(format + ": %w", args..., err), but
+// it returns nil if err is nil.
 func WithMessagef(err error, format string, args ...interface{}) E {
 	if err == nil {
 		return nil
@@ -935,6 +945,11 @@ func WithDetails(err error, kv ...interface{}) E {
 // The error formats as the concatenation of the strings obtained
 // by calling the Error method of each element of errs, with a newline
 // between each string.
+//
+// Join is similar to Errorf("%w\n%w\n", err1, err2), but supports
+// dynamic number of errors, skips nil errors, and it returns
+// the error as-is if there is only one non-nil error already
+// with a stack trace.
 func Join(errs ...error) E {
 	nonNilErrs := make([]error, 0, len(errs))
 	for _, err := range errs {
@@ -1018,7 +1033,8 @@ func (e *wrapError) Details() map[string]interface{} {
 // any details from the "err" and "with" errors are not available
 // through AllDetails on the new error.
 //
-// Use WrapWith when you want to make a new error using a base error,
+// Use WrapWith when you want to make a new error using a base error
+// with a different error message,
 // while preserving the cause of the new error.
 // If you want to reuse the "err" error message use Prefix or Errorf instead.
 func WrapWith(err, with error) E {
@@ -1058,6 +1074,11 @@ func WrapWith(err, with error) E {
 // and want to construct the new message through common prefixing.
 // If you want to control how are messages combined, use Errorf.
 // If you want to fully replace the message, use WrapWith.
+//
+// Prefix is similar to Errorf("%w: %w", prefixErr, err), but supports
+// dynamic number of prefix errors, skips nil errors,
+// does not record a stack trace if err already has it,
+// and it returns nil if err is nil.
 func Prefix(err error, prefix ...error) E {
 	if err == nil {
 		return nil
