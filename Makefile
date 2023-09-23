@@ -9,7 +9,7 @@ test-ci:
 	go tool cover -html=coverage.txt -o coverage.html
 
 lint:
-	golangci-lint run --timeout 4m --color always
+	golangci-lint run --timeout 4m --color always --fix
 
 lint-ci:
 	golangci-lint run --timeout 4m --out-format colored-line-number,code-climate:codeclimate.json
