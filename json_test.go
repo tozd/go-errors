@@ -184,7 +184,7 @@ func TestJSON(t *testing.T) {
 			jsonEqual(t, tt.want, string(jsonError))
 
 			err2, errE := errors.UnmarshalJSON(jsonError)
-			require.NoError(t, errE)
+			require.NoError(t, errE, "% -+#.1v", errE)
 			jsonError2, err := json.Marshal(err2)
 			require.NoError(t, err)
 			assert.Equal(t, string(jsonError), string(jsonError2))

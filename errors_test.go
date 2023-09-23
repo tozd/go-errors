@@ -106,7 +106,7 @@ func copyThroughJSON(t *testing.T, e interface{}) error {
 	jsonError, err := json.Marshal(e)
 	require.NoError(t, err)
 	e2, errE := errors.UnmarshalJSON(jsonError)
-	require.NoError(t, errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 	jsonError2, err := json.Marshal(e2)
 	require.NoError(t, err)
 	assert.Equal(t, jsonError, jsonError2)
@@ -625,7 +625,7 @@ func TestWrapWith(t *testing.T) {
 	jsonEqual(t, `{"cause":{"error":"EOF"},"error":"IO error: EOF","foo":"baz","foo2":"bar2","stack":[]}`, string(jsonError))
 
 	err2, errE := errors.UnmarshalJSON(jsonError)
-	require.NoError(t, errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 	jsonError2, err := json.Marshal(err2)
 	require.NoError(t, err)
 	assert.Equal(t, string(jsonError), string(jsonError2))
@@ -654,7 +654,7 @@ func TestWrapWith(t *testing.T) {
 	jsonEqual(t, `{"cause":{"error":"EOF"},"error":"IO error: EOF","errors":[{"error":"IO error: EOF","type":"eof"}],"foo":"baz","foo2":"bar2","stack":[]}`, string(jsonError))
 
 	err2, errE = errors.UnmarshalJSON(jsonError)
-	require.NoError(t, errE)
+	require.NoError(t, errE, "% -+#.1v", errE)
 	jsonError2, err = json.Marshal(err2)
 	require.NoError(t, err)
 	assert.Equal(t, string(jsonError), string(jsonError2))
