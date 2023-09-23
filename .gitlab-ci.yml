@@ -27,7 +27,9 @@ test:
         coverage_format: cobertura
         path: coverage.xml
     paths:
+      - tests.xml
       - coverage.html
+      - coverage.xml
     expire_in: never
 
   coverage: '/coverage: \d+\.\d+% of statements/'
@@ -123,7 +125,7 @@ sync_releases:
   stage: deploy
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-3-0:latest-debug
+    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-3-3:latest-debug
     entrypoint: [""]
 
   script:
