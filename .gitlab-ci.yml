@@ -125,11 +125,12 @@ sync_releases:
   stage: deploy
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-3-3:latest-debug
+    name: registry.gitlab.com/tozd/gitlab/release/tag/v0-6-0:latest-debug
     entrypoint: [""]
 
   script:
-    - /gitlab-release
+    # On branch jobs, just update or remove releases, thus releases are created only on tag jobs.
+    - /gitlab-release ${CI_COMMIT_BRANCH:+--no-create}
 
   rules:
     # Protected tags start with "v".
@@ -142,7 +143,7 @@ sync_config:
   stage: deploy
 
   image:
-    name: registry.gitlab.com/tozd/gitlab/config/tag/v0-3-3:latest-debug
+    name: registry.gitlab.com/tozd/gitlab/config/tag/v0-5-0:latest-debug
     entrypoint: [""]
 
   script:
