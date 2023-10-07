@@ -320,6 +320,12 @@ so that original error is always available. `Wrap` wraps the error to records th
   package with stack trace recording support, but with different API than
   `github.com/pkg/errors`. It does not support structured details, extended formatting
   nor JSON marshal.
+- [github.com/rotisserie/eris](https://github.com/rotisserie/eris) – Eris has some similar
+  features, like recording a stack trace and support for JSON. It supports additional
+  features, like more formatting options and built-in Sentry support. It can be used
+  as a replacement for `github.com/pkg/errors` but some functions are missing
+  (e.g., `WithMessage`, `WithStack`) while this package provides them. Eris also does
+  not support structured details.
 
 ## GitHub mirror
 

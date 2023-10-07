@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Detect stack traces in errors made by `github.com/rotisserie/eris` package.
+
 ## [0.7.2] - 2023-09-21
 
 ### Fixed

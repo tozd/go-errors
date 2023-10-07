@@ -207,6 +207,10 @@ type goErrorsStackTracer interface {
 	Callers() []uintptr
 }
 
+type erisStackTracer interface {
+	StackFrames() []uintptr
+}
+
 type causer interface {
 	Cause() error
 }
@@ -233,6 +237,8 @@ func getExistingStackTrace(err error) []uintptr {
 			return *(*[]uintptr)(unsafe.Pointer(&st))
 		case goErrorsStackTracer:
 			return e.Callers()
+		case erisStackTracer:
+			return e.StackFrames()
 		}
 		c, ok := err.(causer) //nolint:errorlint
 		if ok && c.Cause() != nil {
