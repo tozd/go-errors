@@ -15,6 +15,8 @@ Features:
 - Uses standard error wrapping (available since Go 1.13) and wrapping of multiple errors (available since Go 1.20).
 - All errors expose information through simple interfaces which do not use custom types.
   This makes errors work without a dependency on this package. They work even across versions of this package.
+- It is interoperable with other popular errors packages and can be used in projects where they are mixed
+  to unify their stack traces and formatting.
 - Provides [`errors.Errorf`](https://pkg.go.dev/gitlab.com/tozd/go/errors#Errorf) which supports `%w` format verb
   to both wrap and record a stack trace at the same time (if not already recorded).
 - Provides [`errors.E`](https://pkg.go.dev/gitlab.com/tozd/go/errors#E) type to be used instead of standard `error`
