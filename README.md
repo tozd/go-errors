@@ -310,6 +310,7 @@ so that original error is always available. `Wrap` wraps the error to records th
 
 - [github.com/cockroachdb/errors](https://github.com/cockroachdb/errors) – Go errors
   with every possible feature you might ever need in your large project.
+  Internally it uses deprecated `github.com/pkg/errors`.
   This package aims to stay lean and be more or less just a drop-in replacement
   for core Go errors and archived `github.com/pkg/errors`, but with stack traces
   and structured details (and few utility functions for common cases).
