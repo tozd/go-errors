@@ -327,6 +327,11 @@ so that original error is always available. `Wrap` wraps the error to records th
   as a replacement for `github.com/pkg/errors` but some functions are missing
   (e.g., `WithMessage`, `WithStack`) while this package provides them. Eris also does
   not support structured details.
+- [github.com/ztrue/tracerr](https://github.com/ztrue/tracerr) – A simple library to
+  create errors with a stack trace. It is able to also show snippets of source code
+  when formatting stack traces. But it is slower than this package because it resolves
+  stack traces at error creation time and not only when formatting. It also lacks
+  many `github.com/pkg/errors` functions so it does not work as a drop-in replacement.
 
 ## GitHub mirror
 
