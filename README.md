@@ -308,6 +308,36 @@ Every modification to errors made through this package is done through wrapping
 so that original error is always available. `Wrap` wraps the error to records the cause.
 `Cause` exist as a helper to return the recorded cause.
 
+## Is this package a fork of `github.com/pkg/errors`?
+
+No. This is a completely new package which has been written from scratch using current
+best practices and patterns in Go and Go errors. But one of its goals is to be (in most cases)
+a drop-in replacement for `github.com/pkg/errors` so it shares API with `github.com/pkg/errors`
+while providing at the same time new utility functions and new functionality.
+
+## It looks like most of the things provided by this package can be done using standard `errors` package?
+
+That is the idea! One of the goals of this package is to learn from `github.com/pkg/errors`
+and update it to modern Go errors patterns. That means that it is interoperable with other
+errors packages and can be used in large codebases with mixed use of different errors packages.
+The idea is that you should be able to create errors which behave like errors from this package
+by implementing few interfaces and this package knows how to use other errors if they implement
+those interfaces, too.
+
+What this package primarily provides are utility functions for common cases so that it is just
+easier to do "the right thing" and construct such useful errors. (And at the same time errors
+have stack traces and structural details if you need them.)
+
+## This package uses `github.com/pkg/errors` under the hood!
+
+No, it does not. It is a completely new package. But because it wants to be compatible
+with errors made by `github.com/pkg/errors` in large codebases with mixed use of different errors
+packages it has to depend on `github.com/pkg/errors` to get one type (`errors.StackTrace`) from it
+so that it can extract stack traces from those errors. It is using no code from `github.com/pkg/errors`.
+
+BTW, this package itself does not require to import it to be able to extract all data from its errors.
+Interfaces used by this package do not use custom types.
+
 ## Related projects
 
 - [github.com/cockroachdb/errors](https://github.com/cockroachdb/errors) – Go errors
