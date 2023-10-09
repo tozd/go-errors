@@ -329,7 +329,11 @@ easier to do "the right thing" and construct useful errors. It even calls into s
 `errors` package itself for most of the heavy lifting.
 Despite many features this package provides this approach keeps it pretty lean.
 
+<!-- markdownlint-disable MD026 -->
+
 ## This package uses `github.com/pkg/errors` under the hood!
+
+<!-- markdownlint-enable MD026 -->
 
 No, it does not. It is a completely new package. But because it wants to be compatible
 with errors made by `github.com/pkg/errors` in large codebases with mixed use of different errors
