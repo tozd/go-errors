@@ -338,6 +338,7 @@ so that it can extract stack traces from those errors. It is using no code from 
 
 BTW, this package itself does not require to import it to be able to extract all data from its errors.
 Interfaces used by this package do not use custom types.
+Another lesson learned from `github.com/pkg/errors`.
 
 ## Related projects
 
