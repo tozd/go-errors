@@ -373,11 +373,21 @@ Another lesson learned from `github.com/pkg/errors`.
 - [github.com/emperror/errors](https://github.com/emperror/errors) – A drop-in replacement
   for `github.com/pkg/errors` with similar features to this package, embracing modern
   Go errors patterns (wrapping, sentinel/base errors, etc.) and sharing similar design goals.
-  It supports structured details as well. But under the hood there are small but important
+  It supports structured details as well. It has different integrations with other packages
+  and services. But under the hood there are small but important
   differences: this package supports `%w` in `errors.Errorf`, it does not use
   `github.com/pkg/errors` internally, you can obtain a stack trace from errors
   without importing this package, it supports more formatting options and JSON
   marshaling of errors.
+- [github.com/axkit/errors](https://github.com/axkit/errors) – Supports recording
+  a stack trace, structured details, severity levels, JSON marshaling, etc.
+  But it inefficiently resolves stack traces at error creation time
+  and not only when formatting. It requires importing the package to access the
+  stack trace. Its API is different from `github.com/pkg/errors`.
+- [github.com/efficientgo/core/errors](https://github.com/efficientgo/core) – A
+  minimal library for wrapping errors with stack traces. Does not provide
+  `errors.Errorf` not does it support `%w` format verb. It is not possible to
+  access unformatted stack trace.
 
 ## GitHub mirror
 
