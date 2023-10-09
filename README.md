@@ -325,8 +325,9 @@ by implementing few interfaces and this package knows how to use other errors if
 those interfaces, too.
 
 What this package primarily provides are utility functions for common cases so that it is just
-easier to do "the right thing" and construct such useful errors. (And at the same time errors
-have stack traces and structural details if you need them.)
+easier to do "the right thing" and construct useful errors. It even calls into standard
+`errors` package itself for most of the heavy lifting.
+Despite many features this package provides this approach keeps it pretty lean.
 
 ## This package uses `github.com/pkg/errors` under the hood!
 
