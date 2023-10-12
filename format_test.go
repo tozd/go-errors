@@ -2100,6 +2100,8 @@ func TestFormatPrefix(t *testing.T) {
 }
 
 func TestGetMessage(t *testing.T) {
+	t.Parallel()
+
 	got := fmt.Sprintf("%s", errors.Formatter{Error: errors.New("test"), GetMessage: func(err error) string {
 		return fmt.Sprintf("X%sX", err.Error())
 	}})
