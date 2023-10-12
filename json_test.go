@@ -179,7 +179,7 @@ func TestJSON(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			jsonError, err := json.Marshal(errors.Formatter{tt.error})
+			jsonError, err := json.Marshal(errors.Formatter{Error: tt.error}) //nolint:exhaustruct
 			require.NoError(t, err)
 			jsonEqual(t, tt.want, string(jsonError))
 

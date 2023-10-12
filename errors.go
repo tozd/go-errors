@@ -378,7 +378,7 @@ func (e *fundamentalError) Error() string {
 }
 
 func (e *fundamentalError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e}) //nolint:exhaustruct
 }
 
 func (e fundamentalError) MarshalJSON() ([]byte, error) {
@@ -413,7 +413,7 @@ func (e *msgError) Error() string {
 }
 
 func (e *msgError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e}) //nolint:exhaustruct
 }
 
 func (e msgError) MarshalJSON() ([]byte, error) {
@@ -453,7 +453,7 @@ func (e *msgJoinedError) Error() string {
 }
 
 func (e *msgJoinedError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e}) //nolint:exhaustruct
 }
 
 func (e msgJoinedError) MarshalJSON() ([]byte, error) {
@@ -542,7 +542,7 @@ func (e *noMsgError) Error() string {
 }
 
 func (e *noMsgError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e}) //nolint:exhaustruct
 }
 
 func (e noMsgError) MarshalJSON() ([]byte, error) {
@@ -633,7 +633,7 @@ func (e *causeError) Error() string {
 }
 
 func (e *causeError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e}) //nolint:exhaustruct
 }
 
 func (e causeError) MarshalJSON() ([]byte, error) {
@@ -993,7 +993,7 @@ func (e *wrapError) Error() string {
 }
 
 func (e *wrapError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{e})
+	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e}) //nolint:exhaustruct
 }
 
 func (e wrapError) MarshalJSON() ([]byte, error) {

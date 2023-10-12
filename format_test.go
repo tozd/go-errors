@@ -1389,11 +1389,11 @@ func TestFormatter(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			got := fmt.Sprintf(tt.format, errors.Formatter{tt.error})
+			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
 			assert.Regexp(t, tt.want, got)
 
 			if !strings.Contains(got, "more data") {
-				err2 := copyThroughJSON(t, errors.Formatter{tt.error})
+				err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
 				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
@@ -1671,11 +1671,11 @@ func TestJoin(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			got := fmt.Sprintf(tt.format, errors.Formatter{tt.error})
+			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
 			assert.Regexp(t, tt.want, got)
 
 			if !strings.Contains(tt.format, ".3v") {
-				err2 := copyThroughJSON(t, errors.Formatter{tt.error})
+				err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
 				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
@@ -2000,10 +2000,10 @@ func TestFormatCustomError(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			got := fmt.Sprintf(tt.format, errors.Formatter{tt.error})
+			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
 			assert.Regexp(t, tt.want, got)
 
-			err2 := copyThroughJSON(t, errors.Formatter{tt.error})
+			err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
 			got2 := fmt.Sprintf(tt.format, err2)
 			assert.Equal(t, got, got2)
 		})
@@ -2097,4 +2097,11 @@ func TestFormatPrefix(t *testing.T) {
 			assert.Equal(t, got, got2)
 		})
 	}
+}
+
+func TestGetMessage(t *testing.T) {
+	got := fmt.Sprintf("%s", errors.Formatter{Error: errors.New("test"), GetMessage: func(err error) string {
+		return fmt.Sprintf("X%sX", err.Error())
+	}})
+	assert.Equal(t, "XtestX", got)
 }

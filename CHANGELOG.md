@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Detect stack traces in errors made by `github.com/rotisserie/eris` package.
+- `GetMessage` to `Formatter` to control how error messages are obtain from
+  errors during formatting.
 
 ## [0.7.2] - 2023-09-21
 

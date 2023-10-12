@@ -112,7 +112,7 @@ func isForeignFormatter(err error) bool {
 	return ok
 }
 
-func formatError(s fmt.State, w io.Writer, indent int, err error) {
+func (f Formatter) formatError(s fmt.State, w io.Writer, indent int, err error) {
 	linePrefix := ""
 	if indent > 0 {
 		width, ok := s.Width()
@@ -147,7 +147,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 			cause, errs = causeOrJoined(err)
 		}
 	} else {
-		formatMsg(w, linePrefix, err)
+		f.formatMsg(w, linePrefix, err)
 		var details map[string]interface{}
 		if s.Flag('#') {
 			details, cause, errs = allDetailsUntilCauseOrJoined(err)
@@ -155,10 +155,10 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 			cause, errs = causeOrJoined(err)
 		}
 		if s.Flag('#') {
-			formatDetails(w, linePrefix, details)
+			f.formatDetails(w, linePrefix, details)
 		}
 		if s.Flag('+') {
-			formatStack(s, w, linePrefix, err)
+			f.formatStack(s, w, linePrefix, err)
 		}
 	}
 
@@ -179,7 +179,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 				if er != nil && er != cause && !isSubsumedError(err, er) { //nolint:errorlint,goerr113
 					// We format error to the buffer so that we can see if anything was written.
 					buf.Reset()
-					formatError(s, buf, indent+1, er)
+					f.formatError(s, buf, indent+1, er)
 					// If nothing was written, we skip this error.
 					if buf.Len() == 0 {
 						continue
@@ -205,7 +205,7 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 		if cause != nil {
 			// We format error to the buffer so that we can see if anything was written.
 			buf.Reset()
-			formatError(s, buf, indent, cause)
+			f.formatError(s, buf, indent, cause)
 			// Only if something was written we continue.
 			if buf.Len() > 0 {
 				if s.Flag('-') {
@@ -223,12 +223,17 @@ func formatError(s fmt.State, w io.Writer, indent int, err error) {
 	}
 }
 
-func formatMsg(w io.Writer, linePrefix string, err error) {
-	writeLinesPrefixed(w, linePrefix, err.Error())
+func (f Formatter) formatMsg(w io.Writer, linePrefix string, err error) {
+	getMessage := f.GetMessage
+	if getMessage == nil {
+		getMessage = defaultGetMessage
+	}
+
+	writeLinesPrefixed(w, linePrefix, getMessage(err))
 }
 
 // Similar to writeFields in zerolog/console.go.
-func formatDetails(w io.Writer, linePrefix string, details map[string]interface{}) {
+func (f Formatter) formatDetails(w io.Writer, linePrefix string, details map[string]interface{}) {
 	fields := make([]string, len(details))
 	i := 0
 	for field := range details {
@@ -260,7 +265,7 @@ func formatDetails(w io.Writer, linePrefix string, details map[string]interface{
 	}
 }
 
-func formatStack(s fmt.State, w io.Writer, linePrefix string, err error) {
+func (f Formatter) formatStack(s fmt.State, w io.Writer, linePrefix string, err error) {
 	var stToFormat interface{}
 	st := getExistingStackTrace(err)
 	if len(st) > 0 {
@@ -290,9 +295,17 @@ func formatStack(s fmt.State, w io.Writer, linePrefix string, err error) {
 	writeLinesPrefixed(w, linePrefix, result)
 }
 
+func defaultGetMessage(err error) string {
+	return err.Error()
+}
+
 // Formatter formats an error as text and marshals the error as JSON.
 type Formatter struct { //nolint:musttag
 	Error error
+
+	// Provide a function to obtain the error's message.
+	// By default error's Error() is called.
+	GetMessage func(error) string
 }
 
 // Format formats the error as text according to the fmt.Formatter interface.
@@ -339,6 +352,11 @@ type Formatter struct { //nolint:musttag
 // When any flag or non-zero precision mode is used, it is assured that the text
 // ends with a newline, if it does not already do so.
 func (f Formatter) Format(s fmt.State, verb rune) {
+	getMessage := f.GetMessage
+	if getMessage == nil {
+		getMessage = defaultGetMessage
+	}
+
 	switch verb {
 	case 'v':
 		precision, ok := s.Precision()
@@ -352,19 +370,19 @@ func (f Formatter) Format(s fmt.State, verb rune) {
 			break
 		}
 		if s.Flag('#') || s.Flag('+') || s.Flag('-') || s.Flag(' ') || precision > 0 {
-			formatError(s, s, 0, f.Error)
+			f.formatError(s, s, 0, f.Error)
 			break
 		}
 		fallthrough
 	case 's':
 		if f.Error != nil {
-			_, _ = io.WriteString(s, f.Error.Error())
+			_, _ = io.WriteString(s, getMessage(f.Error))
 		} else {
 			fmt.Fprintf(s, "%s", f.Error)
 		}
 	case 'q':
 		if f.Error != nil {
-			fmt.Fprintf(s, "%q", f.Error.Error())
+			fmt.Fprintf(s, "%q", getMessage(f.Error))
 		} else {
 			fmt.Fprintf(s, "%q", f.Error)
 		}

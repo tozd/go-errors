@@ -47,7 +47,7 @@ func TestJoinErrorf(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, errors.Formatter{tt.error}))
+			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error})) //nolint:exhaustruct
 		})
 	}
 }
