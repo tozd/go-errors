@@ -34,7 +34,7 @@ lint-docs:
 	npx --yes --package 'markdownlint-cli@~0.34.0' -- markdownlint --ignore-path .gitignore --ignore testdata/ '**/*.md'
 
 audit:
-	go list -json -deps | nancy sleuth --skip-update-check
+	go list -json -deps ./... | nancy sleuth --skip-update-check
 
 encrypt:
 	gitlab-config sops --encrypt --mac-only-encrypted --in-place --encrypted-comment-regex sops:enc .gitlab-conf.yml
