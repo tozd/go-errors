@@ -12,7 +12,7 @@ test:
   image: golang:$IMAGE_TAG
 
   before_script:
-    - apk --update add make gcc musl-dev
+    - apk --update add make bash gcc musl-dev
     - (cd /go; go install gotest.tools/gotestsum@v1.10.1)
     - (cd /go; go install github.com/boumenot/gocover-cobertura@v1.2.0)
 
@@ -44,7 +44,7 @@ lint:
   image: golang:1.21-alpine3.18
 
   before_script:
-    - apk --update add make gcc musl-dev
+    - apk --update add make bash gcc musl-dev
     - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
 
   script:
@@ -62,7 +62,7 @@ fmt:
   image: golang:1.21-alpine3.18
 
   before_script:
-    - apk --update add make git gcc musl-dev grep
+    - apk --update add make bash git gcc musl-dev grep
     - go install mvdan.cc/gofumpt@v0.5.0
     - go install golang.org/x/tools/cmd/goimports@v0.13.0
 
@@ -75,7 +75,7 @@ lint_docs:
   image: node:17-alpine3.14
 
   before_script:
-    - apk --update add make
+    - apk --update add make bash
 
   script:
     - make lint-docs
@@ -86,7 +86,7 @@ audit:
   image: golang:1.21-alpine3.18
 
   before_script:
-    - apk --update add make git gcc musl-dev
+    - apk --update add make bash git gcc musl-dev
     - go install github.com/sonatype-nexus-community/nancy@v1.0.42
 
   script:
