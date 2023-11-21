@@ -33,6 +33,8 @@ linters-settings:
     go: "1.21"
     checks:
       - all
+  tagalign:
+    strict: true
   unused:
     go: "1.21"
 
@@ -142,6 +144,7 @@ issues:
     - path: stack_test\.go
       linters:
         - gochecknoglobals
+        - goconst
         - testpackage
     - path: json_test\.go
       linters:
