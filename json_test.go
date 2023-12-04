@@ -55,6 +55,12 @@ func jsonEqual(t *testing.T, expected string, actual string, msgAndArgs ...inter
 	return equal(t, expectedJSONAsInterface, actualJSONAsInterface, msgAndArgs...)
 }
 
+type testValueReceiverError struct{}
+
+func (e testValueReceiverError) Error() string {
+	return "error"
+}
+
 func TestJSON(t *testing.T) {
 	t.Parallel()
 
@@ -171,6 +177,9 @@ func TestJSON(t *testing.T) {
 	}, {
 		errors.Prefix(errors.Base("parent"), errors.Base("")),
 		`{"error":"parent","stack":[]}`,
+	}, {
+		testValueReceiverError{},
+		`{"error":"error"}`,
 	}}
 
 	for k, tt := range tests {

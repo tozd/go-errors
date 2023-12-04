@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- JSON marshal of value receiver errors.
+  [#15](https://gitlab.com/tozd/go/errors/-/issues/15)
+
 ## [0.8.0] - 2023-10-12
 
 ### Added
