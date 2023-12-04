@@ -154,7 +154,7 @@ func useMarshaler(err error) bool {
 
 	typ := reflect.TypeOf(err)
 	switch typ.Kind() { //nolint:exhaustive
-	case reflect.Pointer, reflect.Interface:
+	case reflect.Ptr, reflect.Interface:
 		typ = typ.Elem()
 	}
 	return hasJSONTag(typ)
