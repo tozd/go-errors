@@ -64,7 +64,7 @@ func (e testValueReceiverError) Error() string {
 func TestJSON(t *testing.T) {
 	t.Parallel()
 
-	testErr := &testStructJoined{msg: "test2"} //nolint:exhaustruct
+	testErr := &testStructJoined{msg: "test2"}
 
 	tests := []struct {
 		error
@@ -151,25 +151,25 @@ func TestJSON(t *testing.T) {
 		errors.WrapWith(errors.Base("foobar"), errors.WithStack(errors.Base("error"))),
 		`{"error":"error","stack":[],"cause":{"error":"foobar"}}`,
 	}, {
-		&testStructJoined{}, //nolint:exhaustruct
+		&testStructJoined{},
 		`{}`,
 	}, {
-		&testStructJoined{msg: "test"}, //nolint:exhaustruct
+		&testStructJoined{msg: "test"},
 		`{"error":"test"}`,
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr},
 		`{"cause":{"error":"test2"},"error":"test1"}`,
 	}, {
 		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr}},
 		`{"cause":{"error":"test2"},"error":"test1"}`,
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}}}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}}},
 		`{"cause":{"error":"test2"},"error":"test1","errors":[{"error":"test3"}]}`,
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}},
 		`{"cause":{"error":"test2"},"error":"test1","errors":[{"error":"test3"},{"error":"test4"}]}`,
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr, parents: []error{&testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{&testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}},
 		`{"cause":{"error":"test2"},"error":"test1","errors":[{"error":"test3"},{"error":"test4"}]}`,
 	}, {
 		errors.Prefix(errors.New("error"), errors.Base("error2")),
@@ -188,7 +188,7 @@ func TestJSON(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			jsonError, err := json.Marshal(errors.Formatter{Error: tt.error}) //nolint:exhaustruct
+			jsonError, err := json.Marshal(errors.Formatter{Error: tt.error})
 			require.NoError(t, err)
 			jsonEqual(t, tt.want, string(jsonError))
 

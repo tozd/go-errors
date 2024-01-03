@@ -1389,11 +1389,11 @@ func TestFormatter(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
+			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error})
 			assert.Regexp(t, tt.want, got)
 
 			if !strings.Contains(got, "more data") {
-				err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
+				err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error})
 				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
@@ -1671,11 +1671,11 @@ func TestJoin(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
+			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error})
 			assert.Regexp(t, tt.want, got)
 
 			if !strings.Contains(tt.format, ".3v") {
-				err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
+				err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error})
 				got2 := fmt.Sprintf(tt.format, err2)
 				assert.Equal(t, got, got2)
 			}
@@ -1934,9 +1934,9 @@ func TestFormatWrapWith(t *testing.T) {
 }
 
 type testStructJoined struct {
-	msg     string
-	cause   error
-	parents []error
+	msg     string  `exhaustruct:"optional"`
+	cause   error   `exhaustruct:"optional"`
+	parents []error `exhaustruct:"optional"`
 }
 
 func (e *testStructJoined) Error() string {
@@ -1954,26 +1954,26 @@ func (e *testStructJoined) Unwrap() []error {
 func TestFormatCustomError(t *testing.T) {
 	t.Parallel()
 
-	testErr := &testStructJoined{msg: "test2"} //nolint:exhaustruct
+	testErr := &testStructJoined{msg: "test2"}
 
 	tests := []struct {
 		error
 		format string
 		want   string
 	}{{
-		&testStructJoined{}, //nolint:exhaustruct
+		&testStructJoined{},
 		"%s",
 		"^$",
 	}, {
-		&testStructJoined{msg: "test"}, //nolint:exhaustruct
+		&testStructJoined{msg: "test"},
 		"%s",
 		"^test$",
 	}, {
-		&testStructJoined{msg: "test"}, //nolint:exhaustruct
+		&testStructJoined{msg: "test"},
 		"%-.1v",
 		"^test\n$",
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr},
 		"%-.1v",
 		"^test1\nthe above error was caused by the following error:\ntest2\n$",
 	}, {
@@ -1981,15 +1981,15 @@ func TestFormatCustomError(t *testing.T) {
 		"%-.1v",
 		"^test1\nthe above error was caused by the following error:\ntest2\n$",
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}}}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}}},
 		"%-.1v",
 		"^test1\nthe above error joins errors:\n\ttest3\nthe above error was caused by the following error:\ntest2\n$",
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{testErr, &testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}},
 		"%-.1v",
 		"^test1\nthe above error joins errors:\n\ttest3\n\ttest4\nthe above error was caused by the following error:\ntest2\n$",
 	}, {
-		&testStructJoined{msg: "test1", cause: testErr, parents: []error{&testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}}, //nolint:exhaustruct
+		&testStructJoined{msg: "test1", cause: testErr, parents: []error{&testStructJoined{msg: "test3"}, &testStructJoined{msg: "test4"}}},
 		"%-.1v",
 		"^test1\nthe above error joins errors:\n\ttest3\n\ttest4\nthe above error was caused by the following error:\ntest2\n$",
 	}}
@@ -2000,10 +2000,10 @@ func TestFormatCustomError(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
+			got := fmt.Sprintf(tt.format, errors.Formatter{Error: tt.error})
 			assert.Regexp(t, tt.want, got)
 
-			err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error}) //nolint:exhaustruct
+			err2 := copyThroughJSON(t, errors.Formatter{Error: tt.error})
 			got2 := fmt.Sprintf(tt.format, err2)
 			assert.Equal(t, got, got2)
 		})

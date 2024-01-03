@@ -305,7 +305,7 @@ type Formatter struct { //nolint:musttag
 
 	// Provide a function to obtain the error's message.
 	// By default error's Error() is called.
-	GetMessage func(error) string
+	GetMessage func(error) string `exhaustruct:"optional"`
 }
 
 // Format formats the error as text according to the fmt.Formatter interface.

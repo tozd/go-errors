@@ -684,9 +684,9 @@ func TestMarshalerError(t *testing.T) {
 		"foo=bar\n"+
 		"gitlab.com/tozd/go/errors_test.testStructJSON.MarshalJSON\n"+
 		"\t.+/errors_test.go:\\d+\n"+
-		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{Error: err})) //nolint:exhaustruct
+		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{Error: err}))
 
-	data, err2 := json.Marshal(errors.Formatter{Error: err}) //nolint:exhaustruct
+	data, err2 := json.Marshal(errors.Formatter{Error: err})
 	assert.NoError(t, err2)
 	jsonEqual(t, `{"error":"json: error calling MarshalJSON for type errors_test.testStructJSON: error","foo":"bar","stack":[]}`, string(data))
 
@@ -723,9 +723,9 @@ func TestFmtErrorf(t *testing.T) {
 		"foo=bar\n"+
 		"gitlab.com/tozd/go/errors_test.getTestNewError\n"+
 		"\t.+/errors_test.go:\\d+\n"+
-		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{Error: err})) //nolint:exhaustruct
+		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{Error: err}))
 
-	data, err2 := json.Marshal(errors.Formatter{Error: err}) //nolint:exhaustruct
+	data, err2 := json.Marshal(errors.Formatter{Error: err})
 	assert.NoError(t, err2)
 	jsonEqual(t, `{"error":"test: error","foo":"bar","stack":[]}`, string(data))
 
