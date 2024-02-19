@@ -84,7 +84,7 @@ func (f frame) MarshalJSON() ([]byte, error) {
 
 // StackFormatter formats a stack trace as text
 // and marshals the stack trace as JSON.
-type StackFormatter struct { //nolint:musttag
+type StackFormatter struct {
 	Stack []uintptr
 }
 

@@ -75,11 +75,11 @@ func useKnownInterface(err error) bool {
 			return true
 		}
 		// We stop unwrapping if we hit cause or join.
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok && c.Cause() != nil {
 			return false
 		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok && len(e.Unwrap()) > 0 {
 			return false
 		}
@@ -94,7 +94,7 @@ func useFormatter(err error) bool {
 	}
 
 	// We check for this interface without unwrapping because it does not work with wrapping anyway.
-	_, ok := err.(fmt.Formatter) //nolint:errorlint
+	_, ok := err.(fmt.Formatter)
 	return ok
 }
 
@@ -108,7 +108,7 @@ func isForeignFormatter(err error) bool {
 	}
 
 	// We check for this interface without unwrapping because it does not work with wrapping anyway.
-	_, ok := err.(fmt.Formatter) //nolint:errorlint
+	_, ok := err.(fmt.Formatter)
 	return ok
 }
 
@@ -271,7 +271,7 @@ func (f Formatter) formatStack(s fmt.State, w io.Writer, linePrefix string, err 
 	if len(st) > 0 {
 		stToFormat = StackFormatter{st}
 	} else {
-		placeholderErr, ok := err.(placeholderStackTracer) //nolint:errorlint
+		placeholderErr, ok := err.(placeholderStackTracer)
 		if !ok {
 			return
 		}
@@ -300,7 +300,7 @@ func defaultGetMessage(err error) string {
 }
 
 // Formatter formats an error as text and marshals the error as JSON.
-type Formatter struct { //nolint:musttag
+type Formatter struct {
 	Error error
 
 	// Provide a function to obtain the error's message.

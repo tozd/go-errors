@@ -42,11 +42,11 @@ func isSubsumedError(err, base error) bool {
 			return false
 		}
 	} else {
-		placeholderBase, ok := base.(placeholderStackTracer) //nolint:errorlint
+		placeholderBase, ok := base.(placeholderStackTracer)
 		if ok {
 			placeholderSt := placeholderBase.StackTrace()
 			if len(placeholderSt) > 0 {
-				placeholderErr, ok := err.(placeholderStackTracer) //nolint:errorlint
+				placeholderErr, ok := err.(placeholderStackTracer)
 				if !ok || !reflect.DeepEqual(placeholderErr.StackTrace(), placeholderSt) {
 					return false
 				}
@@ -80,7 +80,7 @@ func marshalJSONError(err error) ([]byte, E) {
 	if len(st) > 0 {
 		data["stack"] = StackFormatter{st}
 	} else {
-		placeholderErr, ok := err.(placeholderStackTracer) //nolint:errorlint
+		placeholderErr, ok := err.(placeholderStackTracer)
 		if ok {
 			placeholderSt := placeholderErr.StackTrace()
 			if len(placeholderSt) > 0 {
@@ -147,7 +147,7 @@ func useMarshaler(err error) bool {
 	}
 
 	// We check for this interface without unwrapping because it does not work with wrapping anyway.
-	_, ok := err.(json.Marshaler) //nolint:errorlint
+	_, ok := err.(json.Marshaler)
 	if ok {
 		return true
 	}

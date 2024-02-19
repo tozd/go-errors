@@ -193,7 +193,7 @@ func TestStackFormatter(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, StackFormatter{tt.err.(stackTracer).StackTrace()})) //nolint:errorlint,forcetypeassert
+			assert.Regexp(t, tt.want, fmt.Sprintf(tt.format, StackFormatter{tt.err.(stackTracer).StackTrace()})) //nolint:forcetypeassert
 		})
 	}
 

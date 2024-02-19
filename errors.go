@@ -240,11 +240,11 @@ func getExistingStackTrace(err error) []uintptr {
 		case erisStackTracer:
 			return e.StackFrames()
 		}
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok && c.Cause() != nil {
 			return nil
 		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok && len(e.Unwrap()) > 0 {
 			return nil
 		}
@@ -721,14 +721,14 @@ func WithMessagef(err error, format string, args ...interface{}) E {
 // Unwrap() method returning multiple errors.
 func Cause(err error) error {
 	for err != nil {
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok {
 			cause := c.Cause()
 			if cause != nil {
 				return cause //nolint:wrapcheck
 			}
 		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok && len(e.Unwrap()) > 0 {
 			return nil
 		}
@@ -745,14 +745,14 @@ func Cause(err error) error {
 // method returning error.
 func Unjoin(err error) []error {
 	for err != nil {
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok {
 			errs := e.Unwrap()
 			if len(errs) > 0 {
 				return errs
 			}
 		}
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok && c.Cause() != nil {
 			return nil
 		}
@@ -776,11 +776,11 @@ func Details(err error) map[string]interface{} {
 		if dd != nil {
 			return dd
 		}
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok && c.Cause() != nil {
 			return nil
 		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok && len(e.Unwrap()) > 0 {
 			return nil
 		}
@@ -795,7 +795,7 @@ func detailsOf(err error) map[string]interface{} {
 	if err == nil {
 		return nil
 	}
-	d, ok := err.(detailer) //nolint:errorlint
+	d, ok := err.(detailer)
 	if ok {
 		return d.Details()
 	}
@@ -816,11 +816,11 @@ func AllDetails(err error) map[string]interface{} {
 				res[key] = value
 			}
 		}
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok && c.Cause() != nil {
 			return res
 		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok && len(e.Unwrap()) > 0 {
 			return res
 		}
@@ -843,11 +843,11 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 				res[key] = value
 			}
 		}
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok {
 			cause = c.Cause()
 		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok {
 			errs = e.Unwrap()
 		}
@@ -869,11 +869,11 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 	errs = nil
 
 	for err != nil {
-		c, ok := err.(causer) //nolint:errorlint
+		c, ok := err.(causer)
 		if ok {
 			cause = c.Cause()
 		}
-		e, ok := err.(unwrapperJoined) //nolint:errorlint
+		e, ok := err.(unwrapperJoined)
 		if ok {
 			errs = e.Unwrap()
 		}
