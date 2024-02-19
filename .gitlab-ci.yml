@@ -36,16 +36,16 @@ test:
 
   parallel:
     matrix:
-      - IMAGE_TAG: ['1.16-alpine3.15', '1.17-alpine3.16', '1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18']
+      - IMAGE_TAG: ['1.16-alpine3.15', '1.17-alpine3.16', '1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18', '1.22-alpine3.18']
 
 lint:
   stage: test
 
-  image: golang:1.21-alpine3.18
+  image: golang:1.22-alpine3.18
 
   before_script:
     - apk --update add make bash gcc musl-dev
-    - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+    - wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.2
 
   script:
     - make lint-ci
@@ -59,7 +59,7 @@ lint:
 fmt:
   stage: test
 
-  image: golang:1.21-alpine3.18
+  image: golang:1.22-alpine3.18
 
   before_script:
     - apk --update add make bash git gcc musl-dev grep
@@ -83,7 +83,7 @@ lint_docs:
 audit:
   stage: test
 
-  image: golang:1.21-alpine3.18
+  image: golang:1.22-alpine3.18
 
   before_script:
     - apk --update add make bash git gcc musl-dev
@@ -95,7 +95,7 @@ audit:
 commits:
   stage: test
 
-  image: golang:1.21-alpine3.18
+  image: golang:1.22-alpine3.18
 
   variables:
     GIT_DEPTH: "0"
@@ -109,7 +109,7 @@ commits:
 publish:
   stage: deploy
 
-  image: golang:1.21-alpine3.18
+  image: golang:1.22-alpine3.18
 
   script:
     - GOPROXY=proxy.golang.org go list -m "gitlab.com/tozd/go/errors@$CI_COMMIT_REF_NAME"

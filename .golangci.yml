@@ -8,11 +8,11 @@ linters-settings:
   godot:
     scope: all
   gofumpt:
-    go: "1.21"
+    go: "1.22"
   goimports:
     local-prefixes: gitlab.com/tozd/go/errors
   gosimple:
-    go: "1.21"
+    go: "1.22"
     checks:
       - all
   govet:
@@ -26,17 +26,17 @@ linters-settings:
     allow-leading-space: false
     require-specific: true
   stylecheck:
-    go: "1.21"
+    go: "1.22"
     checks:
       - all
   staticcheck:
-    go: "1.21"
+    go: "1.22"
     checks:
       - all
   tagalign:
     strict: true
   unused:
-    go: "1.21"
+    go: "1.22"
 
 linters:
   disable-all: true
