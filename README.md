@@ -372,7 +372,7 @@ Another lesson learned from `github.com/pkg/errors`.
   when formatting stack traces. But it is slower than this package because it resolves
   stack traces at error creation time and not only when formatting. It also lacks
   many `github.com/pkg/errors` functions so it does not work as a drop-in replacement.
-- [github.com/emperror/errors](https://github.com/emperror/errors) – A drop-in replacement
+- [emperror.dev/errors](https://github.com/emperror/errors) – A drop-in replacement
   for `github.com/pkg/errors` with similar features to this package, embracing modern
   Go errors patterns (wrapping, sentinel/base errors, etc.) and sharing similar design goals.
   It supports structured details as well. It has different integrations with other packages
