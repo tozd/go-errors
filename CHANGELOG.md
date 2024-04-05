@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wraps multiple errors.
 - `AllDetails` collect details only until an error with a cause or which
   wraps multiple errors.
-- JSON marshalling adds fields from error's details into JSON.
+- JSON marshaling adds fields from error's details into JSON.
   [#7](https://gitlab.com/tozd/go/errors/-/issues/7)
 - `Wrap` and `Wrapf` return `nil` if provided error is `nil`.
 
