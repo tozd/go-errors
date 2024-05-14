@@ -60,7 +60,7 @@ This is a Go package. You can add it to your project using `go get`:
 go get gitlab.com/tozd/go/errors
 ```
 
-It requires Go 1.16 or newer.
+It requires Go 1.17 or newer.
 
 ## Usage
 
