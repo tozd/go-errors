@@ -141,7 +141,7 @@ project:
   # private, or enabled. Type: string
   security_and_compliance_access_level: disabled
   # Enable or disable Service Desk feature. Type: boolean
-  service_desk_enabled: true
+  service_desk_enabled: false
   # Enable shared runners for this project. Type: boolean
   shared_runners_enabled: true
   # One of disabled, private, or enabled. Type: string
