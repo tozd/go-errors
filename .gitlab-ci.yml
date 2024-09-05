@@ -15,6 +15,7 @@ test:
     - apk --update add make bash gcc musl-dev
     - (cd /go; go install gotest.tools/gotestsum@v1.10.1)
     - (cd /go; go install github.com/boumenot/gocover-cobertura@v1.2.0)
+    - go version
 
   script:
     - make test-ci
@@ -36,12 +37,12 @@ test:
 
   parallel:
     matrix:
-      - IMAGE_TAG: ['1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18', '1.22-alpine3.18']
+      - IMAGE_TAG: ['1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18', '1.22-alpine3.18', '1.23-alpine3.18']
 
 lint:
   stage: test
 
-  image: golang:1.22-alpine3.18
+  image: golang:1.23-alpine3.18
 
   before_script:
     - apk --update add make bash gcc musl-dev
@@ -59,7 +60,7 @@ lint:
 fmt:
   stage: test
 
-  image: golang:1.22-alpine3.18
+  image: golang:1.23-alpine3.18
 
   before_script:
     - apk --update add make bash git gcc musl-dev grep
@@ -72,7 +73,7 @@ fmt:
 lint_docs:
   stage: test
 
-  image: node:17-alpine3.14
+  image: node:20.11-alpine3.18
 
   before_script:
     - apk --update add make bash
@@ -83,7 +84,7 @@ lint_docs:
 audit:
   stage: test
 
-  image: golang:1.22-alpine3.18
+  image: golang:1.23-alpine3.18
 
   before_script:
     - apk --update add make bash git gcc musl-dev
@@ -95,7 +96,7 @@ audit:
 commits:
   stage: test
 
-  image: golang:1.22-alpine3.18
+  image: golang:1.23-alpine3.18
 
   variables:
     GIT_DEPTH: "0"
@@ -109,7 +110,7 @@ commits:
 publish:
   stage: deploy
 
-  image: golang:1.22-alpine3.18
+  image: golang:1.23-alpine3.18
 
   script:
     - GOPROXY=proxy.golang.org go list -m "gitlab.com/tozd/go/errors@$CI_COMMIT_REF_NAME"

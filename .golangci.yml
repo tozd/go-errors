@@ -1,42 +1,35 @@
 linters-settings:
   errcheck:
     check-type-assertions: true
-    enable-all: true
   gocritic:
     disabled-checks:
       - ifElseChain
   godot:
     scope: all
-  gofumpt:
-    go: "1.22"
   goimports:
     local-prefixes: gitlab.com/tozd/go/errors
   gosimple:
-    go: "1.22"
     checks:
       - all
   govet:
-    check-shadowing: true
+    enable-all: true
+    disable:
+      - fieldalignment
   lll:
     line-length: 170
   nestif:
     min-complexity: 15
   nolintlint:
     allow-unused: false
-    allow-leading-space: false
     require-specific: true
   stylecheck:
-    go: "1.22"
     checks:
       - all
   staticcheck:
-    go: "1.22"
     checks:
       - all
   tagalign:
     strict: true
-  unused:
-    go: "1.22"
 
 linters:
   disable-all: true
