@@ -174,7 +174,7 @@ func TestStackFormatter(t *testing.T) {
 		func() error {
 			return func() error {
 				noinline()
-				return Errorf("hello %s", fmt.Sprintf("world: %s", "ooh"))
+				return Errorf("hello %s", "world: ooh")
 			}()
 		}(),
 		"%+v",

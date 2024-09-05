@@ -406,7 +406,7 @@ func TestErrors(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.EqualError(t, tt.err, tt.want)
+			assert.EqualError(t, tt.err, tt.want) //nolint:testifylint
 			assert.Implements(t, (*stackTracer)(nil), tt.err)
 			assert.Equal(t, tt.want, fmt.Sprintf("%s", tt.err))
 			assert.Equal(t, tt.want, fmt.Sprintf("%v", tt.err))
@@ -423,42 +423,42 @@ func TestWithStackNil(t *testing.T) {
 	t.Parallel()
 
 	assert.Nil(t, errors.WithStack(nil))
-	assert.Nil(t, copyThroughJSON(t, errors.WithStack(nil)))
+	assert.NoError(t, copyThroughJSON(t, errors.WithStack(nil)))
 }
 
 func TestWrapNil(t *testing.T) {
 	t.Parallel()
 
 	assert.Nil(t, errors.Wrap(nil, "x"))
-	assert.Nil(t, copyThroughJSON(t, errors.Wrap(nil, "x")))
+	assert.NoError(t, copyThroughJSON(t, errors.Wrap(nil, "x")))
 }
 
 func TestWrapfNil(t *testing.T) {
 	t.Parallel()
 
 	assert.Nil(t, errors.Wrapf(nil, "x"))
-	assert.Nil(t, copyThroughJSON(t, errors.Wrapf(nil, "x")))
+	assert.NoError(t, copyThroughJSON(t, errors.Wrapf(nil, "x")))
 }
 
 func TestWithDetailsNil(t *testing.T) {
 	t.Parallel()
 
 	assert.Nil(t, errors.WithDetails(nil))
-	assert.Nil(t, copyThroughJSON(t, errors.WithDetails(nil)))
+	assert.NoError(t, copyThroughJSON(t, errors.WithDetails(nil)))
 }
 
 func TestWithMessageNil(t *testing.T) {
 	t.Parallel()
 
 	assert.Nil(t, errors.WithMessage(nil, "no error"))
-	assert.Nil(t, copyThroughJSON(t, errors.WithMessage(nil, "no error")))
+	assert.NoError(t, copyThroughJSON(t, errors.WithMessage(nil, "no error")))
 }
 
 func TestWithMessagefNil(t *testing.T) {
 	t.Parallel()
 
 	assert.Nil(t, errors.WithMessagef(nil, "no error"))
-	assert.Nil(t, copyThroughJSON(t, errors.WithMessagef(nil, "no error")))
+	assert.NoError(t, copyThroughJSON(t, errors.WithMessagef(nil, "no error")))
 }
 
 func TestJoinNil(t *testing.T) {
@@ -466,15 +466,15 @@ func TestJoinNil(t *testing.T) {
 
 	assert.Nil(t, errors.Join(nil))
 	assert.Nil(t, errors.Join(nil, nil))
-	assert.Nil(t, copyThroughJSON(t, errors.Join(nil)))
-	assert.Nil(t, copyThroughJSON(t, errors.Join(nil, nil)))
+	assert.NoError(t, copyThroughJSON(t, errors.Join(nil)))
+	assert.NoError(t, copyThroughJSON(t, errors.Join(nil, nil)))
 }
 
 func TestWrapWithNil(t *testing.T) {
 	t.Parallel()
 
 	assert.Nil(t, errors.WrapWith(nil, errors.Base("x")))
-	assert.Nil(t, copyThroughJSON(t, errors.WrapWith(nil, errors.Base("x"))))
+	assert.NoError(t, copyThroughJSON(t, errors.WrapWith(nil, errors.Base("x"))))
 }
 
 // stderrors.New, etc values are not expected to be compared by value.
@@ -514,32 +514,32 @@ func TestBases(t *testing.T) {
 	grandparent := errors.Base("grandparent")
 	parent := errors.BaseWrap(grandparent, "parent")
 	err := errors.WithStack(parent)
-	assert.EqualError(t, err, "parent")
+	assert.EqualError(t, err, "parent") //nolint:testifylint
 	assert.Implements(t, (*stackTracer)(nil), err)
 	stackTrace := fmt.Sprintf("% +-v", err)
 	// Expected stack size (2 lines per frame), plus "stack trace
 	// (most recent call first)" line, plus extra lines.
 	assert.Equal(t, currentStackSize*2+1+1, strings.Count(stackTrace, "\n"), stackTrace)
-	assert.ErrorIs(t, err, parent)
+	assert.ErrorIs(t, err, parent) //nolint:testifylint
 	assert.ErrorIs(t, err, grandparent)
 }
 
 func TestCause(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, errors.Cause(errors.Base("foo")))
-	assert.Nil(t, errors.Cause(errors.New("foo")))
-	assert.Nil(t, errors.Cause(errors.WithMessage(errors.Base("foo"), "bar")))
+	assert.NoError(t, errors.Cause(errors.Base("foo")))
+	assert.NoError(t, errors.Cause(errors.New("foo")))
+	assert.NoError(t, errors.Cause(errors.WithMessage(errors.Base("foo"), "bar")))
 
 	err := errors.Base("foo")
 	assert.Equal(t, err, errors.Cause(errors.Wrap(err, "bar")))
 	assert.Equal(t, err, errors.Cause(errors.WithMessage(errors.Wrap(err, "bar"), "zar")))
 
 	wrap := &errorWithCauseAndWrap{"test", nil, nil}
-	assert.Nil(t, errors.Cause(wrap))
+	assert.NoError(t, errors.Cause(wrap))
 
 	wrap.wrap = err
-	assert.Nil(t, errors.Cause(wrap))
+	assert.NoError(t, errors.Cause(wrap))
 
 	wrap.wrap = errors.Wrap(err, "bar")
 	assert.Equal(t, err, errors.Cause(wrap))
@@ -617,7 +617,7 @@ func TestWrapWith(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(testErr))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(copyThroughJSON(t, testErr)))
 	assert.Equal(t, []error{eofBaseErr, io.EOF}, errors.Unjoin(testErr))
-	assert.Nil(t, errors.Unwrap(testErr))
+	assert.NoError(t, errors.Unwrap(testErr)) //nolint:testifylint
 	assert.Equal(t, io.EOF, errors.Cause(testErr))
 
 	jsonError, err := json.Marshal(testErr)
@@ -646,7 +646,7 @@ func TestWrapWith(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(testErr))
 	assert.Equal(t, map[string]interface{}{"foo2": "bar2", "foo": "baz"}, errors.AllDetails(copyThroughJSON(t, testErr)))
 	assert.Equal(t, []error{eofDetailsBaseErr, io.EOF}, errors.Unjoin(testErr))
-	assert.Nil(t, errors.Unwrap(testErr))
+	assert.NoError(t, errors.Unwrap(testErr)) //nolint:testifylint
 	assert.Equal(t, io.EOF, errors.Cause(testErr))
 
 	jsonError, err = json.Marshal(testErr)
@@ -672,7 +672,7 @@ func TestMarshalerError(t *testing.T) {
 	t.Parallel()
 
 	_, err := json.Marshal(testStructJSON{})
-	assert.Error(t, err)
+	require.Error(t, err)
 	var marshalerError *json.MarshalerError
 	require.ErrorAs(t, err, &marshalerError)
 
@@ -687,7 +687,7 @@ func TestMarshalerError(t *testing.T) {
 		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{Error: err}))
 
 	data, err2 := json.Marshal(errors.Formatter{Error: err})
-	assert.NoError(t, err2)
+	require.NoError(t, err2)
 	jsonEqual(t, `{"error":"json: error calling MarshalJSON for type errors_test.testStructJSON: error","foo":"bar","stack":[]}`, string(data))
 
 	errWithStack := errors.WithStack(err)
@@ -699,7 +699,7 @@ func TestMarshalerError(t *testing.T) {
 		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errWithStack))
 
 	data, err2 = json.Marshal(errWithStack)
-	assert.NoError(t, err2)
+	require.NoError(t, err2)
 	jsonEqual(t, `{"error":"json: error calling MarshalJSON for type errors_test.testStructJSON: error","foo":"bar","stack":[]}`, string(data))
 }
 
@@ -713,7 +713,7 @@ func TestFmtErrorf(t *testing.T) {
 	t.Parallel()
 
 	err := fmt.Errorf("test: %w", getTestNewError())
-	assert.Error(t, err)
+	assert.Error(t, err) //nolint:testifylint
 
 	var stackTrace stackTracer
 	require.ErrorAs(t, err, &stackTrace)
@@ -726,7 +726,7 @@ func TestFmtErrorf(t *testing.T) {
 		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errors.Formatter{Error: err}))
 
 	data, err2 := json.Marshal(errors.Formatter{Error: err})
-	assert.NoError(t, err2)
+	require.NoError(t, err2)
 	jsonEqual(t, `{"error":"test: error","foo":"bar","stack":[]}`, string(data))
 
 	errWithStack := errors.WithStack(err)
@@ -738,7 +738,7 @@ func TestFmtErrorf(t *testing.T) {
 		"(.+\n\t.+:\\d+\n)+$", fmt.Sprintf("%#+v", errWithStack))
 
 	data, err2 = json.Marshal(errWithStack)
-	assert.NoError(t, err2)
+	require.NoError(t, err2)
 	jsonEqual(t, `{"error":"test: error","foo":"bar","stack":[]}`, string(data))
 }
 
@@ -768,11 +768,11 @@ func TestUnjoin(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"level5": 5}, errors.AllDetails(err4))
 
 	assert.Equal(t, err3, errors.Cause(err4))
-	assert.Equal(t, nil, errors.Cause(err3))
+	assert.NoError(t, errors.Cause(err3)) //nolint:testifylint
 	assert.Equal(t, joined, errors.Unwrap(err3))
-	assert.Equal(t, nil, errors.Unwrap(joined))
-	assert.True(t, nil == errors.Unjoin(err4))
+	assert.NoError(t, errors.Unwrap(joined)) //nolint:testifylint
+	assert.Nil(t, errors.Unjoin(err4))
 	assert.Equal(t, []error{err2, right}, errors.Unjoin(err3))
 	assert.Equal(t, []error{err2, right}, errors.Unjoin(joined))
-	assert.True(t, nil == errors.Unjoin(err2))
+	assert.Nil(t, errors.Unjoin(err2))
 }
