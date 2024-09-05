@@ -176,7 +176,7 @@ func (f Formatter) formatError(s fmt.State, w io.Writer, indent int, err error) 
 			for _, er := range errs {
 				// er should never be nil, but we still check.
 				// We also make sure we do not repeat cause here or repeat an error without any additional information.
-				if er != nil && er != cause && !isSubsumedError(err, er) { //nolint:errorlint,goerr113
+				if er != nil && er != cause && !isSubsumedError(err, er) { //nolint:errorlint,err113
 					// We format error to the buffer so that we can see if anything was written.
 					buf.Reset()
 					f.formatError(s, buf, indent+1, er)

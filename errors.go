@@ -322,7 +322,7 @@ func New(message string) E {
 // unless wrapped error already have a stack trace.
 // If %w is provided multiple times, then a stack trace is always recorded.
 func Errorf(format string, args ...interface{}) E {
-	err := fmt.Errorf(format, args...) //nolint:goerr113
+	err := fmt.Errorf(format, args...) //nolint:err113
 	var errs []error
 	// Errorf itself maybe wrapped an error or errors so we can use a type switch here
 	// and do not need to (and should not) use As to determine if that happened.

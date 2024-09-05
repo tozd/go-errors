@@ -33,7 +33,7 @@ type placeholderStackTracer interface {
 // multiple errors.
 func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 	if bytes.Equal(data, []byte("null")) {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	var payload map[string]json.RawMessage
 	err := json.Unmarshal(data, &payload)
@@ -93,7 +93,7 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
 			if e != nil {
 				// If e is equal to cause, we want to have e be the same pointer to cause, so that
 				// handling of wrapError-like errors can be simplified in formatting and JSON marshal.
-				if cause != nil && reflect.DeepEqual(e, cause) {
+				if cause != nil && reflect.DeepEqual(e, cause) { //nolint:govet
 					errs = append(errs, cause)
 				} else {
 					errs = append(errs, e)
