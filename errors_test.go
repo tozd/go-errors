@@ -406,7 +406,7 @@ func TestErrors(t *testing.T) {
 		t.Run(fmt.Sprintf("case=%d", k), func(t *testing.T) {
 			t.Parallel()
 
-			assert.EqualError(t, tt.err, tt.want) //nolint:testifylint
+			assert.EqualError(t, tt.err, tt.want)
 			assert.Implements(t, (*stackTracer)(nil), tt.err)
 			assert.Equal(t, tt.want, fmt.Sprintf("%s", tt.err))
 			assert.Equal(t, tt.want, fmt.Sprintf("%v", tt.err))
@@ -514,13 +514,13 @@ func TestBases(t *testing.T) {
 	grandparent := errors.Base("grandparent")
 	parent := errors.BaseWrap(grandparent, "parent")
 	err := errors.WithStack(parent)
-	assert.EqualError(t, err, "parent") //nolint:testifylint
+	assert.EqualError(t, err, "parent")
 	assert.Implements(t, (*stackTracer)(nil), err)
 	stackTrace := fmt.Sprintf("% +-v", err)
 	// Expected stack size (2 lines per frame), plus "stack trace
 	// (most recent call first)" line, plus extra lines.
 	assert.Equal(t, currentStackSize*2+1+1, strings.Count(stackTrace, "\n"), stackTrace)
-	assert.ErrorIs(t, err, parent) //nolint:testifylint
+	assert.ErrorIs(t, err, parent)
 	assert.ErrorIs(t, err, grandparent)
 }
 
@@ -713,7 +713,7 @@ func TestFmtErrorf(t *testing.T) {
 	t.Parallel()
 
 	err := fmt.Errorf("test: %w", getTestNewError())
-	assert.Error(t, err) //nolint:testifylint
+	assert.Error(t, err)
 
 	var stackTrace stackTracer
 	require.ErrorAs(t, err, &stackTrace)

@@ -30,6 +30,9 @@ linters-settings:
       - all
   tagalign:
     strict: true
+  testifylint:
+    require-error:
+      fn-pattern: ^(NoError|NotErrorIs)$
 
 linters:
   disable-all: true
