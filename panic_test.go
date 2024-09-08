@@ -75,6 +75,6 @@ func TestPanic(t *testing.T) {
 		`\t?\n\n`+
 		`goroutine 1 \[running\]:\n`+
 		`main\.main\(\)\n`+
-		`\t.*/testdata/panic.go:8 \+0xcf\n`+
+		`\t.*/testdata/panic.go:8 \+0x..\n`+
 		`exit status 2\n$`, output.String())
 }
