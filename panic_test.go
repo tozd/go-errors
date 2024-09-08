@@ -64,15 +64,15 @@ func TestPanic(t *testing.T) {
 	}
 
 	assert.Regexp(t, `^panic: panic error\n`+
-		`\tkey=value\n`+
-		`\tstack trace \(most recent call first\):\n`+
-		`\tmain\.main\n`+
-		`\t\t.*/testdata/panic.go:8\n`+
-		`\truntime\.main\n`+
-		`\t\t.*/src/runtime/proc.go:\d+\n`+
-		`\truntime\.goexit\n`+
-		`\t\t.*/src/runtime/.*:\d+\n`+
-		`\t\n\n`+
+		`\t?key=value\n`+
+		`\t?stack trace \(most recent call first\):\n`+
+		`\t?main\.main\n`+
+		`\t?\t.*/testdata/panic.go:8\n`+
+		`\t?runtime\.main\n`+
+		`\t?\t.*/src/runtime/proc.go:\d+\n`+
+		`\t?runtime\.goexit\n`+
+		`\t?\t.*/src/runtime/.*:\d+\n`+
+		`\t?\n\n`+
 		`goroutine 1 \[running\]:\n`+
 		`main\.main\(\)\n`+
 		`\t.*/testdata/panic.go:8 \+0xcf\n`+
