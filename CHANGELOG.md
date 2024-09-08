@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Expose all error's data when using in an unhandled panic.
+  [#16](https://gitlab.com/tozd/go/errors/-/issues/5)
+
 ## [0.9.0] - 2024-09-06
 
 ### Added

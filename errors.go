@@ -374,6 +374,9 @@ type fundamentalError struct {
 }
 
 func (e *fundamentalError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
@@ -409,6 +412,9 @@ type msgError struct {
 }
 
 func (e *msgError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
@@ -449,6 +455,9 @@ type msgJoinedError struct {
 }
 
 func (e *msgJoinedError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
@@ -538,6 +547,9 @@ type noMsgError struct {
 }
 
 func (e *noMsgError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.err.Error()
 }
 
@@ -629,6 +641,9 @@ type causeError struct {
 }
 
 func (e *causeError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
@@ -989,6 +1004,9 @@ type wrapError struct {
 }
 
 func (e *wrapError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.with.Error()
 }
 

@@ -165,6 +165,14 @@ func callers(extraSkip int) []uintptr {
 	return pcs[0:n]
 }
 
+func isCalledFromRuntimePanic() bool {
+	_, file, _, ok := runtime.Caller(2) //nolint:mnd
+	if !ok {
+		return false
+	}
+	return strings.HasSuffix(file, "/src/runtime/panic.go")
+}
+
 // funcname removes the path prefix component of a function's name.
 func funcname(name string) string {
 	i := strings.LastIndex(name, "/")

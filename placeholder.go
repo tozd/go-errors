@@ -171,6 +171,9 @@ type placeholderError struct {
 }
 
 func (e *placeholderError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
@@ -198,6 +201,9 @@ type placeholderCauseError struct {
 }
 
 func (e *placeholderCauseError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
@@ -233,6 +239,9 @@ type placeholderJoinedError struct {
 }
 
 func (e *placeholderJoinedError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
@@ -265,6 +274,9 @@ type placeholderJoinedCauseError struct {
 }
 
 func (e *placeholderJoinedCauseError) Error() string {
+	if isCalledFromRuntimePanic() {
+		return fmt.Sprintf("% -+#.1v", Formatter{Error: e})
+	}
 	return e.msg
 }
 
