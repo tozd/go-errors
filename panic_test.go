@@ -2,8 +2,6 @@ package errors_test
 
 import (
 	"bytes"
-	"context"
-	"os"
 	"os/exec"
 	"syscall"
 	"testing"
@@ -18,12 +16,9 @@ import (
 func TestPanic(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-
 	output := &bytes.Buffer{}
 
-	cmd := exec.CommandContext(ctx, "go", "run", "-race", "testdata/panic.go")
+	cmd := exec.Command("go", "run", "-race", "testdata/panic.go")
 	cmd.Stdout = output
 	cmd.Stderr = output
 	// We have to make a process group and send signals to the whole group.
@@ -31,23 +26,13 @@ func TestPanic(t *testing.T) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{ //nolint:exhaustruct
 		Setpgid: true,
 	}
-	cmd.Cancel = func() error {
-		if cmd.Process.Pid < 1 {
-			return nil
-		}
-		// We kill whole process group.
-		e := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-		if errors.Is(e, syscall.ESRCH) {
-			return os.ErrProcessDone
-		}
-		return e //nolint:wrapcheck
-	}
 
 	err := cmd.Start()
 	require.NoError(t, err)
 
 	time.Sleep(10 * time.Second)
 
+	// We kill whole process group.
 	err = syscall.Kill(-cmd.Process.Pid, syscall.SIGINT)
 	assert.NoError(t, err) //nolint:testifylint
 
