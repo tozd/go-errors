@@ -76,10 +76,10 @@ lint_docs:
   image: node:20.17-alpine3.19
 
   before_script:
-    - apk --update add make bash
+    - apk --update add make bash git
 
   script:
-    - make lint-docs
+    - make lint-docs-ci
 
 audit:
   stage: test
