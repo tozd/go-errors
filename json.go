@@ -101,7 +101,7 @@ func marshalJSONError(err error) ([]byte, E) {
 				if data["errors"] == nil {
 					data["errors"] = []json.RawMessage{json.RawMessage(jsonEr)}
 				} else {
-					data["errors"] = append(data["errors"].([]json.RawMessage), json.RawMessage(jsonEr)) //nolint:forcetypeassert
+					data["errors"] = append(data["errors"].([]json.RawMessage), json.RawMessage(jsonEr)) //nolint:forcetypeassert,errcheck
 				}
 			}
 		}
