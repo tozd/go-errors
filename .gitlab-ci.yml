@@ -37,12 +37,12 @@ test:
 
   parallel:
     matrix:
-      - IMAGE_TAG: ['1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18', '1.22-alpine3.18', '1.23-alpine3.20', '1.24-alpine3.21']
+      - IMAGE_TAG: ['1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18', '1.22-alpine3.18', '1.23-alpine3.21', '1.24-alpine3.21']
 
 lint:
   stage: test
 
-  image: golang:1.23-alpine3.19
+  image: golang:1.24-alpine3.21
 
   before_script:
     - apk --update add make bash gcc musl-dev
@@ -60,7 +60,7 @@ lint:
 fmt:
   stage: test
 
-  image: golang:1.23-alpine3.19
+  image: golang:1.24-alpine3.21
 
   before_script:
     - apk --update add make bash git gcc musl-dev grep
@@ -84,7 +84,7 @@ lint_docs:
 audit:
   stage: test
 
-  image: golang:1.23-alpine3.19
+  image: golang:1.24-alpine3.21
 
   before_script:
     - apk --update add make bash git gcc musl-dev
@@ -96,7 +96,7 @@ audit:
 commits:
   stage: test
 
-  image: golang:1.23-alpine3.19
+  image: golang:1.24-alpine3.21
 
   variables:
     GIT_DEPTH: "0"
@@ -110,7 +110,7 @@ commits:
 publish:
   stage: deploy
 
-  image: golang:1.23-alpine3.19
+  image: golang:1.24-alpine3.21
 
   script:
     - GOPROXY=proxy.golang.org go list -m "gitlab.com/tozd/go/errors@$CI_COMMIT_REF_NAME"

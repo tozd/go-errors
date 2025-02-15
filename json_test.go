@@ -196,7 +196,7 @@ func TestJSON(t *testing.T) {
 			require.NoError(t, errE, "% -+#.1v", errE)
 			jsonError2, err := json.Marshal(err2)
 			require.NoError(t, err)
-			assert.Equal(t, string(jsonError), string(jsonError2))
+			assert.Equal(t, string(jsonError), string(jsonError2)) //nolint:testifylint
 		})
 	}
 }

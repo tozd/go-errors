@@ -109,7 +109,7 @@ func copyThroughJSON(t *testing.T, e interface{}) error {
 	require.NoError(t, errE, "% -+#.1v", errE)
 	jsonError2, err := json.Marshal(e2)
 	require.NoError(t, err)
-	assert.Equal(t, jsonError, jsonError2)
+	assert.Equal(t, string(jsonError), string(jsonError2)) //nolint:testifylint
 
 	return e2 //nolint:wrapcheck
 }
@@ -628,7 +628,7 @@ func TestWrapWith(t *testing.T) {
 	require.NoError(t, errE, "% -+#.1v", errE)
 	jsonError2, err := json.Marshal(err2)
 	require.NoError(t, err)
-	assert.Equal(t, string(jsonError), string(jsonError2))
+	assert.Equal(t, string(jsonError), string(jsonError2)) //nolint:testifylint
 
 	ioDetailsBaseErr := &testStructDetails{"IO error", nil, new(sync.Mutex), nil}
 	errors.Details(ioDetailsBaseErr)["type"] = "io"
@@ -657,7 +657,7 @@ func TestWrapWith(t *testing.T) {
 	require.NoError(t, errE, "% -+#.1v", errE)
 	jsonError2, err = json.Marshal(err2)
 	require.NoError(t, err)
-	assert.Equal(t, string(jsonError), string(jsonError2))
+	assert.Equal(t, string(jsonError), string(jsonError2)) //nolint:testifylint
 }
 
 type testStructJSON struct{}
