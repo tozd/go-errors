@@ -1046,7 +1046,7 @@ func (e *wrapError) Details() map[string]interface{} {
 // If "err" is nil, WrapWith returns nil.
 // If "with" is nil, WrapWith panics.
 //
-// If the "with" error does already have a stack trace,
+// If the "with" error does not already have a stack trace,
 // a stack trace is recorded at the point WrapWith was called.
 //
 // The new error wraps two errors, the "with" error and the "err" error,
