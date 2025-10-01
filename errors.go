@@ -847,7 +847,7 @@ func AllDetails(err error) map[string]interface{} {
 // allDetailsUntilCauseOrJoined builds a map with details unwrapping errors
 // until it hits a cause or joined errors, also returning it or them.
 // This also means that it does not traverse errors returned by Join.
-func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,stylecheck,nonamedreturns
+func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,nonamedreturns
 	res = make(map[string]interface{})
 	cause = nil
 	errs = nil
@@ -879,7 +879,7 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 // causeOrJoined unwraps err repeatedly until it hits a cause or joined errors,
 // returning it or them.
 // This also means that it does not traverse errors returned by Join.
-func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,stylecheck,nonamedreturns
+func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,nonamedreturns
 	cause = nil
 	errs = nil
 

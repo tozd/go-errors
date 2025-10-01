@@ -44,11 +44,13 @@ func jsonEqual(t *testing.T, expected string, actual string, msgAndArgs ...inter
 	t.Helper()
 	var expectedJSONAsInterface, actualJSONAsInterface interface{}
 
-	if err := json.Unmarshal([]byte(expected), &expectedJSONAsInterface); err != nil {
+	err := json.Unmarshal([]byte(expected), &expectedJSONAsInterface)
+	if err != nil {
 		return assert.Fail(t, fmt.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", expected, err.Error()), msgAndArgs...)
 	}
 
-	if err := json.Unmarshal([]byte(actual), &actualJSONAsInterface); err != nil {
+	err = json.Unmarshal([]byte(actual), &actualJSONAsInterface)
+	if err != nil {
 		return assert.Fail(t, fmt.Sprintf("Input ('%s') needs to be valid json.\nJSON parsing error: '%s'", actual, err.Error()), msgAndArgs...)
 	}
 
@@ -68,6 +70,7 @@ func TestJSON(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		want string
 	}{{
 		errors.New("error"),

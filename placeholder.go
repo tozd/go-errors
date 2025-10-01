@@ -31,7 +31,7 @@ type placeholderStackTracer interface {
 // of wrapping are combined into one JSON object. Nested objects happen
 // only for errors implementing causer or unwrapper interface returning
 // multiple errors.
-func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,stylecheck
+func UnmarshalJSON(data []byte) (error, E) { //nolint:revive
 	if bytes.Equal(data, []byte("null")) {
 		return nil, nil //nolint:nilnil
 	}

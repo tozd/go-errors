@@ -11,10 +11,10 @@ test-ci:
 	go tool cover -html=coverage.txt -o coverage.html
 
 lint:
-	golangci-lint run --timeout 4m --color always --allow-parallel-runners --fix --max-issues-per-linter 0 --max-same-issues 0
+	golangci-lint run --output.text.colors --allow-parallel-runners --fix
 
 lint-ci:
-	golangci-lint run --timeout 4m --max-issues-per-linter 0 --max-same-issues 0 --out-format colored-line-number,code-climate:codeclimate.json
+	golangci-lint run --output.text.path=stdout --output.code-climate.path=codeclimate.json
 
 fmt:
 	go mod tidy

@@ -21,6 +21,7 @@ func TestFormatNew(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -103,6 +104,7 @@ func TestFormatErrorf(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -222,6 +224,7 @@ func TestFormatWithStack(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -361,6 +364,7 @@ func TestFormatWrap(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -611,6 +615,7 @@ func TestFormatWrapf(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -687,6 +692,7 @@ func TestFormatWithMessage(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -910,6 +916,7 @@ func TestFormatWrappedNew(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -946,6 +953,7 @@ func TestFormatWithDetails(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -1155,6 +1163,7 @@ func TestFormatter(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -1408,6 +1417,7 @@ func TestJoin(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -1690,6 +1700,7 @@ func TestFormatWrapWith(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -1958,6 +1969,7 @@ func TestFormatCustomError(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{
@@ -2017,6 +2029,7 @@ func TestFormatPrefix(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{

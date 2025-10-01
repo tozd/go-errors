@@ -17,6 +17,7 @@ func TestJoinErrorf(t *testing.T) {
 
 	tests := []struct {
 		error
+
 		format string
 		want   string
 	}{{

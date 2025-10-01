@@ -41,6 +41,7 @@ func TestFrameFormat(t *testing.T) {
 
 	tests := []struct {
 		frame
+
 		format string
 		want   string
 	}{{
@@ -224,7 +225,7 @@ func TestStackFormatter(t *testing.T) {
 		"gitlab.com/tozd/go/errors.TestStackFormatter\n"+
 		"  .+/stack_test.go\n", fmt.Sprintf("%+2s", StackFormatter{stack}))
 
-	assert.Equal(t, "", fmt.Sprintf("%+v", StackFormatter{nil}))
+	assert.Empty(t, fmt.Sprintf("%+v", StackFormatter{nil}))
 
 	assert.Regexp(t, "^%!f\\(errors.frame=stack_test.go:204\\)\n"+
 		"%!f\\(errors.frame=stack_test.go:205\\)\n", fmt.Sprintf("%f", StackFormatter{stack}))
