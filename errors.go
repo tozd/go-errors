@@ -868,12 +868,12 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 		}
 		if cause != nil || len(errs) > 0 {
 			// It is possible that both cause and errs is set. One example is wrapError.
-			return
+			return res, cause, errs
 		}
 		err = Unwrap(err)
 	}
 
-	return
+	return res, cause, errs
 }
 
 // causeOrJoined unwraps err repeatedly until it hits a cause or joined errors,
@@ -894,12 +894,12 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,styl
 		}
 		if cause != nil || len(errs) > 0 {
 			// It is possible that both cause and errs is set. One example is wrapError.
-			return
+			return cause, errs
 		}
 		err = Unwrap(err)
 	}
 
-	return
+	return cause, errs
 }
 
 // WithDetails wraps err into an error which implements the detailer interface
