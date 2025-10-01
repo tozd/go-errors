@@ -16,7 +16,6 @@ plugins:
     filename: CHANGELOG.md
     addUnreleased: true
     addVersionUrl: true
-    strictLatest: false
     head: main
     versionUrlFormats:
       unreleasedUrl: "{repositoryUrl}/-/compare/{tagName}...{head}"
