@@ -32,7 +32,7 @@ func badVerb(s fmt.State, verb rune, arg interface{}) {
 	if arg != nil {
 		_, _ = io.WriteString(s, reflect.TypeOf(arg).String())
 		_, _ = io.WriteString(s, "=")
-		fmt.Fprintf(s, "%v", arg)
+		_, _ = fmt.Fprintf(s, "%v", arg)
 	} else {
 		_, _ = io.WriteString(s, nilAngleString)
 	}
@@ -378,13 +378,13 @@ func (f Formatter) Format(s fmt.State, verb rune) {
 		if f.Error != nil {
 			_, _ = io.WriteString(s, getMessage(f.Error))
 		} else {
-			fmt.Fprintf(s, "%s", f.Error)
+			_, _ = fmt.Fprintf(s, "%s", f.Error)
 		}
 	case 'q':
 		if f.Error != nil {
-			fmt.Fprintf(s, "%q", getMessage(f.Error))
+			_, _ = fmt.Fprintf(s, "%q", getMessage(f.Error))
 		} else {
-			fmt.Fprintf(s, "%q", f.Error)
+			_, _ = fmt.Fprintf(s, "%q", f.Error)
 		}
 	default:
 		badVerb(s, verb, f.Error)

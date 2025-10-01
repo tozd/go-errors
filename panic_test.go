@@ -18,7 +18,7 @@ func TestPanic(t *testing.T) {
 
 	output := &bytes.Buffer{}
 
-	cmd := exec.Command("go", "run", "-race", "testdata/panic.go")
+	cmd := exec.Command("go", "run", "-race", "testdata/panic.go") //nolint:noctx
 	cmd.Stdout = output
 	cmd.Stderr = output
 	// We have to make a process group and send signals to the whole group.

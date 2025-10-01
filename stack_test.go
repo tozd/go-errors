@@ -20,7 +20,7 @@ var (
 	}()
 )
 
-type X struct{}
+type X struct{} //nolint:recvcheck
 
 // val returns a frame pointing to itself.
 //

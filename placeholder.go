@@ -31,7 +31,7 @@ type placeholderStackTracer interface {
 // of wrapping are combined into one JSON object. Nested objects happen
 // only for errors implementing causer or unwrapper interface returning
 // multiple errors.
-func UnmarshalJSON(data []byte) (error, E) { //nolint:revive
+func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if bytes.Equal(data, []byte("null")) {
 		return nil, nil //nolint:nilnil
 	}
@@ -178,7 +178,7 @@ func (e *placeholderError) Error() string {
 }
 
 func (e *placeholderError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e placeholderError) MarshalJSON() ([]byte, error) {
@@ -208,7 +208,7 @@ func (e *placeholderCauseError) Error() string {
 }
 
 func (e *placeholderCauseError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e placeholderCauseError) MarshalJSON() ([]byte, error) {
@@ -246,7 +246,7 @@ func (e *placeholderJoinedError) Error() string {
 }
 
 func (e *placeholderJoinedError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e placeholderJoinedError) MarshalJSON() ([]byte, error) {
@@ -281,7 +281,7 @@ func (e *placeholderJoinedCauseError) Error() string {
 }
 
 func (e *placeholderJoinedCauseError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e placeholderJoinedCauseError) MarshalJSON() ([]byte, error) {

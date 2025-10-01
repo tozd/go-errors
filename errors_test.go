@@ -44,12 +44,12 @@ func (e *errorWithFormat) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			io.WriteString(s, e.vMsg)
+			_, _ = io.WriteString(s, e.vMsg)
 			return
 		}
 		fallthrough
 	case 's':
-		io.WriteString(s, "foobar1")
+		_, _ = io.WriteString(s, "foobar1")
 	case 'q':
 		fmt.Fprintf(s, "%q", "foobar2")
 	}
@@ -67,12 +67,12 @@ func (e *errorWithFormatAndStack) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			io.WriteString(s, e.vMsg)
+			_, _ = io.WriteString(s, e.vMsg)
 			return
 		}
 		fallthrough
 	case 's':
-		io.WriteString(s, "foobar1")
+		_, _ = io.WriteString(s, "foobar1")
 	case 'q':
 		fmt.Fprintf(s, "%q", "foobar2")
 	}

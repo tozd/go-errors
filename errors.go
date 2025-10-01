@@ -234,7 +234,7 @@ func getExistingStackTrace(err error) []uintptr {
 			return e.StackTrace()
 		case pkgStackTracer:
 			st := e.StackTrace()
-			return *(*[]uintptr)(unsafe.Pointer(&st))
+			return *(*[]uintptr)(unsafe.Pointer(&st)) //nolint:gosec
 		case goErrorsStackTracer:
 			return e.Callers()
 		case erisStackTracer:
@@ -381,7 +381,7 @@ func (e *fundamentalError) Error() string {
 }
 
 func (e *fundamentalError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e fundamentalError) MarshalJSON() ([]byte, error) {
@@ -419,7 +419,7 @@ func (e *msgError) Error() string {
 }
 
 func (e *msgError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e msgError) MarshalJSON() ([]byte, error) {
@@ -462,7 +462,7 @@ func (e *msgJoinedError) Error() string {
 }
 
 func (e *msgJoinedError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e msgJoinedError) MarshalJSON() ([]byte, error) {
@@ -554,7 +554,7 @@ func (e *noMsgError) Error() string {
 }
 
 func (e *noMsgError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e noMsgError) MarshalJSON() ([]byte, error) {
@@ -648,7 +648,7 @@ func (e *causeError) Error() string {
 }
 
 func (e *causeError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e causeError) MarshalJSON() ([]byte, error) {
@@ -847,7 +847,7 @@ func AllDetails(err error) map[string]interface{} {
 // allDetailsUntilCauseOrJoined builds a map with details unwrapping errors
 // until it hits a cause or joined errors, also returning it or them.
 // This also means that it does not traverse errors returned by Join.
-func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,nonamedreturns
+func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause error, errs []error) { //nolint:revive,nonamedreturns,staticcheck
 	res = make(map[string]interface{})
 	cause = nil
 	errs = nil
@@ -868,18 +868,18 @@ func allDetailsUntilCauseOrJoined(err error) (res map[string]interface{}, cause 
 		}
 		if cause != nil || len(errs) > 0 {
 			// It is possible that both cause and errs is set. One example is wrapError.
-			return res, cause, errs
+			return res, cause, errs //nolint:wrapcheck
 		}
 		err = Unwrap(err)
 	}
 
-	return res, cause, errs
+	return res, cause, errs //nolint:wrapcheck
 }
 
 // causeOrJoined unwraps err repeatedly until it hits a cause or joined errors,
 // returning it or them.
 // This also means that it does not traverse errors returned by Join.
-func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,nonamedreturns
+func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,nonamedreturns,staticcheck
 	cause = nil
 	errs = nil
 
@@ -894,12 +894,12 @@ func causeOrJoined(err error) (cause error, errs []error) { //nolint:revive,nona
 		}
 		if cause != nil || len(errs) > 0 {
 			// It is possible that both cause and errs is set. One example is wrapError.
-			return cause, errs
+			return cause, errs //nolint:wrapcheck
 		}
 		err = Unwrap(err)
 	}
 
-	return cause, errs
+	return cause, errs //nolint:wrapcheck
 }
 
 // WithDetails wraps err into an error which implements the detailer interface
@@ -1011,7 +1011,7 @@ func (e *wrapError) Error() string {
 }
 
 func (e *wrapError) Format(s fmt.State, verb rune) {
-	fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
+	_, _ = fmt.Fprintf(s, formatString(s, verb), Formatter{Error: e})
 }
 
 func (e wrapError) MarshalJSON() ([]byte, error) {
