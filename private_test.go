@@ -39,12 +39,12 @@ func TestUseMarshaler(t *testing.T) {
 	t.Parallel()
 
 	assert.False(t, useMarshaler(New("test")))
-	assert.False(t, useMarshaler(&fundamentalError{})) //nolint:exhaustruct
+	assert.False(t, useMarshaler(&fundamentalError{}))
 	assert.False(t, useMarshaler(Base("test")))
 	assert.True(t, useMarshaler(&structWithMarshalerError{}))
 	var se stringError = "test"
 	assert.False(t, useMarshaler(&se))
-	assert.False(t, useMarshaler(&json.MarshalerError{})) //nolint:exhaustruct
-	assert.True(t, useMarshaler(&structError{}))          //nolint:exhaustruct
-	assert.True(t, useMarshaler(&structParentError{}))    //nolint:exhaustruct
+	assert.False(t, useMarshaler(&json.MarshalerError{}))
+	assert.True(t, useMarshaler(&structError{}))
+	assert.True(t, useMarshaler(&structParentError{}))
 }

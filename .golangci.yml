@@ -18,6 +18,8 @@ linters:
   settings:
     errcheck:
       check-type-assertions: true
+    exhaustruct:
+      allow-empty: true
     gocritic:
       disabled-checks:
         - ifElseChain
