@@ -49,6 +49,9 @@ linters:
     warn-unused: true
     rules:
       - linters:
+          - revive
+        text: "exported: exported var Err"
+      - linters:
           - gochecknoglobals
           - goconst
           - testpackage
