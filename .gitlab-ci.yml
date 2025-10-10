@@ -39,15 +39,15 @@ test:
     matrix:
       - GOTESTSUM: 'v1.11.0'
         COBERTURA: 'v1.3.0'
-        IMAGE_TAG: ['1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18', '1.22-alpine3.18', '1.23-alpine3.21', '1.24-alpine3.21']
+        IMAGE_TAG: ['1.18-alpine3.17', '1.19-alpine3.18', '1.20-alpine3.18', '1.21-alpine3.18', '1.22-alpine3.18', '1.23-alpine3.21', '1.24-alpine3.22']
       - GOTESTSUM: 'v1.13.0'
         COBERTURA: 'v1.4.0'
-        IMAGE_TAG: ['1.25-alpine3.21']
+        IMAGE_TAG: ['1.25-alpine3.22']
 
 lint:
   stage: test
 
-  image: golang:1.25-alpine3.21
+  image: golang:1.25-alpine3.22
 
   before_script:
     - apk --update add make bash gcc musl-dev
@@ -65,7 +65,7 @@ lint:
 fmt:
   stage: test
 
-  image: golang:1.25-alpine3.21
+  image: golang:1.25-alpine3.22
 
   before_script:
     - apk --update add make bash git gcc musl-dev grep
@@ -78,7 +78,7 @@ fmt:
 lint_docs:
   stage: test
 
-  image: node:22.20-alpine3.21
+  image: node:22.20-alpine3.22
 
   before_script:
     - apk --update add make bash git
@@ -89,7 +89,7 @@ lint_docs:
 audit:
   stage: test
 
-  image: golang:1.25-alpine3.21
+  image: golang:1.25-alpine3.22
 
   before_script:
     - apk --update add make bash git gcc musl-dev
@@ -101,7 +101,7 @@ audit:
 commits:
   stage: test
 
-  image: golang:1.25-alpine3.21
+  image: golang:1.25-alpine3.22
 
   variables:
     GIT_DEPTH: "0"
@@ -115,7 +115,7 @@ commits:
 publish:
   stage: deploy
 
-  image: golang:1.25-alpine3.21
+  image: golang:1.25-alpine3.22
 
   script:
     - GOPROXY=proxy.golang.org go list -m "gitlab.com/tozd/go/errors@$CI_COMMIT_REF_NAME"
