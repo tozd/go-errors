@@ -1,4 +1,4 @@
-SHELL = /bin/bash -o pipefail
+SHELL = /usr/bin/env bash -o pipefail
 
 .PHONY: test test-ci lint lint-ci fmt fmt-ci upgrade clean release lint-docs lint-docs-ci audit encrypt decrypt sops
 
