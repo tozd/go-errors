@@ -78,7 +78,7 @@ fmt:
 lint_docs:
   stage: test
 
-  image: node:22.20-alpine3.22
+  image: node:24.10-alpine3.22
 
   before_script:
     - apk --update add make bash git
