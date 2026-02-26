@@ -51,7 +51,7 @@ linters:
     rules:
       - linters:
           - revive
-        text: "exported: exported var Err"
+        text: "avoid package names that conflict with Go standard library package names"
       - linters:
           - gochecknoglobals
           - goconst

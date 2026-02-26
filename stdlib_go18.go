@@ -1,4 +1,4 @@
-package errors //nolint:revive
+package errors
 
 // AsType finds the first error in err's tree that matches the type E, and
 // if one is found, returns that error value and true. Otherwise, it
