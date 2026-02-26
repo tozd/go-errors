@@ -1,5 +1,4 @@
 //go:build go1.20
-// +build go1.20
 
 // We want this file to be after errors_test.go so that extra test cases are appended to others.
 package errors_test

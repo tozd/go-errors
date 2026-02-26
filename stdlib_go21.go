@@ -1,5 +1,4 @@
 //go:build go1.21
-// +build go1.21
 
 package errors
 
@@ -16,7 +15,7 @@ import (
 //
 //	errors.Is(err, errors.ErrUnsupported)
 //
-// either by directly wrapping ErrUnsupported or by implementing an Is method.
+// either by directly wrapping ErrUnsupported or by implementing an [Is] method.
 //
 // Functions and methods should document the cases in which an error
 // wrapping this will be returned.

@@ -1,5 +1,4 @@
 //go:build !go1.20
-// +build !go1.20
 
 package errors
 
@@ -7,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"unicode/utf8"
 )
 
 const (
@@ -37,13 +35,12 @@ func appendRuneNonASCII(p []byte, r rune) []byte {
 	switch i := uint32(r); {
 	case i <= rune2Max:
 		return append(p, t2|byte(r>>6), tx|byte(r)&maskx)
-	case i > utf8.MaxRune, surrogateMin <= i && i <= surrogateMax:
-		r = utf8.RuneError
-		fallthrough
-	case i <= rune3Max:
+	case i < surrogateMin, surrogateMax < i && i <= rune3Max:
 		return append(p, t3|byte(r>>12), tx|byte(r>>6)&maskx, tx|byte(r)&maskx)
-	default:
+	case i > rune3Max && i <= utf.MaxRune:
 		return append(p, t4|byte(r>>18), tx|byte(r>>12)&maskx, tx|byte(r>>6)&maskx, tx|byte(r)&maskx)
+	default:
+		return append(p, runeErrorByte0, runeErrorByte1, runeErrorByte2)
 	}
 }
 
@@ -69,13 +66,17 @@ func formatString(state fmt.State, verb rune) string {
 
 // Copied from errors/wrap.go available from Go 1.20 on with support for joined errors.
 func stderrorsIs(err, target error) bool {
-	if target == nil {
+	if err == nil || target == nil {
 		return err == target
 	}
 
 	isComparable := reflect.TypeOf(target).Comparable()
+	return is(err, target, isComparable)
+}
+
+func is(err, target error, targetComparable bool) bool {
 	for {
-		if isComparable && err == target {
+		if targetComparable && err == target {
 			return true
 		}
 		if x, ok := err.(interface{ Is(error) bool }); ok && x.Is(target) {
@@ -89,7 +90,7 @@ func stderrorsIs(err, target error) bool {
 			}
 		case interface{ Unwrap() []error }:
 			for _, err := range x.Unwrap() {
-				if Is(err, target) {
+				if is(err, target, targetComparable) {
 					return true
 				}
 			}
@@ -119,12 +120,16 @@ func stderrorsAs(err error, target interface{}) bool {
 	if targetType.Kind() != reflect.Interface && !targetType.Implements(errorType) {
 		panic("errors: *target must be interface or implement error")
 	}
+	return as(err, target, val, targetType)
+}
+
+func as(err error, target any, targetVal reflect.Value, targetType reflect.Type) bool {
 	for {
 		if reflect.TypeOf(err).AssignableTo(targetType) {
-			val.Elem().Set(reflect.ValueOf(err))
+			targetVal.Elem().Set(reflect.ValueOf(err))
 			return true
 		}
-		if x, ok := err.(interface{ As(interface{}) bool }); ok && x.As(target) {
+		if x, ok := err.(interface{ As(any) bool }); ok && x.As(target) {
 			return true
 		}
 		switch x := err.(type) {
@@ -135,7 +140,10 @@ func stderrorsAs(err error, target interface{}) bool {
 			}
 		case interface{ Unwrap() []error }:
 			for _, err := range x.Unwrap() {
-				if As(err, target) {
+				if err == nil {
+					continue
+				}
+				if as(err, target, targetVal, targetType) {
 					return true
 				}
 			}
@@ -145,3 +153,5 @@ func stderrorsAs(err error, target interface{}) bool {
 		}
 	}
 }
+
+var errorType = reflect.TypeOf((*error)(nil)).Elem()

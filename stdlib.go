@@ -6,10 +6,11 @@ import (
 )
 
 // Is reports whether any error in err's tree matches target.
+// The target must be comparable.
 //
 // The tree consists of err itself, followed by the errors obtained by repeatedly
-// calling Unwrap. When err wraps multiple errors, Is examines err followed by a
-// depth-first traversal of its children.
+// calling its Unwrap() error or Unwrap() []error method. When err wraps multiple
+// errors, Is examines err followed by a depth-first traversal of its children.
 //
 // An error is considered to match a target if it is equal to that target or if
 // it implements a method Is(error) bool such that Is(target) returns true.
@@ -21,7 +22,7 @@ import (
 //
 // then Is(MyError{}, fs.ErrExist) returns true. See [syscall.Errno.Is] for
 // an example in the standard library. An Is method should only shallowly
-// compare err and the target and not call Unwrap on either.
+// compare err and the target and not call [Unwrap] on either.
 //
 // This function is a proxy for standard errors.Is.
 func Is(err, target error) bool {
@@ -31,12 +32,16 @@ func Is(err, target error) bool {
 // As finds the first error in err's tree that matches target, and if one is found, sets
 // target to that error value and returns true. Otherwise, it returns false.
 //
+// For most uses, prefer [AsType]. As is equivalent to [AsType] but sets its target
+// argument rather than returning the matching error and doesn't require its target
+// argument to implement error.
+//
 // The tree consists of err itself, followed by the errors obtained by repeatedly
-// calling Unwrap. When err wraps multiple errors, As examines err followed by a
-// depth-first traversal of its children.
+// calling its Unwrap() error or Unwrap() []error method. When err wraps multiple
+// errors, As examines err followed by a depth-first traversal of its children.
 //
 // An error matches target if the error's concrete value is assignable to the value
-// pointed to by target, or if the error has a method As(interface{}) bool such that
+// pointed to by target, or if the error has a method As(any) bool such that
 // As(target) returns true. In the latter case, the As method is responsible for
 // setting target.
 //
