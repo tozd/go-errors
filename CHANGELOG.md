@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support up to Go 1.26.
+- Proxy and backport standard `errors.AsType` function.
+
+### Removed
+
+- Support for Go 1.17.
+
 ## [0.10.0] - 2024-09-09
 
 ### Added
