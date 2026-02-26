@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-02-26
+
 ### Added
 
 - Support up to Go 1.26.
@@ -167,7 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First public release.
 
-[unreleased]: https://gitlab.com/tozd/go/errors/-/compare/v0.10.0...main
+[unreleased]: https://gitlab.com/tozd/go/errors/-/compare/v0.11.0...main
+[0.11.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.10.0...v0.11.0
 [0.10.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.9.0...v0.10.0
 [0.9.0]: https://gitlab.com/tozd/go/errors/-/compare/v0.8.1...v0.9.0
 [0.8.1]: https://gitlab.com/tozd/go/errors/-/compare/v0.8.0...v0.8.1
