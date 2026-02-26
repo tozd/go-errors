@@ -7,5 +7,5 @@ import (
 )
 
 func stderrorsAsType[E error](err error) (E, bool) { //nolint:ireturn
-	return stderrors.AsType[T](err)
+	return stderrors.AsType[E](err)
 }
