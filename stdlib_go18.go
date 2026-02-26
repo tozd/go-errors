@@ -1,5 +1,3 @@
-//go:build go1.18
-
 package errors
 
 // AsType finds the first error in err's tree that matches the type E, and

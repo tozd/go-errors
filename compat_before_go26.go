@@ -1,4 +1,4 @@
-//go:build go1.18 && !go1.26
+//go:build !go1.26
 
 package errors
 
