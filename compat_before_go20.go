@@ -20,9 +20,9 @@ const (
 	t2             = 0b11000000
 	t3             = 0b11100000
 	t4             = 0b11110000
-	runeErrorByte0 = t3 | (utf.RuneError >> 12)
-	runeErrorByte1 = tx | (utf.RuneError>>6)&maskx
-	runeErrorByte2 = tx | utf.RuneError&maskx
+	runeErrorByte0 = t3 | (utf8.RuneError >> 12)
+	runeErrorByte1 = tx | (utf8.RuneError>>6)&maskx
+	runeErrorByte2 = tx | utf8.RuneError&maskx
 )
 
 // Copied from unicode/utf8/utf8.go available from Go 1.18 on.
@@ -41,7 +41,7 @@ func appendRuneNonASCII(p []byte, r rune) []byte {
 		return append(p, t2|byte(r>>6), tx|byte(r)&maskx)
 	case i < surrogateMin, surrogateMax < i && i <= rune3Max:
 		return append(p, t3|byte(r>>12), tx|byte(r>>6)&maskx, tx|byte(r)&maskx)
-	case i > rune3Max && i <= utf.MaxRune:
+	case i > rune3Max && i <= utf8.MaxRune:
 		return append(p, t4|byte(r>>18), tx|byte(r>>12)&maskx, tx|byte(r>>6)&maskx, tx|byte(r)&maskx)
 	default:
 		return append(p, runeErrorByte0, runeErrorByte1, runeErrorByte2)
