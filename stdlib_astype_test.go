@@ -56,10 +56,6 @@ func TestAsType(t *testing.T) {
 
 	var errT errorT
 	var errP *fs.PathError
-	type timeout interface {
-		Timeout() bool
-		error
-	}
 	poserErr := &poser{"oh no", nil}
 
 	testAsType(t,

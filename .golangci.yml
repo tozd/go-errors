@@ -10,6 +10,7 @@ linters:
     - gocognit
     - gocyclo
     - godox
+    - modernize
     - nlreturn
     - unqueryvet
     - varnamelen

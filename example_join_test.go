@@ -13,7 +13,7 @@ func run() (errE errors.E) {
 		return errors.WithStack(err)
 	}
 	defer func() {
-		errE = errors.Join(errE, errors.WithStack(os.Remove(file.Name())))
+		errE = errors.Join(errE, errors.WithStack(os.Remove(file.Name()))) //nolint:gosec
 	}()
 
 	// Do something with the file...
