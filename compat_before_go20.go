@@ -6,19 +6,23 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"unicode/utf8"
 )
 
 const (
-	rune1Max     = 1<<7 - 1
-	rune2Max     = 1<<11 - 1
-	rune3Max     = 1<<16 - 1
-	surrogateMin = 0xD800
-	surrogateMax = 0xDFFF
-	maskx        = 0b00111111
-	tx           = 0b10000000
-	t2           = 0b11000000
-	t3           = 0b11100000
-	t4           = 0b11110000
+	rune1Max       = 1<<7 - 1
+	rune2Max       = 1<<11 - 1
+	rune3Max       = 1<<16 - 1
+	surrogateMin   = 0xD800
+	surrogateMax   = 0xDFFF
+	maskx          = 0b00111111
+	tx             = 0b10000000
+	t2             = 0b11000000
+	t3             = 0b11100000
+	t4             = 0b11110000
+	runeErrorByte0 = t3 | (utf.RuneError >> 12)
+	runeErrorByte1 = tx | (utf.RuneError>>6)&maskx
+	runeErrorByte2 = tx | utf.RuneError&maskx
 )
 
 // Copied from unicode/utf8/utf8.go available from Go 1.18 on.
@@ -153,5 +157,3 @@ func as(err error, target any, targetVal reflect.Value, targetType reflect.Type)
 		}
 	}
 }
-
-var errorType = reflect.TypeOf((*error)(nil)).Elem()

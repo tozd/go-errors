@@ -6,4 +6,6 @@ import (
 	stderrors "errors"
 )
 
-var stderrorsAsType = stderrors.AsType //nolint:gochecknoglobals
+func stderrorsAsType[E error](err error) (E, bool) { //nolint:ireturn
+	return stderrors.AsType[T](err)
+}
