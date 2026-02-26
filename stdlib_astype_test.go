@@ -1,13 +1,11 @@
-//go:build go1.20
-
 package errors_test
 
-// Tests in this file copied from errors/wrap_test.go available from Go 1.26 on.
+// Tests in this file copied from errors/wrap_test.go available from Go 1.26 on
+// without test cases which require support for comparable.
 
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"testing"
 
 	"gitlab.com/tozd/go/errors"
@@ -62,7 +60,6 @@ func TestAsType(t *testing.T) {
 		Timeout() bool
 		error
 	}
-	_, errF := os.Open("non-existing")
 	poserErr := &poser{"oh no", nil}
 
 	testAsType(t,
@@ -73,11 +70,6 @@ func TestAsType(t *testing.T) {
 	testAsType(t,
 		wrapped{"pitied the fool", errorT{"T"}},
 		errorT{"T"},
-		true,
-	)
-	testAsType(t,
-		errF,
-		errF,
 		true,
 	)
 	testAsType(t,
@@ -106,28 +98,6 @@ func TestAsType(t *testing.T) {
 		true,
 	)
 	testAsType(t,
-		errors.New("err"),
-		timeout(nil),
-		false,
-	)
-	testAsType(t,
-		errF,
-		func() timeout {
-			var target timeout
-			_ = errors.As(errF, &target)
-			return target
-		}(),
-		true)
-	testAsType(t,
-		wrapped{"path error", errF},
-		func() timeout {
-			var target timeout
-			_ = errors.As(errF, &target)
-			return target
-		}(),
-		true,
-	)
-	testAsType(t,
 		multiErr{},
 		errT,
 		false,
@@ -150,15 +120,6 @@ func TestAsType(t *testing.T) {
 	testAsType(t,
 		multiErr{multiErr{errors.New("a"), errorT{"a"}}, errorT{"b"}},
 		errorT{"a"},
-		true,
-	)
-	testAsType(t,
-		multiErr{wrapped{"path error", errF}},
-		func() timeout {
-			var target timeout
-			_ = errors.As(errF, &target)
-			return target
-		}(),
 		true,
 	)
 	testAsType(t,
