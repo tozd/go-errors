@@ -52,7 +52,9 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		err := json.Unmarshal(errorData, &msg)
 		if err != nil {
-			return nil, WithMessage(err, "error")
+			errE := WithMessage(err, "error")
+			Details(errE)["json"] = string(errorData)
+			return nil, errE
 		}
 	}
 
@@ -61,7 +63,9 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		err := json.Unmarshal(stackData, &s)
 		if err != nil {
-			return nil, WithMessage(err, "stack")
+			errE := WithMessage(err, "stack")
+			Details(errE)["json"] = string(stackData)
+			return nil, errE
 		}
 		if len(s) == 0 {
 			s = nil
@@ -73,7 +77,9 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		cause, errE = UnmarshalJSON(causeData)
 		if errE != nil {
-			return nil, WithMessage(errE, "cause")
+			errE := WithMessage(errE, "cause")
+			Details(errE)["json"] = string(causeData)
+			return nil, errE
 		}
 	}
 
@@ -83,12 +89,16 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 		var errorsSliceData []json.RawMessage
 		err := json.Unmarshal(errorsData, &errorsSliceData)
 		if err != nil {
-			return nil, WithMessage(err, "errors")
+			errE := WithMessage(err, "errors")
+			Details(errE)["json"] = string(errorsData)
+			return nil, errE
 		}
 		for i, d := range errorsSliceData {
 			e, errE := UnmarshalJSON(d)
 			if errE != nil {
-				return nil, WithMessagef(errE, "errors: %d", i)
+				errE := WithMessagef(errE, "errors: %d", i)
+				Details(errE)["json"] = string(d)
+				return nil, errE
 			}
 			if e != nil {
 				// If e is equal to cause, we want to have e be the same pointer to cause, so that
@@ -110,7 +120,9 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 		var v interface{}
 		err := json.Unmarshal(value, &v)
 		if err != nil {
-			return nil, WithMessage(err, key)
+			errE := WithMessage(err, key)
+			Details(errE)["json"] = string(value)
+			return nil, errE
 		}
 		details[key] = v
 	}
