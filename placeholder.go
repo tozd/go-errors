@@ -52,7 +52,7 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		err := json.Unmarshal(errorData, &msg)
 		if err != nil {
-			errE := WithMessage(err, "error")
+			errE := WithMessage(err, "error") //nolint:govet
 			Details(errE)["json"] = string(errorData)
 			return nil, errE
 		}
@@ -63,7 +63,7 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		err := json.Unmarshal(stackData, &s)
 		if err != nil {
-			errE := WithMessage(err, "stack")
+			errE := WithMessage(err, "stack") //nolint:govet
 			Details(errE)["json"] = string(stackData)
 			return nil, errE
 		}
@@ -77,7 +77,7 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		cause, errE = UnmarshalJSON(causeData)
 		if errE != nil {
-			errE := WithMessage(errE, "cause")
+			errE := WithMessage(errE, "cause") //nolint:govet
 			Details(errE)["json"] = string(causeData)
 			return nil, errE
 		}
@@ -96,7 +96,7 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 		for i, d := range errorsSliceData {
 			e, errE := UnmarshalJSON(d)
 			if errE != nil {
-				errE := WithMessagef(errE, "errors: %d", i)
+				errE := WithMessagef(errE, "errors: %d", i) //nolint:govet
 				Details(errE)["json"] = string(d)
 				return nil, errE
 			}
