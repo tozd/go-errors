@@ -52,9 +52,8 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		err := json.Unmarshal(errorData, &msg)
 		if err != nil {
-			errE := WithMessage(err, "error") //nolint:govet
-			Details(errE)["json"] = string(errorData)
-			return nil, errE
+			// "error" field is not a string, treat it as a detail.
+			payload["error"] = errorData
 		}
 	}
 
@@ -63,11 +62,10 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		err := json.Unmarshal(stackData, &s)
 		if err != nil {
-			errE := WithMessage(err, "stack") //nolint:govet
-			Details(errE)["json"] = string(stackData)
-			return nil, errE
-		}
-		if len(s) == 0 {
+			// "stack" field is not a stack trace, treat it as a detail.
+			payload["stack"] = stackData
+			s = nil
+		} else if len(s) == 0 {
 			s = nil
 		}
 	}
@@ -77,9 +75,9 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 	if ok {
 		cause, errE = UnmarshalJSON(causeData)
 		if errE != nil {
-			errE := WithMessage(errE, "cause") //nolint:govet
-			Details(errE)["json"] = string(causeData)
-			return nil, errE
+			// "cause" field is not an error, treat it as a detail.
+			payload["cause"] = causeData
+			cause = nil
 		}
 	}
 
@@ -89,24 +87,26 @@ func UnmarshalJSON(data []byte) (error, E) { //nolint:revive,staticcheck
 		var errorsSliceData []json.RawMessage
 		err := json.Unmarshal(errorsData, &errorsSliceData)
 		if err != nil {
-			errE := WithMessage(err, "errors")
-			Details(errE)["json"] = string(errorsData)
-			return nil, errE
-		}
-		for i, d := range errorsSliceData {
-			e, errE := UnmarshalJSON(d)
-			if errE != nil {
-				errE := WithMessagef(errE, "errors: %d", i) //nolint:govet
-				Details(errE)["json"] = string(d)
-				return nil, errE
-			}
-			if e != nil {
-				// If e is equal to cause, we want to have e be the same pointer to cause, so that
-				// handling of wrapError-like errors can be simplified in formatting and JSON marshal.
-				if cause != nil && reflect.DeepEqual(e, cause) { //nolint:govet
-					errs = append(errs, cause)
-				} else {
-					errs = append(errs, e)
+			// "errors" field is not a slice, treat it as a detail.
+			payload["errors"] = errorsData
+			errs = nil
+		} else {
+			for _, d := range errorsSliceData {
+				e, errE := UnmarshalJSON(d)
+				if errE != nil {
+					// "errors" field is not a slice of errors, treat it as a detail.
+					payload["errors"] = errorsData
+					errs = nil
+					break
+				}
+				if e != nil {
+					// If e is equal to cause, we want to have e be the same pointer to cause, so that
+					// handling of wrapError-like errors can be simplified in formatting and JSON marshal.
+					if cause != nil && reflect.DeepEqual(e, cause) { //nolint:govet
+						errs = append(errs, cause)
+					} else {
+						errs = append(errs, e)
+					}
 				}
 			}
 		}
