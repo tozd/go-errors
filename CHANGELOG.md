@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Work with error-looking JSONs which are not errors.
+
 ## [0.11.0] - 2026-02-26
 
 ### Added
