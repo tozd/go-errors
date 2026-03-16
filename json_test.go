@@ -203,3 +203,12 @@ func TestJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestUnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	//nolint:lll
+	e, errE := errors.UnmarshalJSON([]byte(`{"error":"bulk indexing had failures","errors":[{"error":{"caused_by":{"reason":"Can't get text on a START_OBJECT at 1:106","type":"illegal_state_exception"},"reason":"failed to parse field [claims.rel.to] of type [keyword] in document with id 'SdQgTgtcqTm7xHV4PV1oAd'. Preview of field's value: '{id=SdQgTgtcqTm7xHV4PV1oAd}'","type":"mapper_parsing_exception"},"id":"SdQgTgtcqTm7xHV4PV1oAd"}],"seq":1,"stack":[{"file":"gitlab.com/peerdb/peerdb/internal/search/bridge.go","line":429,"name":"gitlab.com/peerdb/peerdb/internal/search.(*Bridge[...]).indexCommit"},{"file":"gitlab.com/peerdb/peerdb/internal/search/bridge.go","line":312,"name":"gitlab.com/peerdb/peerdb/internal/search.(*Bridge[...]).run"},{"file":"gitlab.com/peerdb/peerdb/internal/search/bridge.go","line":230,"name":"gitlab.com/peerdb/peerdb/internal/search.(*Bridge[...]).Start.func1"},{"file":"runtime/asm_amd64.s","line":1693,"name":"runtime.goexit"}],"view":"main"}`))
+	require.NoError(t, errE, "% -+#.1v", errE)
+	assert.EqualError(t, e, "bulk indexing had failures")
+}
